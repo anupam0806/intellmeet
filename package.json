@@ -1,0 +1,21 @@
+{
+  "name": "intellmeet",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --workspace=client run build && npm --workspace=server run build",
+    "start": "npm --workspace=server run start",
+    "lint": "npm --workspace=client run lint && npm --workspace=server run lint",
+    "test": "npm --workspace=client run test && npm --workspace=server run test"
+  },
+  "allowScripts": {
+    "bcrypt@5.1.1": true,
+    "mongodb-memory-server@10.4.3": true,
+    "esbuild": true
+  }
+}
