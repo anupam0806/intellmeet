@@ -25,13 +25,14 @@ export async function connectDB(): Promise<void> {
 }
 
 export function getDatabaseStatus(): DatabaseStatus {
-  if (!isConfigured) {
+  if (mongoose.connection.readyState === 1) {
+    return "connected";
+  }
+  if (!isConfigured && (!env.MONGODB_URI || env.MONGODB_URI.trim() === "")) {
     return "not-configured";
   }
 
   switch (mongoose.connection.readyState) {
-    case 1:
-      return "connected";
     case 2:
       return "connecting";
     default:

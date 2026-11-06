@@ -8,6 +8,9 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { sanitizeInPlace } from "./utils/sanitize.js";
 import { healthRouter } from "./routes/health.js";
+import { authRouter } from "./routes/auth.routes.js";
+import { teamRouter } from "./routes/team.routes.js";
+import { userRouter } from "./routes/user.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp(): express.Application {
@@ -71,7 +74,10 @@ export function createApp(): express.Application {
   });
   app.use("/api", generalLimiter);
 
-  // Health check endpoints
+  // API v1 routes
+  app.use("/api/v1/auth", authRouter);
+  app.use("/api/v1/team", teamRouter);
+  app.use("/api/v1/users", userRouter);
   app.use("/api/v1/health", healthRouter);
   app.use("/health", healthRouter);
 
