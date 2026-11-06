@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
+import mongoose from "mongoose";
 import { createApp } from "../src/app.js";
 import { Meeting } from "../src/models/Meeting.js";
 
@@ -289,7 +290,7 @@ describe("Meetings Endpoints and Lifecycle", () => {
     // Add an open participant directly in DB to test participant closure
     const meetingInDb = await Meeting.findById(meetingId);
     meetingInDb?.participants.push({
-      userId: user.id as any,
+      userId: new mongoose.Types.ObjectId(user.id),
       name: user.name,
       joinedAt: new Date(Date.now() - 60000),
       captionsOn: true,
