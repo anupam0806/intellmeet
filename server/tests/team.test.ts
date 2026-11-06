@@ -129,10 +129,17 @@ describe("Team Endpoints and Tenancy", () => {
     expect(promoteRes.status).toBe(200);
     expect(promoteRes.body.user.role).toBe("ADMIN");
 
+    // Member logs in to get an updated token with ADMIN role
+    const memberLogin = await request(app).post("/api/v1/auth/login").send({
+      email: "two@example.com",
+      password: "Password123",
+    });
+    expect(memberLogin.body.user.role).toBe("ADMIN");
+
     // Now demoting Admin One should succeed because Member Two is also Admin
     const demoteRes = await request(app)
       .patch(`/api/v1/team/members/${admin1Res.body.user.id}/role`)
-      .set("Authorization", `Bearer ${memberRes.body.accessToken}`)
+      .set("Authorization", `Bearer ${memberLogin.body.accessToken}`)
       .send({ role: "MEMBER" });
 
     expect(demoteRes.status).toBe(200);
