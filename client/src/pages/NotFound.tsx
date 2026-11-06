@@ -1,11 +1,45 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export function NotFound(): React.JSX.Element {
   return (
-    <div style={{ padding: "32px", maxWidth: "600px" }}>
-      <h1 style={{ fontSize: "30px", fontWeight: 700, margin: "0 0 16px 0" }}>404 — Not Found</h1>
-      <p style={{ color: "var(--ink-soft)" }}>The page or resource you requested does not exist.</p>
+    <div
+      style={{
+        padding: "48px 24px",
+        maxWidth: "600px",
+        margin: "0 auto",
+        textAlign: "center",
+      }}
+    >
+      <h1
+        style={{
+          fontSize: "30px",
+          fontWeight: 700,
+          color: "var(--ink)",
+          marginBottom: "12px",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        404 — Not Found
+      </h1>
+      <p style={{ color: "var(--ink-soft)", fontSize: "16px", marginBottom: "24px" }}>
+        The page or resource you requested does not exist.
+      </p>
+      <Link
+        to="/dashboard"
+        style={{
+          display: "inline-block",
+          padding: "8px 16px",
+          backgroundColor: "var(--ink)",
+          color: "var(--ground)",
+          borderRadius: "var(--radius)",
+          textDecoration: "none",
+          fontWeight: 600,
+          fontSize: "14px",
+        }}
+      >
+        Back to Dashboard
+      </Link>
     </div>
   );
 }
-
