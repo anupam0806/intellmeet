@@ -177,3 +177,4 @@ meetingSchema.index({
 });
 
 export const Meeting = mongoose.model<IMeeting>("Meeting", meetingSchema);
+

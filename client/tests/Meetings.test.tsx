@@ -111,3 +111,4 @@ describe("Meetings UI Components", () => {
     expect(screen.getByText("LIVE")).toBeInTheDocument();
   });
 });
+

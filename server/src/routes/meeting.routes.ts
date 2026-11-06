@@ -29,3 +29,4 @@ meetingRouter.patch(
 meetingRouter.delete("/:id", validateParams(meetingIdParamSchema), MeetingController.delete);
 meetingRouter.post("/:id/start", validateParams(meetingIdParamSchema), MeetingController.start);
 meetingRouter.post("/:id/end", validateParams(meetingIdParamSchema), MeetingController.end);
+
