@@ -304,4 +304,18 @@ describe("Auth Endpoints", () => {
       delete process.env.TEST_RATE_LIMIT;
     }
   });
+
+  it("enforces demo rate limiting of 30 requests when enabled", async () => {
+    process.env.TEST_RATE_LIMIT = "true";
+    try {
+      let lastRes;
+      for (let i = 0; i < 31; i++) {
+        lastRes = await request(app).post("/api/v1/auth/demo");
+      }
+      expect(lastRes?.status).toBe(429);
+      expect(lastRes?.body.error.code).toBe("RATE_LIMITED");
+    } finally {
+      delete process.env.TEST_RATE_LIMIT;
+    }
+  });
 });
