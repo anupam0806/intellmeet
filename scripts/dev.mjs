@@ -3,12 +3,12 @@ import { spawn } from "node:child_process";
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const serverProcess = spawn(npmCmd, ["--workspace=server", "run", "dev"], {
-  stdio: "inherit",
+  stdio: ["ignore", "inherit", "inherit"],
   shell: true,
 });
 
 const clientProcess = spawn(npmCmd, ["--workspace=client", "run", "dev"], {
-  stdio: "inherit",
+  stdio: ["ignore", "inherit", "inherit"],
   shell: true,
 });
 
