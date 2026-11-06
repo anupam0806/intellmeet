@@ -53,7 +53,7 @@ export function generateAccessToken(user: { _id: mongoose.Types.ObjectId; teamId
       role: user.role,
     },
     env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" },
+    { expiresIn: "15m", algorithm: "HS256" },
   );
 }
 

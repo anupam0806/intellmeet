@@ -19,7 +19,9 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 
   const token = authHeader.slice(7).trim();
   try {
-    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenPayload;
+    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      algorithms: ["HS256"],
+    }) as AccessTokenPayload;
     if (!payload.userId || !payload.teamId || !payload.role) {
       next(new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token"));
       return;
