@@ -1,12 +1,20 @@
+import fs from "node:fs";
+import path from "node:path";
 import { z } from "zod";
 
-// Load local environment file if it exists (Node 20+)
+// Attempt to load local environment file if it exists, without throwing
 try {
   if (typeof process.loadEnvFile === "function") {
-    process.loadEnvFile();
+    const cwdEnvPath = path.resolve(process.cwd(), ".env");
+    const serverEnvPath = path.resolve(process.cwd(), "server", ".env");
+    if (fs.existsSync(cwdEnvPath)) {
+      process.loadEnvFile(cwdEnvPath);
+    } else if (fs.existsSync(serverEnvPath)) {
+      process.loadEnvFile(serverEnvPath);
+    }
   }
 } catch {
-  // If .env does not exist, ignore and continue with process.env / defaults
+  // If reading fails, ignore and proceed with environment variables
 }
 
 const isTest = process.env.NODE_ENV === "test";
