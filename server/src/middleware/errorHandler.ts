@@ -49,6 +49,17 @@ export function errorHandler(
     return;
   }
 
+  if (err instanceof SyntaxError && "status" in err && (err as { status: number }).status === 400) {
+    res.status(400).json({
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "Malformed JSON payload",
+        details: [],
+      },
+    });
+    return;
+  }
+
   // General unhandled internal errors
   logger.error({ err }, "Unhandled server error occurred");
 
