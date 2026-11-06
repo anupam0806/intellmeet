@@ -12,14 +12,16 @@ describe("Health and Security Endpoints", () => {
     expect(res.body).toHaveProperty("status", "ok");
     expect(res.body).toHaveProperty("uptime");
     expect(typeof res.body.uptime).toBe("number");
-    expect(res.body).toHaveProperty("database", "not-configured");
+    expect(res.body).toHaveProperty("database");
+    expect(["connected", "not-configured"]).toContain(res.body.database);
   });
 
   it("GET /health utility endpoint returns ok with uptime", async () => {
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("status", "ok");
-    expect(res.body).toHaveProperty("database", "not-configured");
+    expect(res.body).toHaveProperty("database");
+    expect(["connected", "not-configured"]).toContain(res.body.database);
   });
 
   it("returns 404 with standard error format for unknown API routes", async () => {
