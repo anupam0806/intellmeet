@@ -177,3 +177,25 @@ export async function endMeeting(id: string): Promise<{ meeting: Meeting }> {
   });
 }
 
+export interface ChatMessageItem {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  createdAt: string;
+}
+
+export async function getMeetingChat(meetingId: string): Promise<{ items: ChatMessageItem[] }> {
+  return apiFetch<{ items: ChatMessageItem[] }>(`/api/v1/meetings/${meetingId}/chat`);
+}
+
+export interface RtcConfig {
+  iceServers: RTCIceServer[];
+  maxParticipants: number;
+}
+
+export async function getRtcConfig(): Promise<RtcConfig> {
+  return apiFetch<RtcConfig>("/api/v1/rtc/config");
+}
+
+
