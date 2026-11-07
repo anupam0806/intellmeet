@@ -1,8 +1,10 @@
-import { describe, it, expect } from "vitest";
+import crypto from "node:crypto";
+import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 import { createApp } from "../src/app.js";
 import { Meeting } from "../src/models/Meeting.js";
+import { generateUniqueRoomCode } from "../src/services/meeting.service.js";
 
 describe("Meetings Endpoints and Lifecycle", () => {
   const app = createApp();
@@ -454,21 +456,52 @@ describe("Meetings Endpoints and Lifecycle", () => {
     expect(endRes.status).toBe(404);
   });
 
-  it("rejects unknown keys and invalid inputs with 400 VALIDATION_ERROR", async () => {
+  it("rejects unknown keys on create, update, and join with 400 VALIDATION_ERROR", async () => {
     const { token } = await createTestTeam("Validator Host", "validator@example.com", "Validator Team");
 
-    // Unknown key in body
-    const unknownKeyRes = await request(app)
+    // Create a valid meeting first to test update
+    const validMeetingRes = await request(app)
+      .post("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Base Meeting" });
+    expect(validMeetingRes.status).toBe(201);
+    const meetingId = validMeetingRes.body.id;
+    const roomCode = validMeetingRes.body.roomCode;
+
+    // Unknown key on create
+    const unknownCreateRes = await request(app)
       .post("/api/v1/meetings")
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Valid Title",
-        unknownField: "malicious",
+        unknownField: "not_allowed",
       });
-    expect(unknownKeyRes.status).toBe(400);
-    expect(unknownKeyRes.body.error.code).toBe("VALIDATION_ERROR");
+    expect(unknownCreateRes.status).toBe(400);
+    expect(unknownCreateRes.body.error.code).toBe("VALIDATION_ERROR");
 
-    // Title too short
+    // Unknown key on update
+    const unknownUpdateRes = await request(app)
+      .patch(`/api/v1/meetings/${meetingId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Updated Title",
+        extraProperty: "not_allowed",
+      });
+    expect(unknownUpdateRes.status).toBe(400);
+    expect(unknownUpdateRes.body.error.code).toBe("VALIDATION_ERROR");
+
+    // Unknown key on join
+    const unknownJoinRes = await request(app)
+      .post("/api/v1/meetings/join")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        roomCode,
+        unexpectedProperty: "not_allowed",
+      });
+    expect(unknownJoinRes.status).toBe(400);
+    expect(unknownJoinRes.body.error.code).toBe("VALIDATION_ERROR");
+
+    // Title too short on create
     const shortTitleRes = await request(app)
       .post("/api/v1/meetings")
       .set("Authorization", `Bearer ${token}`)
@@ -483,5 +516,176 @@ describe("Meetings Endpoints and Lifecycle", () => {
       .set("Authorization", `Bearer ${token}`);
     expect(invalidIdRes.status).toBe(400);
     expect(invalidIdRes.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("forces a roomCode collision and confirms retry generates a unique code", async () => {
+    const { token } = await createTestTeam("Collision Host", "collision@example.com", "Collision Team");
+
+    // Pre-insert a meeting with a known roomCode into the DB
+    const collidingCode = "aaaaaaaaaa";
+    await Meeting.create({
+      teamId: new mongoose.Types.ObjectId(),
+      title: "Existing Collision Meeting",
+      hostId: new mongoose.Types.ObjectId(),
+      roomCode: collidingCode,
+      colorIndex: 0,
+    });
+
+    const origRandomBytes = crypto.randomBytes;
+    let collisionAttempt = 0;
+    // Buffer filled with 0s maps to index 0 of chars: "aaaaaaaaaa"
+    const mockCollidingBuffer = Buffer.alloc(10, 0);
+
+    const randomBytesSpy = vi.spyOn(crypto, "randomBytes").mockImplementation(((size: number) => {
+      if (size === 10 && collisionAttempt === 0) {
+        collisionAttempt++;
+        return mockCollidingBuffer;
+      }
+      return origRandomBytes(size);
+    }) as typeof crypto.randomBytes);
+
+    try {
+      // Direct service function test
+      const uniqueCode = await generateUniqueRoomCode();
+      expect(collisionAttempt).toBe(1);
+      expect(uniqueCode).not.toBe(collidingCode);
+      expect(uniqueCode).toHaveLength(10);
+
+      // Verify via POST /meetings endpoint as well
+      collisionAttempt = 0;
+      const res = await request(app)
+        .post("/api/v1/meetings")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ title: "Meeting with Collision Retry" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.roomCode).not.toBe(collidingCode);
+      expect(res.body.roomCode).toHaveLength(10);
+      expect(collisionAttempt).toBe(1);
+    } finally {
+      randomBytesSpy.mockRestore();
+    }
+  });
+
+  it("GET /meetings returns full MeetingSummary fields (hostName, participantCount, aiStatus, actionItemCount)", async () => {
+    const { token, user } = await createTestTeam("Summary Host", "summary_host@example.com", "Summary Team");
+
+    const createRes = await request(app)
+      .post("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Summary Spec Meeting", description: "Checking summary properties" });
+
+    expect(createRes.status).toBe(201);
+    const meetingId = createRes.body.id;
+
+    // Initially: participantCount is 0, aiStatus is NONE, actionItemCount is 0
+    let listRes = await request(app)
+      .get("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.items).toHaveLength(1);
+    const item = listRes.body.items[0];
+
+    expect(item).toMatchObject({
+      id: meetingId,
+      title: "Summary Spec Meeting",
+      hostId: user.id,
+      hostName: user.name,
+      colorIndex: 0,
+      status: "SCHEDULED",
+      participantCount: 0,
+      aiStatus: "NONE",
+      actionItemCount: 0,
+    });
+
+    // Update with participants and action items in DB
+    await Meeting.findByIdAndUpdate(meetingId, {
+      participants: [
+        {
+          userId: new mongoose.Types.ObjectId(user.id),
+          name: user.name,
+          joinedAt: new Date(),
+          captionsOn: true,
+        },
+      ],
+      "ai.status": "COMPLETED",
+      "ai.actionItems": [
+        { text: "Finish documentation", completed: false },
+        { text: "Release v1.0", completed: true },
+      ],
+    });
+
+    listRes = await request(app)
+      .get("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listRes.status).toBe(200);
+    const updatedItem = listRes.body.items[0];
+    expect(updatedItem.hostName).toBe(user.name);
+    expect(updatedItem.participantCount).toBe(1);
+    expect(updatedItem.aiStatus).toBe("COMPLETED");
+    expect(updatedItem.actionItemCount).toBe(2);
+  });
+
+  it("GET /meetings?q= searches across title, description, and ai.summary using the text index", async () => {
+    // Ensure text index is created
+    await Meeting.init();
+
+    const { token } = await createTestTeam("Search Host", "search_host@example.com", "Search Team");
+
+    // Meeting 1: unique keyword in title
+    const m1 = await request(app)
+      .post("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Kubernetes Cluster Architecture", description: "Regular infrastructure discussion" });
+
+    // Meeting 2: unique keyword in description
+    const m2 = await request(app)
+      .post("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Weekly Standup", description: "Refactoring the authentication microservice" });
+
+    // Meeting 3: unique keyword in ai.summary
+    const m3 = await request(app)
+      .post("/api/v1/meetings")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Financial Review", description: "Reviewing company performance" });
+
+    await Meeting.findByIdAndUpdate(m3.body.id, {
+      "ai.summary": "The team approved the quarterly marketing expenditure",
+    });
+
+    // Search keyword from title
+    const searchTitleRes = await request(app)
+      .get("/api/v1/meetings?q=Kubernetes")
+      .set("Authorization", `Bearer ${token}`);
+    expect(searchTitleRes.status).toBe(200);
+    expect(searchTitleRes.body.total).toBe(1);
+    expect(searchTitleRes.body.items[0].id).toBe(m1.body.id);
+
+    // Search keyword from description
+    const searchDescRes = await request(app)
+      .get("/api/v1/meetings?q=authentication")
+      .set("Authorization", `Bearer ${token}`);
+    expect(searchDescRes.status).toBe(200);
+    expect(searchDescRes.body.total).toBe(1);
+    expect(searchDescRes.body.items[0].id).toBe(m2.body.id);
+
+    // Search keyword from ai.summary
+    const searchSummaryRes = await request(app)
+      .get("/api/v1/meetings?q=marketing")
+      .set("Authorization", `Bearer ${token}`);
+    expect(searchSummaryRes.status).toBe(200);
+    expect(searchSummaryRes.body.total).toBe(1);
+    expect(searchSummaryRes.body.items[0].id).toBe(m3.body.id);
+
+    // Search nonexistent keyword
+    const searchEmptyRes = await request(app)
+      .get("/api/v1/meetings?q=nonexistentkeyword123")
+      .set("Authorization", `Bearer ${token}`);
+    expect(searchEmptyRes.status).toBe(200);
+    expect(searchEmptyRes.body.total).toBe(0);
+    expect(searchEmptyRes.body.items).toHaveLength(0);
   });
 });
