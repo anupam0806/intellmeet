@@ -241,3 +241,4 @@ export async function handleLeave(io: Server, socket: Socket, meetingId: string)
     logger.error({ err }, "Error in handleLeave");
   }
 }
+

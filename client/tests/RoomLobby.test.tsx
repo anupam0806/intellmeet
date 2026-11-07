@@ -125,3 +125,4 @@ describe("Room LobbyView Component", () => {
     expect(joinBtn).toBeEnabled();
   });
 });
+

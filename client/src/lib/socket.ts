@@ -38,3 +38,4 @@ export function disconnectSocket(): void {
     socketInstance = null;
   }
 }
+

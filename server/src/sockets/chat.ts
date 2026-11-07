@@ -94,3 +94,4 @@ export function registerChatHandlers(io: Server, socket: Socket) {
     });
   });
 }
+

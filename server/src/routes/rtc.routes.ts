@@ -6,3 +6,4 @@ export const rtcRouter = Router();
 
 rtcRouter.use(requireAuth);
 rtcRouter.get("/config", RtcController.getConfig);
+

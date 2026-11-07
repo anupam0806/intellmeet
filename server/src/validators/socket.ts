@@ -77,3 +77,4 @@ export const socketChatTypingSchema = z
   .strict();
 
 export type SocketChatTypingInput = z.infer<typeof socketChatTypingSchema>;
+
