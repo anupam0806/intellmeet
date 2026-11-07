@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import mongoose, { type FilterQuery } from "mongoose";
+import type { Server as SocketIOServer } from "socket.io";
 import { Meeting, type IMeeting } from "../models/Meeting.js";
+import { ChatMessage } from "../models/ChatMessage.js";
 import { User, type UserRole } from "../models/User.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import { logger } from "../utils/logger.js";
@@ -242,17 +244,17 @@ export class MeetingService {
       throw new ApiError(409, "CONFLICT", "Cannot delete a meeting while it is live");
     }
 
-    // Remove associated transcripts and chat messages if those collections exist
+    // Remove associated transcripts and chat messages
     try {
       await mongoose.connection.collection("transcriptsegments").deleteMany({ meetingId: meeting._id });
     } catch {
-      // Collection may not exist yet in P2
+      // Collection may not exist yet in P3
     }
 
     try {
-      await mongoose.connection.collection("chatmessages").deleteMany({ meetingId: meeting._id });
+      await ChatMessage.deleteMany({ meetingId: meeting._id });
     } catch {
-      // Collection may not exist yet in P2
+      // Ignore if collection not ready
     }
 
     await Meeting.deleteOne({ _id: meeting._id });
@@ -306,6 +308,7 @@ export class MeetingService {
     userId: string,
     userRole: UserRole,
     teamId: string,
+    io?: SocketIOServer,
   ) {
     const meeting = await Meeting.findOne({ _id: meetingId, teamId }).populate("hostId", "name");
     if (!meeting) {
@@ -344,6 +347,14 @@ export class MeetingService {
     await meeting.save();
 
     startAiGeneration(meeting._id.toString());
+
+    if (io) {
+      const meetingIdStr = meeting._id.toString();
+      const teamIdStr = meeting.teamId.toString();
+      io.to(`meeting:${meetingIdStr}`).emit("meeting:ended", { meetingId: meetingIdStr });
+      io.to(`team:${teamIdStr}`).emit("meeting:ended", { meetingId: meetingIdStr });
+      io.in(`meeting:${meetingIdStr}`).socketsLeave(`meeting:${meetingIdStr}`);
+    }
 
     return { meeting: formatMeeting(meeting) };
   }

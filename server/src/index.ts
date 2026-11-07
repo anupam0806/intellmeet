@@ -1,8 +1,8 @@
 import http from "node:http";
-import { Server as SocketIOServer } from "socket.io";
 import { env } from "./config/env.js";
 import { connectDB, getDatabaseStatus } from "./config/db.js";
 import { createApp } from "./app.js";
+import { createSocketServer } from "./sockets/index.js";
 import { logger } from "./utils/logger.js";
 
 async function bootstrap(): Promise<void> {
@@ -13,22 +13,8 @@ async function bootstrap(): Promise<void> {
   const server = http.createServer(app);
 
   // Initialize Socket.io
-  const io = new SocketIOServer(server, {
-    cors:
-      env.NODE_ENV === "development"
-        ? {
-            origin: env.CLIENT_ORIGIN,
-            credentials: true,
-          }
-        : undefined,
-  });
-
-  io.on("connection", (socket) => {
-    logger.debug({ socketId: socket.id }, "Socket connected");
-    socket.on("disconnect", () => {
-      logger.debug({ socketId: socket.id }, "Socket disconnected");
-    });
-  });
+  const io = createSocketServer(server);
+  app.set("io", io);
 
   server.listen(env.PORT, () => {
     logger.info(

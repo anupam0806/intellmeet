@@ -96,11 +96,13 @@ export class MeetingController {
 
   static async end(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const io = req.app.get("io");
       const result = await MeetingService.endMeeting(
         req.params.id as string,
         req.user!.id,
         req.user!.role,
         req.user!.teamId,
+        io,
       );
       res.status(200).json(result);
     } catch (error) {
