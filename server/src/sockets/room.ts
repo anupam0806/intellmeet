@@ -179,6 +179,25 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
 
     if (!socket.data.meetingId) return;
 
+    const roomKey = `meeting:${socket.data.meetingId}`;
+
+    // Enforce single active screen share in the meeting room
+    if (parsed.data.screen) {
+      const socketsInRoom = io.sockets.adapter.rooms.get(roomKey) || new Set<string>();
+      for (const sId of socketsInRoom) {
+        if (sId !== socket.id) {
+          const peerSocket = io.sockets.sockets.get(sId);
+          if (peerSocket?.data.media?.screen) {
+            socket.emit("error", {
+              code: "SCREEN_SHARE_ACTIVE",
+              message: "Another participant is already sharing their screen",
+            });
+            return;
+          }
+        }
+      }
+    }
+
     socket.data.media = parsed.data;
 
     // Update captionsOn on participant record in DB
@@ -197,7 +216,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       logger.error({ err }, "Error updating captionsOn");
     }
 
-    io.to(`meeting:${socket.data.meetingId}`).emit("media:state", {
+    io.to(roomKey).emit("media:state", {
       socketId: socket.id,
       ...parsed.data,
     });
@@ -218,6 +237,9 @@ export async function handleLeave(io: Server, socket: Socket, meetingId: string)
 
     const userId = socket.data.userId;
     delete socket.data.meetingId;
+    if (socket.data.media) {
+      socket.data.media.screen = false;
+    }
 
     if (userId) {
       // Set leftAt on open participant entry

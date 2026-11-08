@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { MeetingController } from "../controllers/meeting.controller.js";
 import { ChatController } from "../controllers/chat.controller.js";
+import { TranscriptController } from "../controllers/transcript.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 import { validateBody, validateParams, validateQuery } from "../middleware/validate.js";
 import {
@@ -22,6 +23,16 @@ meetingRouter.post("/join", validateBody(joinMeetingSchema), MeetingController.j
 
 meetingRouter.get("/:id", validateParams(meetingIdParamSchema), MeetingController.getById);
 meetingRouter.get("/:id/chat", validateParams(meetingIdParamSchema), ChatController.listChat);
+meetingRouter.get(
+  "/:id/transcript",
+  validateParams(meetingIdParamSchema),
+  TranscriptController.getTranscript,
+);
+meetingRouter.post(
+  "/:id/transcript",
+  validateParams(meetingIdParamSchema),
+  TranscriptController.postTranscript,
+);
 meetingRouter.patch(
   "/:id",
   validateParams(meetingIdParamSchema),

@@ -6,6 +6,7 @@ import { User } from "../models/User.js";
 import { registerRoomHandlers } from "./room.js";
 import { registerSignalHandlers } from "./signal.js";
 import { registerChatHandlers } from "./chat.js";
+import { registerTranscriptHandlers } from "./transcript.js";
 import { logger } from "../utils/logger.js";
 
 interface TokenPayload {
@@ -82,6 +83,7 @@ export function initSocketServer(io: Server): void {
     registerRoomHandlers(io, socket);
     registerSignalHandlers(io, socket);
     registerChatHandlers(io, socket);
+    registerTranscriptHandlers(io, socket);
 
     socket.on("disconnect", () => {
       logger.debug({ socketId: socket.id, userId: socket.data.userId }, "Socket disconnected");
