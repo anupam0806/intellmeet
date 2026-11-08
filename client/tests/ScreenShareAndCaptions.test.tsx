@@ -1,6 +1,5 @@
-import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { PeerConnectionManager } from "../src/lib/rtc.js";
 import { CaptionController } from "../src/lib/captions.js";
 import { CaptionsPanel } from "../src/components/room/CaptionsPanel.js";

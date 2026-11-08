@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import "./LobbyView.css";
 import { Mic, MicOff, Video, VideoOff, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -335,14 +336,7 @@ export function LobbyView({
                       setSelectedAudio(e.target.value);
                       onSelectAudioDevice(e.target.value);
                     }}
-                    style={{
-                      backgroundColor: "var(--ground)",
-                      border: "1px solid var(--rule)",
-                      borderRadius: "var(--radius)",
-                      padding: "8px 10px",
-                      color: "var(--ink)",
-                      fontSize: "13px",
-                    }}
+                    className="device-select"
                   >
                     {audioDevices.map((d) => (
                       <option key={d.deviceId} value={d.deviceId}>
@@ -366,14 +360,7 @@ export function LobbyView({
                       setSelectedVideo(e.target.value);
                       onSelectVideoDevice(e.target.value);
                     }}
-                    style={{
-                      backgroundColor: "var(--ground)",
-                      border: "1px solid var(--rule)",
-                      borderRadius: "var(--radius)",
-                      padding: "8px 10px",
-                      color: "var(--ink)",
-                      fontSize: "13px",
-                    }}
+                    className="device-select"
                   >
                     {videoDevices.map((d) => (
                       <option key={d.deviceId} value={d.deviceId}>
@@ -455,24 +442,7 @@ export function LobbyView({
                 type="button"
                 onClick={onJoinRoom}
                 disabled={isJoining || lobbyState === "meeting_ended" || lobbyState === "room_full" || lobbyState === "already_in_room"}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "var(--signal)",
-                  color: "var(--on-signal)",
-                  border: "none",
-                  borderRadius: "var(--radius)",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: isJoining ? "wait" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  opacity:
-                    isJoining || lobbyState === "meeting_ended" || lobbyState === "room_full" || lobbyState === "already_in_room"
-                      ? 0.5
-                      : 1,
-                }}
+className="join-button"
               >
                 {isJoining && <Loader2 size={16} className="animate-spin" />}
                 {lobbyState === "waiting_for_host" ? "Join when ready" : "Join now"}

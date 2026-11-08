@@ -1,0 +1,46 @@
+/* LobbyView specific styling */
+
+.join-button {
+  padding: 10px 20px;
+  background-color: var(--signal);
+  color: var(--on-signal);
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.join-button:hover {
+  filter: brightness(0.9);
+}
+
+.join-button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.join-button:active {
+  filter: brightness(0.8);
+}
+
+.join-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.device-select {
+  background-color: var(--ground);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 13px;
+  color-scheme: light dark; /* ensures options inherit colors */
+}
+

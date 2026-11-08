@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import React from "react";
 import { MemoryRouter } from "react-router-dom";
 import { Login } from "../src/pages/Login.js";
 import { useAuthStore } from "../src/store/authStore.js";
@@ -77,7 +76,7 @@ describe("Demo Login UI Component", () => {
       expect(fetchSpy).toHaveBeenCalledTimes(1);
     });
 
-    const [url, options] = fetchSpy.mock.calls[0];
+    const [url, options] = fetchSpy.mock.calls[0]!;
     expect(url).toContain("/api/v1/auth/demo");
     expect(options.method).toBe("POST");
     expect(JSON.parse(options.body)).toEqual({ persona: "dev" });
