@@ -42,3 +42,15 @@ export const loginSchema = z
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const demoPersonaEnum = z.enum(["maya", "dev", "lena", "omar", "sofia"]);
+export type DemoPersona = z.infer<typeof demoPersonaEnum>;
+
+export const demoLoginSchema = z
+  .object({
+    persona: demoPersonaEnum.default("maya"),
+  })
+  .strict()
+  .default({ persona: "maya" });
+
+export type DemoLoginInput = z.infer<typeof demoLoginSchema>;
+

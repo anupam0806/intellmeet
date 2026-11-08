@@ -50,9 +50,10 @@ export class AuthController {
     }
   }
 
-  static async demo(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async demo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await AuthService.demoLogin();
+      const persona = req.body?.persona;
+      const result = await AuthService.demoLogin(persona);
       setRefreshCookie(res, result.refreshTokenValue);
       res.status(200).json({
         accessToken: result.accessToken,

@@ -14,13 +14,23 @@ const loginFormSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginFormSchema>;
 
+export const DEMO_PERSONAS = [
+  { persona: "maya", name: "Maya Chen", firstName: "Maya", role: "Admin" },
+  { persona: "dev", name: "Dev Patel", firstName: "Dev", role: "Member" },
+  { persona: "lena", name: "Lena Fischer", firstName: "Lena", role: "Member" },
+  { persona: "omar", name: "Omar Haddad", firstName: "Omar", role: "Member" },
+  { persona: "sofia", name: "Sofia Rossi", firstName: "Sofia", role: "Member" },
+] as const;
+
+export type DemoPersona = (typeof DEMO_PERSONAS)[number]["persona"];
+
 export function Login(): React.JSX.Element {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [serverError, setServerError] = useState<string | null>(null);
-  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -61,23 +71,24 @@ export function Login(): React.JSX.Element {
     }
   };
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = async (persona: DemoPersona) => {
     setServerError(null);
-    setDemoLoading(true);
+    setDemoLoading(persona);
     try {
       const res = await apiFetch<{ accessToken: string; user: User }>("/api/v1/auth/demo", {
         method: "POST",
+        body: JSON.stringify({ persona }),
       });
       setAuth(res.user, res.accessToken);
       navigate(getTargetUrl());
     } catch (err) {
       if (err instanceof ApiClientError && err.code === "NOT_FOUND") {
-        setServerError("Demo team is not seeded yet. Sign up below to get started.");
+        setServerError("Demo accounts are not set up on this server.");
       } else {
         setServerError("Unable to sign in with demo credentials.");
       }
     } finally {
-      setDemoLoading(false);
+      setDemoLoading(null);
     }
   };
 
@@ -235,7 +246,7 @@ export function Login(): React.JSX.Element {
 
             <button
               type="submit"
-              disabled={isSubmitting || demoLoading}
+              disabled={isSubmitting || demoLoading !== null}
               style={{
                 width: "100%",
                 height: "40px",
@@ -247,33 +258,81 @@ export function Login(): React.JSX.Element {
                 fontWeight: 600,
                 cursor: isSubmitting ? "not-allowed" : "pointer",
                 opacity: isSubmitting ? 0.7 : 1,
-                marginBottom: "12px",
+                marginBottom: "16px",
               }}
             >
               {isSubmitting ? "Signing in..." : "Log in"}
             </button>
+          </form>
 
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={isSubmitting || demoLoading}
+          {/* Try the demo section */}
+          <div style={{ marginTop: "24px" }}>
+            <h2
               style={{
-                width: "100%",
-                height: "40px",
-                borderRadius: "var(--radius)",
-                border: "1px solid var(--rule)",
-                backgroundColor: "transparent",
-                color: "var(--ink)",
                 fontSize: "15px",
                 fontWeight: 600,
-                cursor: demoLoading ? "not-allowed" : "pointer",
-                opacity: demoLoading ? 0.7 : 1,
+                color: "var(--ink)",
+                margin: "0 0 4px 0",
+              }}
+            >
+              Try the demo
+            </h2>
+            <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 12px 0" }}>
+              Sign in instantly as any team member to explore the workspace.
+            </p>
+
+            <div
+              style={{
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--radius)",
+                overflow: "hidden",
                 marginBottom: "20px",
               }}
             >
-              {demoLoading ? "Connecting to demo..." : "Try demo"}
-            </button>
-          </form>
+              {DEMO_PERSONAS.map((p, index) => (
+                <div
+                  key={p.persona}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    backgroundColor: "var(--surface)",
+                    borderBottom: index < DEMO_PERSONAS.length - 1 ? "1px solid var(--rule)" : "none",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink)" }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
+                      {p.role}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin(p.persona)}
+                    disabled={isSubmitting || demoLoading !== null}
+                    style={{
+                      height: "32px",
+                      padding: "0 12px",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--rule)",
+                      backgroundColor: "transparent",
+                      color: "var(--ink)",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: demoLoading !== null ? "not-allowed" : "pointer",
+                      opacity: demoLoading === p.persona ? 0.7 : 1,
+                    }}
+                  >
+                    {demoLoading === p.persona ? "Connecting..." : `Continue as ${p.firstName}`}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 16px 0" }}>
             The server can take about a minute to wake after idle time.

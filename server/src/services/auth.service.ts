@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { User, IUser } from "../models/User.js";
 import { Team } from "../models/Team.js";
-import { env } from "../config/env.js";
+import { env, isDemoLoginEnabled } from "../config/env.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import { SignupInput, LoginInput } from "../validators/auth.js";
+import { SignupInput, LoginInput, DemoPersona } from "../validators/auth.js";
 import { UpdateUserInput } from "../validators/user.js";
 
 const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuvwxyzABCDEF1234567890abcdefghijk";
@@ -63,6 +63,14 @@ export async function createRefreshToken(userId: mongoose.Types.ObjectId): Promi
   const hash = await bcrypt.hash(secretPart, getBcryptRounds());
   return { rawToken, hash };
 }
+
+export const DEMO_PERSONAS: Record<DemoPersona, { email: string; name: string; role: "ADMIN" | "MEMBER" }> = {
+  maya: { email: "maya@brightwell.test", name: "Maya Chen", role: "ADMIN" },
+  dev: { email: "dev@brightwell.test", name: "Dev Patel", role: "MEMBER" },
+  lena: { email: "lena@brightwell.test", name: "Lena Fischer", role: "MEMBER" },
+  omar: { email: "omar@brightwell.test", name: "Omar Haddad", role: "MEMBER" },
+  sofia: { email: "sofia@brightwell.test", name: "Sofia Rossi", role: "MEMBER" },
+};
 
 export class AuthService {
   static async signup(input: SignupInput) {
@@ -150,8 +158,17 @@ export class AuthService {
     };
   }
 
-  static async demoLogin() {
-    const user = await User.findOne({ email: "maya@brightwell.test" });
+  static async demoLogin(persona: DemoPersona = "maya") {
+    if (!isDemoLoginEnabled()) {
+      throw new ApiError(404, "NOT_FOUND", "Demo accounts are not available on this server");
+    }
+
+    const personaConfig = DEMO_PERSONAS[persona];
+    if (!personaConfig) {
+      throw new ApiError(400, "VALIDATION_ERROR", "Invalid demo persona");
+    }
+
+    const user = await User.findOne({ email: personaConfig.email });
     if (!user) {
       throw new ApiError(404, "NOT_FOUND", "Demo data is not seeded");
     }

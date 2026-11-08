@@ -39,6 +39,13 @@ const envSchema = z
       .string()
       .transform((val) => (val ? val : "http://localhost:5173"))
       .default("http://localhost:5173"),
+    DEMO_LOGIN_ENABLED: z.preprocess((val) => {
+      if (typeof val === "boolean") return val;
+      if (typeof val === "string" && val.trim() !== "") {
+        return val === "true" || val === "1";
+      }
+      return process.env.NODE_ENV !== "production";
+    }, z.boolean()),
     AI_PROVIDER: z
       .enum(["openai", "mock", ""])
       .transform((val) => (val === "" || !val ? "mock" : val))
@@ -101,3 +108,11 @@ if (!parsedEnv.success) {
 
 export const env = parsedEnv.data;
 export type Env = z.infer<typeof envSchema>;
+
+export function isDemoLoginEnabled(): boolean {
+  const envVal = process.env.DEMO_LOGIN_ENABLED;
+  if (envVal !== undefined && envVal !== "") {
+    return envVal === "true" || envVal === "1";
+  }
+  return env.NODE_ENV !== "production";
+}

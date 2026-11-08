@@ -20,7 +20,8 @@ describe("Auth Pages UI", () => {
 
     expect(screen.getByRole("heading", { name: "Log in" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Try demo" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Try the demo" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue as Maya" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
   });

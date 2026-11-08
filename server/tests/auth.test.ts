@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { User } from "../src/models/User.js";
+import { runSeed } from "../src/seed.js";
 
 describe("Auth Endpoints", () => {
   const app = createApp();
@@ -285,6 +286,82 @@ describe("Auth Endpoints", () => {
     const res = await request(app).post("/api/v1/auth/demo");
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("POST /auth/demo returns 404 when DEMO_LOGIN_ENABLED is false", async () => {
+    process.env.DEMO_LOGIN_ENABLED = "false";
+    try {
+      const res = await request(app).post("/api/v1/auth/demo");
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe("NOT_FOUND");
+    } finally {
+      delete process.env.DEMO_LOGIN_ENABLED;
+    }
+  });
+
+  it("POST /auth/demo rejects unknown persona with 400 VALIDATION_ERROR", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "charlie" });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("POST /auth/demo rejects extra keys with 400 VALIDATION_ERROR", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "maya", extra: "hack" });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("POST /auth/demo logs in as each persona when seeded", async () => {
+    await runSeed({ silent: true });
+
+    // 1. Default (no body) -> Maya Chen (ADMIN)
+    const defaultRes = await request(app).post("/api/v1/auth/demo");
+    expect(defaultRes.status).toBe(200);
+    expect(defaultRes.body.user.email).toBe("maya@brightwell.test");
+    expect(defaultRes.body.user.name).toBe("Maya Chen");
+    expect(defaultRes.body.user.role).toBe("ADMIN");
+    expect(defaultRes.body).toHaveProperty("accessToken");
+    expect(defaultRes.headers["set-cookie"]).toBeDefined();
+
+    // 2. Dev Patel (MEMBER)
+    const devRes = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "dev" });
+    expect(devRes.status).toBe(200);
+    expect(devRes.body.user.email).toBe("dev@brightwell.test");
+    expect(devRes.body.user.name).toBe("Dev Patel");
+    expect(devRes.body.user.role).toBe("MEMBER");
+
+    // 3. Lena Fischer (MEMBER)
+    const lenaRes = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "lena" });
+    expect(lenaRes.status).toBe(200);
+    expect(lenaRes.body.user.email).toBe("lena@brightwell.test");
+    expect(lenaRes.body.user.name).toBe("Lena Fischer");
+    expect(lenaRes.body.user.role).toBe("MEMBER");
+
+    // 4. Omar Haddad (MEMBER)
+    const omarRes = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "omar" });
+    expect(omarRes.status).toBe(200);
+    expect(omarRes.body.user.email).toBe("omar@brightwell.test");
+    expect(omarRes.body.user.name).toBe("Omar Haddad");
+    expect(omarRes.body.user.role).toBe("MEMBER");
+
+    // 5. Sofia Rossi (MEMBER)
+    const sofiaRes = await request(app)
+      .post("/api/v1/auth/demo")
+      .send({ persona: "sofia" });
+    expect(sofiaRes.status).toBe(200);
+    expect(sofiaRes.body.user.email).toBe("sofia@brightwell.test");
+    expect(sofiaRes.body.user.name).toBe("Sofia Rossi");
+    expect(sofiaRes.body.user.role).toBe("MEMBER");
   });
 
   it("enforces auth rate limiting when enabled", async () => {
