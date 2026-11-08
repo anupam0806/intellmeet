@@ -198,4 +198,42 @@ export async function getRtcConfig(): Promise<RtcConfig> {
   return apiFetch<RtcConfig>("/api/v1/rtc/config");
 }
 
+export interface TranscriptSegmentItem {
+  id: string;
+  speakerId?: string;
+  speakerName: string;
+  text: string;
+  ts: string;
+}
+
+export interface MeetingTranscriptResponse {
+  items: TranscriptSegmentItem[];
+  total: number;
+}
+
+export async function getMeetingTranscript(
+  meetingId: string,
+  limit = 500,
+  offset = 0,
+): Promise<MeetingTranscriptResponse> {
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    offset: offset.toString(),
+  });
+  return apiFetch<MeetingTranscriptResponse>(
+    `/api/v1/meetings/${meetingId}/transcript?${params.toString()}`,
+  );
+}
+
+export async function postMeetingTranscript(
+  meetingId: string,
+  text: string,
+): Promise<{ created: number }> {
+  return apiFetch<{ created: number }>(`/api/v1/meetings/${meetingId}/transcript`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+}
+
 

@@ -16,6 +16,8 @@ import {
   captureMedia,
   type PeerStreamInfo,
 } from "../lib/rtc.js";
+import { CaptionController, isSpeechRecognitionSupported } from "../lib/captions.js";
+import type { LiveCaptionSegment } from "../components/room/CaptionsPanel.js";
 import { LobbyView } from "../components/room/LobbyView.js";
 import { LiveRoomView } from "../components/room/LiveRoomView.js";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -51,10 +53,20 @@ export function Room(): React.JSX.Element {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | undefined>(undefined);
 
+  // Screen share and Captions state
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [captionsEnabled, setCaptionsEnabled] = useState(false);
+  const [liveCaptions, setLiveCaptions] = useState<LiveCaptionSegment[]>([]);
+  const isCaptionsSupported = isSpeechRecognitionSupported();
+
   // Refs for WebRTC and socket management
   const rtcManagerRef = useRef<PeerConnectionManager | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const isJoinedRef = useRef(false);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  screenStreamRef.current = screenStream;
+  const captionControllerRef = useRef<CaptionController | null>(null);
 
   // Clear transient status message
   const showStatus = useCallback((msg: string) => {
@@ -157,7 +169,7 @@ export function Room(): React.JSX.Element {
     };
   }, [meeting, navigate, showStatus]);
 
-  // 3. Audio & Video toggle controls
+  // 3. Media toggle controls
   const handleToggleAudio = useCallback(() => {
     setAudioEnabled((prev) => {
       const next = !prev;
@@ -166,17 +178,22 @@ export function Room(): React.JSX.Element {
           t.enabled = next;
         });
       }
+      rtcManagerRef.current?.setTrackEnabled("audio", next);
+
+      // Privacy: pause speech recognition immediately when muted
+      captionControllerRef.current?.setMuted(!next);
+
       if (socketRef.current?.connected && isJoinedRef.current) {
         socketRef.current.emit("media:state", {
           audio: next,
           video: videoEnabled,
-          screen: false,
-          captions: false,
+          screen: isScreenSharing,
+          captions: captionsEnabled,
         });
       }
       return next;
     });
-  }, [localStream, videoEnabled]);
+  }, [localStream, videoEnabled, isScreenSharing, captionsEnabled]);
 
   const handleToggleVideo = useCallback(() => {
     setVideoEnabled((prev) => {
@@ -186,17 +203,166 @@ export function Room(): React.JSX.Element {
           t.enabled = next;
         });
       }
+      if (!isScreenSharing) {
+        rtcManagerRef.current?.setTrackEnabled("video", next);
+      }
       if (socketRef.current?.connected && isJoinedRef.current) {
         socketRef.current.emit("media:state", {
           audio: audioEnabled,
           video: next,
-          screen: false,
-          captions: false,
+          screen: isScreenSharing,
+          captions: captionsEnabled,
         });
       }
       return next;
     });
-  }, [localStream, audioEnabled]);
+  }, [localStream, audioEnabled, isScreenSharing, captionsEnabled]);
+
+  // Screen share handling
+  const handleStopScreenShare = useCallback(() => {
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+    }
+    setScreenStream(null);
+    setIsScreenSharing(false);
+
+    // Restore camera track if camera is enabled
+    if (localStream && videoEnabled) {
+      const cameraTrack = localStream.getVideoTracks()[0] || null;
+      void rtcManagerRef.current?.replaceVideoTrack(cameraTrack);
+    } else {
+      void rtcManagerRef.current?.replaceVideoTrack(null);
+    }
+
+    if (socketRef.current?.connected && isJoinedRef.current) {
+      socketRef.current.emit("media:state", {
+        audio: audioEnabled,
+        video: videoEnabled,
+        screen: false,
+        captions: captionsEnabled,
+      });
+    }
+  }, [localStream, videoEnabled, audioEnabled, captionsEnabled]);
+
+  const handleToggleScreenShare = useCallback(async () => {
+    if (isScreenSharing) {
+      handleStopScreenShare();
+      return;
+    }
+
+    // Reject locally if another participant is already sharing
+    const isSomeoneElseSharing = peers.some((p) => p.media.screen);
+    if (isSomeoneElseSharing) {
+      showStatus("Someone else is currently sharing their screen");
+      return;
+    }
+
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        showStatus("Screen sharing is not supported in this browser");
+        return;
+      }
+
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+
+      const screenTrack = displayStream.getVideoTracks()[0];
+      if (!screenTrack) return;
+
+      screenTrack.onended = () => {
+        handleStopScreenShare();
+      };
+
+      screenStreamRef.current = displayStream;
+      setScreenStream(displayStream);
+      setIsScreenSharing(true);
+
+      await rtcManagerRef.current?.replaceVideoTrack(screenTrack);
+
+      if (socketRef.current?.connected && isJoinedRef.current) {
+        socketRef.current.emit("media:state", {
+          audio: audioEnabled,
+          video: videoEnabled,
+          screen: true,
+          captions: captionsEnabled,
+        });
+      }
+    } catch (err: unknown) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "NotAllowedError" || name === "AbortError") {
+        showStatus("Screen sharing was cancelled or denied");
+      } else {
+        showStatus("Unable to share screen");
+      }
+    }
+  }, [
+    isScreenSharing,
+    peers,
+    audioEnabled,
+    videoEnabled,
+    captionsEnabled,
+    showStatus,
+    handleStopScreenShare,
+  ]);
+
+  // Captions handling
+  useEffect(() => {
+    if (!isCaptionsSupported) return;
+
+    const controller = new CaptionController({
+      onSegment: (segment) => {
+        if (socketRef.current?.connected && isJoinedRef.current) {
+          socketRef.current.emit("transcript:segment", segment);
+        }
+      },
+      onError: (msg) => {
+        showStatus(msg);
+      },
+      onCaptionsOff: () => {
+        setCaptionsEnabled(false);
+        if (socketRef.current?.connected && isJoinedRef.current) {
+          socketRef.current.emit("media:state", {
+            audio: audioEnabled,
+            video: videoEnabled,
+            screen: isScreenSharing,
+            captions: false,
+          });
+        }
+      },
+    });
+
+    captionControllerRef.current = controller;
+
+    return () => {
+      controller.destroy();
+      captionControllerRef.current = null;
+    };
+  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
+
+  const handleToggleCaptions = useCallback(() => {
+    if (!isCaptionsSupported) {
+      showStatus("Live captions need Chrome or Edge.");
+      return;
+    }
+
+    setCaptionsEnabled((prev) => {
+      const next = !prev;
+      captionControllerRef.current?.setCaptionsEnabled(next);
+
+      if (socketRef.current?.connected && isJoinedRef.current) {
+        socketRef.current.emit("media:state", {
+          audio: audioEnabled,
+          video: videoEnabled,
+          screen: isScreenSharing,
+          captions: next,
+        });
+      }
+      return next;
+    });
+  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
 
   const handleSelectAudioDevice = useCallback(
     async (deviceId: string) => {
@@ -388,6 +554,19 @@ export function Room(): React.JSX.Element {
       );
     };
 
+    const onTranscriptSegment = (data: LiveCaptionSegment) => {
+      setLiveCaptions((prev) => [...prev, data]);
+    };
+
+    const onSocketError = (err: { code?: string; message?: string }) => {
+      if (err.code === "SCREEN_SHARE_ACTIVE") {
+        handleStopScreenShare();
+        showStatus("Another participant is already sharing their screen.");
+      } else if (err.code === "RATE_LIMITED") {
+        showStatus("Too many requests sent. Please wait a moment.");
+      }
+    };
+
     socket.on("room:peer-joined", onPeerJoined);
     socket.on("room:peer-left", onPeerLeft);
     socket.on("signal:offer", onSignalOffer);
@@ -396,6 +575,8 @@ export function Room(): React.JSX.Element {
     socket.on("media:state", onMediaState);
     socket.on("chat:message", onChatMessage);
     socket.on("chat:typing", onChatTyping);
+    socket.on("transcript:segment", onTranscriptSegment);
+    socket.on("error", onSocketError);
     socket.on("reconnect", onReconnect);
 
     return () => {
@@ -407,9 +588,11 @@ export function Room(): React.JSX.Element {
       socket.off("media:state", onMediaState);
       socket.off("chat:message", onChatMessage);
       socket.off("chat:typing", onChatTyping);
+      socket.off("transcript:segment", onTranscriptSegment);
+      socket.off("error", onSocketError);
       socket.off("reconnect", onReconnect);
     };
-  }, [isInLiveRoom, meeting, showStatus]);
+  }, [isInLiveRoom, meeting, showStatus, handleStopScreenShare]);
 
   // 6. Chat actions
   const handleSendMessage = useCallback(
@@ -466,6 +649,10 @@ export function Room(): React.JSX.Element {
         socketRef.current.emit("room:leave", { meetingId: meeting.id });
       }
       rtcManagerRef.current?.destroy();
+      captionControllerRef.current?.destroy();
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
       if (localStream) {
         localStream.getTracks().forEach((t) => t.stop());
       }
@@ -545,6 +732,11 @@ export function Room(): React.JSX.Element {
         selfName={user?.name || "You"}
         selfAudio={audioEnabled}
         selfVideo={videoEnabled}
+        isScreenSharing={isScreenSharing}
+        screenStream={screenStream}
+        captions={liveCaptions}
+        captionsEnabled={captionsEnabled}
+        isCaptionsSupported={isCaptionsSupported}
         isHost={meeting.hostId === user?.id}
         isAdmin={user?.role === "ADMIN"}
         hostId={meeting.hostId}
@@ -556,6 +748,8 @@ export function Room(): React.JSX.Element {
         getDebugStats={handleGetDebugStats}
         onToggleAudio={handleToggleAudio}
         onToggleVideo={handleToggleVideo}
+        onToggleScreenShare={handleToggleScreenShare}
+        onToggleCaptions={handleToggleCaptions}
         onSendMessage={handleSendMessage}
         onTyping={handleTyping}
         onLeaveMeeting={handleLeaveMeeting}

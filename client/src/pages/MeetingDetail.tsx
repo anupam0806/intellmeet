@@ -10,6 +10,8 @@ import {
   updateMeeting,
   getMeetingColor,
   formatDuration,
+  getMeetingTranscript,
+  postMeetingTranscript,
 } from "../lib/meetings.js";
 import {
   Copy,
@@ -28,6 +30,8 @@ import {
   Sparkles,
   Info,
   X,
+  FileText,
+  Upload,
 } from "lucide-react";
 
 export function MeetingDetail(): React.JSX.Element {
@@ -110,6 +114,41 @@ export function MeetingDetail(): React.JSX.Element {
       setActionError(err.message || "Failed to update meeting");
     },
   });
+
+  // Transcript query & paste mutation
+  const transcriptQuery = useQuery({
+    queryKey: ["meeting-transcript", id],
+    queryFn: () => getMeetingTranscript(id!),
+    enabled: Boolean(id && meeting?.status === "ENDED"),
+  });
+
+  const [pasteText, setPasteText] = useState("");
+  const [pasteError, setPasteError] = useState("");
+  const [pasteSuccess, setPasteSuccess] = useState(false);
+
+  const pasteTranscriptMutation = useMutation({
+    mutationFn: (text: string) => postMeetingTranscript(id!, text),
+    onSuccess: () => {
+      setPasteText("");
+      setPasteError("");
+      setPasteSuccess(true);
+      setTimeout(() => setPasteSuccess(false), 3000);
+      void queryClient.invalidateQueries({ queryKey: ["meeting-transcript", id] });
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Failed to paste transcript";
+      setPasteError(msg);
+    },
+  });
+
+  const missingSpeechParticipants = (meeting?.participants || [])
+    .filter((p) => !p.captionsOn)
+    .map((p) => p.name)
+    .filter((name, idx, arr) => arr.indexOf(name) === idx);
+
+  const isTranscriptEmpty = (transcriptQuery.data?.total ?? 0) === 0;
+  const showPastePanel =
+    canManage && (isTranscriptEmpty || missingSpeechParticipants.length > 0);
 
   function handleCopyCode() {
     if (!meeting) return;
@@ -561,6 +600,191 @@ export function MeetingDetail(): React.JSX.Element {
                 AI summary generation, key takeaways, decisions, and action item tracking will be automatically generated and displayed here in Phase P5.
               </p>
             </div>
+          </div>
+
+          {/* Missing Speech Notice */}
+          {missingSpeechParticipants.length > 0 && (
+            <div
+              data-testid="missing-speech-notice"
+              className="rounded-xl border p-4 flex items-start gap-3"
+              style={{
+                backgroundColor: "rgba(166, 124, 61, 0.08)",
+                borderColor: "var(--meeting-3, #a67c3d)",
+                color: "var(--ink)",
+              }}
+            >
+              <Info className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "var(--meeting-3, #a67c3d)" }} />
+              <div className="text-sm">
+                <strong>Incomplete transcript notice: </strong>
+                <span>
+                  Speech from {missingSpeechParticipants.join(", ")} is not in this transcript.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Prominent Paste Panel */}
+          {showPastePanel && (
+            <div
+              data-testid="paste-transcript-panel"
+              className="rounded-xl border p-6 space-y-4"
+              style={{
+                backgroundColor: "var(--surface)",
+                borderColor: "var(--rule)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" style={{ color: "var(--signal)" }} />
+                  <h3 className="text-base font-bold" style={{ color: "var(--ink)" }}>
+                    Paste Transcript
+                  </h3>
+                </div>
+                <span className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                  Host / Admin action
+                </span>
+              </div>
+
+              <p className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                You can paste meeting notes or an external transcript. It will be split into segments
+                and added to the meeting transcript.
+              </p>
+
+              {pasteError && (
+                <div
+                  className="p-3 text-xs rounded-lg border bg-red-500/10 border-red-500 text-red-600 dark:text-red-400"
+                >
+                  {pasteError}
+                </div>
+              )}
+
+              {pasteSuccess && (
+                <div
+                  className="p-3 text-xs rounded-lg border bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                >
+                  Transcript successfully saved and added to the meeting.
+                </div>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!pasteText.trim()) return;
+                  pasteTranscriptMutation.mutate(pasteText);
+                }}
+                className="space-y-3"
+              >
+                <textarea
+                  data-testid="paste-transcript-textarea"
+                  rows={4}
+                  value={pasteText}
+                  onChange={(e) => setPasteText(e.target.value)}
+                  maxLength={50000}
+                  placeholder="Paste transcript text here (up to 50,000 characters)..."
+                  className="w-full rounded-lg border p-3 text-sm focus:outline-hidden"
+                  style={{
+                    backgroundColor: "var(--ground)",
+                    borderColor: "var(--rule)",
+                    color: "var(--ink)",
+                    fontFamily: "Newsreader, Georgia, serif",
+                  }}
+                />
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                    {pasteText.length.toLocaleString()} / 50,000 characters
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={!pasteText.trim() || pasteTranscriptMutation.isPending}
+                    className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                    style={{
+                      backgroundColor: "var(--signal)",
+                      color: "var(--on-signal)",
+                    }}
+                  >
+                    <span>
+                      {pasteTranscriptMutation.isPending ? "Saving transcript..." : "Save transcript"}
+                    </span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Transcript Section */}
+          <div
+            className="rounded-xl border p-8 space-y-6"
+            style={{
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--rule)",
+            }}
+          >
+            <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--rule)" }}>
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5" style={{ color: "var(--ink)" }} />
+                <h3 className="text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  Meeting Transcript
+                </h3>
+              </div>
+              <span
+                className="px-2.5 py-0.5 text-xs font-semibold rounded-full border"
+                style={{
+                  backgroundColor: "var(--ground)",
+                  borderColor: "var(--rule)",
+                  color: "var(--ink)",
+                }}
+              >
+                {transcriptQuery.data?.total ?? 0} segments
+              </span>
+            </div>
+
+            {transcriptQuery.isLoading ? (
+              <div className="py-8 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+                Loading transcript...
+              </div>
+            ) : isTranscriptEmpty ? (
+              <div className="py-8 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+                No transcript segments recorded for this meeting.
+              </div>
+            ) : (
+              <div className="space-y-4 max-w-3xl">
+                {transcriptQuery.data?.items.map((segment) => {
+                  const timeStr = new Date(segment.ts).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  });
+
+                  return (
+                    <div
+                      key={segment.id}
+                      className="p-3.5 rounded-lg border space-y-1.5"
+                      style={{
+                        backgroundColor: "var(--ground)",
+                        borderColor: "var(--rule)",
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-xs" style={{ color: "var(--ink-soft)" }}>
+                        <span className="font-semibold" style={{ color: "var(--ink)" }}>
+                          {segment.speakerName}
+                        </span>
+                        <span className="tabular-nums">{timeStr}</span>
+                      </div>
+                      <p
+                        className="text-sm leading-relaxed"
+                        style={{
+                          color: "var(--ink)",
+                          fontFamily: "Newsreader, Georgia, serif",
+                        }}
+                      >
+                        {segment.text}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

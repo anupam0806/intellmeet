@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { TranscriptSegment } from "../models/TranscriptSegment.js";
 import { Meeting } from "../models/Meeting.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import type { UserRole } from "../types/auth.js";
+import type { UserRole } from "../models/User.js";
 import type { GetTranscriptQuery } from "../validators/transcript.js";
 
 export function splitTextIntoChunks(text: string, maxLen = 1000): string[] {

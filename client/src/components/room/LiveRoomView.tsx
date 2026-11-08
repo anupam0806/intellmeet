@@ -9,11 +9,13 @@ import {
   LogOut,
   PhoneOff,
   Subtitles,
+  Monitor,
   X,
 } from "lucide-react";
 import { VideoTile } from "./VideoTile.js";
 import { ChatPanel } from "./ChatPanel.js";
 import { ParticipantsPanel } from "./ParticipantsPanel.js";
+import { CaptionsPanel, type LiveCaptionSegment } from "./CaptionsPanel.js";
 import { DebugPanel } from "./DebugPanel.js";
 import type { PeerStreamInfo, PeerDebugStats } from "../../lib/rtc.js";
 import type { ChatMessageItem } from "../../lib/meetings.js";
@@ -23,6 +25,11 @@ interface LiveRoomViewProps {
   selfName: string;
   selfAudio: boolean;
   selfVideo: boolean;
+  isScreenSharing?: boolean;
+  screenStream?: MediaStream | null;
+  captions?: LiveCaptionSegment[];
+  captionsEnabled?: boolean;
+  isCaptionsSupported?: boolean;
   isHost: boolean;
   isAdmin: boolean;
   hostId: string;
@@ -34,6 +41,8 @@ interface LiveRoomViewProps {
   getDebugStats?: () => Promise<PeerDebugStats[]>;
   onToggleAudio: () => void;
   onToggleVideo: () => void;
+  onToggleScreenShare?: () => void;
+  onToggleCaptions?: () => void;
   onSendMessage: (text: string) => void;
   onTyping: (isTyping: boolean) => void;
   onLeaveMeeting: () => void;
@@ -46,6 +55,11 @@ export function LiveRoomView({
   selfName,
   selfAudio,
   selfVideo,
+  isScreenSharing = false,
+  screenStream = null,
+  captions = [],
+  captionsEnabled = false,
+  isCaptionsSupported = true,
   isHost,
   isAdmin,
   hostId,
@@ -57,6 +71,8 @@ export function LiveRoomView({
   getDebugStats,
   onToggleAudio,
   onToggleVideo,
+  onToggleScreenShare,
+  onToggleCaptions,
   onSendMessage,
   onTyping,
   onLeaveMeeting,
@@ -76,6 +92,7 @@ export function LiveRoomView({
     }));
   };
 
+  const isSomeoneElseSharing = peers.some((p) => p.media.screen);
   const canEndMeeting = isHost || isAdmin;
   const totalTiles = 1 + peers.length;
 
@@ -171,6 +188,88 @@ export function LiveRoomView({
           >
             {selfVideo ? <Video size={18} /> : <VideoOff size={18} />}
           </button>
+
+          {/* Screen Share */}
+          <button
+            type="button"
+            onClick={isSomeoneElseSharing ? undefined : onToggleScreenShare}
+            disabled={isSomeoneElseSharing}
+            aria-label={
+              isScreenSharing
+                ? "Stop sharing screen"
+                : isSomeoneElseSharing
+                ? "Someone else is currently sharing their screen"
+                : "Share screen"
+            }
+            title={
+              isScreenSharing
+                ? "Stop sharing screen"
+                : isSomeoneElseSharing
+                ? "Someone else is currently sharing their screen"
+                : "Share screen"
+            }
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "var(--radius, 8px)",
+              backgroundColor: isScreenSharing
+                ? "var(--signal, #d24a00)"
+                : isSomeoneElseSharing
+                ? "rgba(28, 28, 31, 0.5)"
+                : "var(--ink, #1c1c1f)",
+              color: isSomeoneElseSharing ? "var(--ink-soft, #71717a)" : "#fff",
+              border: "1px solid var(--rule, #2d2d31)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: isSomeoneElseSharing ? "not-allowed" : "pointer",
+              opacity: isSomeoneElseSharing ? 0.6 : 1,
+            }}
+          >
+            <Monitor size={18} />
+          </button>
+
+          {/* Captions Toggle */}
+          {isCaptionsSupported ? (
+            <button
+              type="button"
+              onClick={onToggleCaptions}
+              aria-label={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
+              title={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "var(--radius, 8px)",
+                backgroundColor: captionsEnabled
+                  ? "var(--signal, #d24a00)"
+                  : "var(--ink, #1c1c1f)",
+                color: "#fff",
+                border: "1px solid var(--rule, #2d2d31)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <Subtitles size={18} />
+            </button>
+          ) : (
+            <div
+              title="Live captions need Chrome or Edge."
+              aria-label="Live captions need Chrome or Edge."
+              style={{
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--ink-soft, #71717a)",
+                cursor: "not-allowed",
+              }}
+            >
+              <Subtitles size={18} opacity={0.3} />
+            </div>
+          )}
 
           {/* Chat Panel Toggle */}
           <button
@@ -315,12 +414,14 @@ export function LiveRoomView({
         >
           {/* Self Tile */}
           <VideoTile
-            stream={selfStream}
+            stream={isScreenSharing && screenStream ? screenStream : selfStream}
             name={selfName}
             isSelf
             isHost={isHost}
             audioEnabled={selfAudio}
             videoEnabled={selfVideo}
+            isScreenSharing={isScreenSharing}
+            captionsEnabled={captionsEnabled}
             colorIndex={colorIndex}
           />
 
@@ -335,6 +436,8 @@ export function LiveRoomView({
               isHost={peer.userId === hostId}
               audioEnabled={peer.media.audio}
               videoEnabled={peer.media.video}
+              isScreenSharing={peer.media.screen}
+              captionsEnabled={peer.media.captions}
               colorIndex={colorIndex}
               isFailed={peer.isFailed}
               onRetryConnection={() => onRetryPeerConnection(peer.socketId)}
@@ -407,28 +510,19 @@ export function LiveRoomView({
                 selfName={selfName}
                 selfAudio={selfAudio}
                 selfVideo={selfVideo}
+                selfCaptions={captionsEnabled}
                 isHost={isHost}
                 peers={peers}
                 hostId={hostId}
               />
             )}
             {activeSideTab === "captions" && (
-              <div
-                style={{
-                  height: "100%",
-                  backgroundColor: "var(--surface, #18181b)",
-                  borderLeft: "1px solid var(--rule, #27272a)",
-                  padding: "24px",
-                  color: "var(--ink-soft, #71717a)",
-                  fontSize: "13px",
-                  textAlign: "center",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                Live speech captions will be activated in Phase 4.
-              </div>
+              <CaptionsPanel
+                captions={captions}
+                isSupported={isCaptionsSupported}
+                captionsEnabled={captionsEnabled}
+                onToggleCaptions={onToggleCaptions || (() => {})}
+              />
             )}
           </div>
         </div>

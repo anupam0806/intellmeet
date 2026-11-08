@@ -124,8 +124,31 @@ export class PeerConnectionManager {
     };
     this.peers.set(socketId, record);
 
-    // Add local tracks if available
-    if (this.localStream) {
+    // Ensure each peer connection always has audio and video transceivers from creation
+    if (typeof pc.addTransceiver === "function") {
+      try {
+        const audioTrack = this.localStream?.getAudioTracks()[0];
+        if (audioTrack && this.localStream) {
+          pc.addTrack(audioTrack, this.localStream);
+        } else {
+          pc.addTransceiver("audio", { direction: "sendrecv" });
+        }
+
+        const videoTrack = this.localStream?.getVideoTracks()[0];
+        if (videoTrack && this.localStream) {
+          pc.addTrack(videoTrack, this.localStream);
+        } else {
+          pc.addTransceiver("video", { direction: "sendrecv" });
+        }
+      } catch {
+        // Fallback to addTrack if addTransceiver fails
+        if (this.localStream) {
+          for (const track of this.localStream.getTracks()) {
+            pc.addTrack(track, this.localStream);
+          }
+        }
+      }
+    } else if (this.localStream) {
       for (const track of this.localStream.getTracks()) {
         pc.addTrack(track, this.localStream);
       }
@@ -332,6 +355,31 @@ export class PeerConnectionManager {
       const sender = senders.find((s) => s.track?.kind === track.kind);
       if (sender) {
         await sender.replaceTrack(track);
+      }
+    }
+  }
+
+  async replaceVideoTrack(track: MediaStreamTrack | null): Promise<void> {
+    for (const [, peer] of this.peers) {
+      const senders = peer.pc.getSenders();
+      let videoSender = senders.find((s) => s.track?.kind === "video");
+
+      if (!videoSender && typeof peer.pc.getTransceivers === "function") {
+        const transceivers = peer.pc.getTransceivers();
+        const vt = transceivers.find(
+          (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video",
+        );
+        if (vt?.sender) {
+          videoSender = vt.sender;
+        }
+      }
+
+      if (!videoSender && senders.length > 0) {
+        videoSender = senders.find((s) => s.track?.kind !== "audio");
+      }
+
+      if (videoSender) {
+        await videoSender.replaceTrack(track);
       }
     }
   }

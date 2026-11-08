@@ -9,6 +9,8 @@ interface VideoTileProps {
   isHost?: boolean;
   audioEnabled?: boolean;
   videoEnabled?: boolean;
+  isScreenSharing?: boolean;
+  captionsEnabled?: boolean;
   isActiveSpeaker?: boolean;
   colorIndex?: number;
   isFailed?: boolean;
@@ -24,6 +26,8 @@ export function VideoTile({
   isHost = false,
   audioEnabled = true,
   videoEnabled = true,
+  isScreenSharing = false,
+  captionsEnabled = true,
   isActiveSpeaker = false,
   colorIndex = 0,
   isFailed = false,
@@ -141,7 +145,8 @@ export function VideoTile({
     .slice(0, 2)
     .toUpperCase();
 
-  const isVideoVisible = videoEnabled && Boolean(stream && stream.getVideoTracks().length > 0);
+  const isVideoVisible =
+    (videoEnabled || isScreenSharing) && Boolean(stream && stream.getVideoTracks().length > 0);
 
   return (
     <div
@@ -159,6 +164,30 @@ export function VideoTile({
         justifyContent: "center",
       }}
     >
+      {/* Presenting Badge */}
+      {isScreenSharing && (
+        <div
+          data-testid="presenting-badge"
+          style={{
+            position: "absolute",
+            top: "12px",
+            left: "12px",
+            backgroundColor: "var(--signal, #d24a00)",
+            color: "#fff",
+            fontSize: "11px",
+            fontWeight: 600,
+            padding: "3px 8px",
+            borderRadius: "4px",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <span>Presenting</span>
+        </div>
+      )}
+
       {/* Video Element - kept permanently mounted to avoid tearing down stream/audio */}
       <video
         ref={videoRef}
@@ -168,8 +197,8 @@ export function VideoTile({
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "cover",
-          transform: isSelf ? "scaleX(-1)" : "none",
+          objectFit: isScreenSharing ? "contain" : "cover",
+          transform: isSelf && !isScreenSharing ? "scaleX(-1)" : "none",
           display: isVideoVisible ? "block" : "none",
         }}
       />
@@ -267,6 +296,24 @@ export function VideoTile({
           {isSelf ? "You" : name}
           {isHost ? " (Host)" : ""}
         </span>
+
+        {/* Captions Off Marker */}
+        {!captionsEnabled && (
+          <span
+            data-testid="captions-off-marker"
+            style={{
+              fontSize: "10px",
+              color: "var(--ink-soft, #a1a1aa)",
+              backgroundColor: "rgba(255, 255, 255, 0.08)",
+              padding: "1px 5px",
+              borderRadius: "3px",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+            }}
+            title="Captions off"
+          >
+            captions off
+          </span>
+        )}
 
         {/* Audio status & Live Audio Level Indicator */}
         {audioEnabled ? (

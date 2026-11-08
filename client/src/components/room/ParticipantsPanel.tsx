@@ -9,12 +9,14 @@ interface ParticipantItem {
   isHost?: boolean;
   audio: boolean;
   video: boolean;
+  captions: boolean;
 }
 
 interface ParticipantsPanelProps {
   selfName: string;
   selfAudio: boolean;
   selfVideo: boolean;
+  selfCaptions?: boolean;
   isHost: boolean;
   peers: PeerStreamInfo[];
   hostId?: string;
@@ -24,6 +26,7 @@ export function ParticipantsPanel({
   selfName,
   selfAudio,
   selfVideo,
+  selfCaptions = false,
   isHost,
   peers,
   hostId,
@@ -36,6 +39,7 @@ export function ParticipantsPanel({
       isHost,
       audio: selfAudio,
       video: selfVideo,
+      captions: selfCaptions,
     },
     ...peers.map((p) => ({
       id: p.socketId,
@@ -44,6 +48,7 @@ export function ParticipantsPanel({
       isHost: p.userId === hostId,
       audio: p.media.audio,
       video: p.media.video,
+      captions: Boolean(p.media.captions),
     })),
   ];
 
@@ -128,7 +133,23 @@ export function ParticipantsPanel({
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {!p.captions && (
+                  <span
+                    data-testid="participant-captions-off"
+                    style={{
+                      fontSize: "10px",
+                      color: "var(--ink-soft, #a1a1aa)",
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      padding: "1px 5px",
+                      borderRadius: "3px",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                    }}
+                    title="Captions off"
+                  >
+                    captions off
+                  </span>
+                )}
                 {p.audio ? (
                   <Mic size={14} style={{ color: "var(--paper, #f4f4f5)" }} />
                 ) : (
