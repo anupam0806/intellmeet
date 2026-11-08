@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Subtitles, AlertCircle } from "lucide-react";
+import { Subtitles, AlertCircle, Globe } from "lucide-react";
+import { CAPTION_LANGUAGES } from "../../lib/captions.js";
 
 export interface LiveCaptionSegment {
   id: string;
@@ -9,11 +10,15 @@ export interface LiveCaptionSegment {
   ts: number | string;
 }
 
-interface CaptionsPanelProps {
+export interface CaptionsPanelProps {
   captions: LiveCaptionSegment[];
   isSupported: boolean;
   captionsEnabled: boolean;
   onToggleCaptions: () => void;
+  currentLanguage?: string;
+  onLanguageChange?: (lang: string) => void;
+  interimCaption?: string;
+  speakerName?: string;
 }
 
 export function CaptionsPanel({
@@ -21,6 +26,10 @@ export function CaptionsPanel({
   isSupported,
   captionsEnabled,
   onToggleCaptions,
+  currentLanguage = "en-US",
+  onLanguageChange,
+  interimCaption,
+  speakerName = "You",
 }: CaptionsPanelProps): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,7 +37,7 @@ export function CaptionsPanel({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [captions]);
+  }, [captions, interimCaption]);
 
   function formatTime(ts: number | string): string {
     const d = new Date(ts);
@@ -81,6 +90,65 @@ export function CaptionsPanel({
         )}
       </div>
 
+      {/* Language Picker Bar */}
+      {isSupported && (
+        <div
+          style={{
+            padding: "8px 16px",
+            borderBottom: "1px solid var(--rule)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            backgroundColor: "var(--ground)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <Globe size={14} style={{ color: "var(--ink-soft)" }} />
+            <label
+              htmlFor="caption-language-select"
+              style={{
+                fontSize: "12px",
+                color: "var(--ink-soft)",
+                fontWeight: 500,
+              }}
+            >
+              Language
+            </label>
+          </div>
+          <select
+            id="caption-language-select"
+            data-testid="caption-language-select"
+            aria-label="Spoken language"
+            value={currentLanguage}
+            onChange={(e) => onLanguageChange?.(e.target.value)}
+            style={{
+              fontSize: "12px",
+              padding: "3px 8px",
+              borderRadius: "3px",
+              border: "1px solid var(--rule)",
+              backgroundColor: "var(--surface)",
+              color: "var(--ink)",
+              colorScheme: "light dark",
+              cursor: "pointer",
+            }}
+          >
+            {CAPTION_LANGUAGES.map((lang) => (
+              <option
+                key={lang.code}
+                value={lang.code}
+                style={{
+                  backgroundColor: "var(--surface)",
+                  color: "var(--ink)",
+                }}
+              >
+                {lang.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Unsupported browser notice */}
       {!isSupported && (
         <div
@@ -117,7 +185,7 @@ export function CaptionsPanel({
           gap: "12px",
         }}
       >
-        {captions.length === 0 ? (
+        {captions.length === 0 && !interimCaption ? (
           <div
             style={{
               textAlign: "center",
@@ -132,49 +200,92 @@ export function CaptionsPanel({
             Spoken words from participants with captions turned on will appear here in real time.
           </div>
         ) : (
-          captions.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "2px",
-                backgroundColor: "var(--ground)",
-                padding: "8px 10px",
-                borderRadius: "8px",
-                border: "1px solid var(--rule)",
-              }}
-            >
+          <>
+            {captions.map((c) => (
               <div
+                key={c.id}
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: "11px",
-                  color: "var(--ink-soft)",
+                  flexDirection: "column",
+                  gap: "2px",
+                  backgroundColor: "var(--ground)",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--rule)",
                 }}
               >
-                <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
-                  {c.speakerName}
-                </strong>
-                <span>{formatTime(c.ts)}</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: "11px",
+                    color: "var(--ink-soft)",
+                  }}
+                >
+                  <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
+                    {c.speakerName}
+                  </strong>
+                  <span>{formatTime(c.ts)}</span>
+                </div>
+                <p
+                  style={{
+                    margin: "4px 0 0 0",
+                    fontSize: "14px",
+                    lineHeight: 1.5,
+                    fontFamily: "var(--font-serif)",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {c.text}
+                </p>
               </div>
-              <p
+            ))}
+
+            {/* Interim Results for Speaker (grey text) */}
+            {interimCaption && (
+              <div
+                data-testid="interim-caption"
                 style={{
-                  margin: "4px 0 0 0",
-                  fontSize: "14px",
-                  lineHeight: 1.5,
-                  fontFamily: "var(--font-serif)",
-                  color: "var(--ink)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  backgroundColor: "var(--ground)",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border: "1px dashed var(--rule)",
                 }}
               >
-                {c.text}
-              </p>
-            </div>
-          ))
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: "11px",
+                    color: "var(--ink-soft)",
+                  }}
+                >
+                  <strong style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+                    {speakerName}
+                  </strong>
+                  <span style={{ fontStyle: "italic", fontSize: "10px" }}>transcribing...</span>
+                </div>
+                <p
+                  style={{
+                    margin: "4px 0 0 0",
+                    fontSize: "14px",
+                    lineHeight: 1.5,
+                    fontFamily: "var(--font-serif)",
+                    color: "var(--ink-soft)",
+                  }}
+                >
+                  {interimCaption}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 }
-

@@ -30,6 +30,9 @@ interface LiveRoomViewProps {
   captions?: LiveCaptionSegment[];
   captionsEnabled?: boolean;
   isCaptionsSupported?: boolean;
+  captionLanguage?: string;
+  onCaptionLanguageChange?: (lang: string) => void;
+  interimCaption?: string;
   isHost: boolean;
   isAdmin: boolean;
   hostId: string;
@@ -60,6 +63,9 @@ export function LiveRoomView({
   captions = [],
   captionsEnabled = false,
   isCaptionsSupported = true,
+  captionLanguage,
+  onCaptionLanguageChange,
+  interimCaption,
   isHost,
   isAdmin,
   hostId,
@@ -522,6 +528,10 @@ export function LiveRoomView({
                 isSupported={isCaptionsSupported}
                 captionsEnabled={captionsEnabled}
                 onToggleCaptions={onToggleCaptions || (() => {})}
+                currentLanguage={captionLanguage}
+                onLanguageChange={onCaptionLanguageChange}
+                interimCaption={interimCaption}
+                speakerName={selfName}
               />
             )}
           </div>

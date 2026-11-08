@@ -16,7 +16,7 @@ import {
   captureMedia,
   type PeerStreamInfo,
 } from "../lib/rtc.js";
-import { CaptionController, isSpeechRecognitionSupported } from "../lib/captions.js";
+import { CaptionController, isSpeechRecognitionSupported, getDefaultCaptionLanguage } from "../lib/captions.js";
 import type { LiveCaptionSegment } from "../components/room/CaptionsPanel.js";
 import { LobbyView } from "../components/room/LobbyView.js";
 import { LiveRoomView } from "../components/room/LiveRoomView.js";
@@ -58,6 +58,8 @@ export function Room(): React.JSX.Element {
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [liveCaptions, setLiveCaptions] = useState<LiveCaptionSegment[]>([]);
+  const [captionLanguage, setCaptionLanguage] = useState<string>(() => getDefaultCaptionLanguage());
+  const [interimCaption, setInterimCaption] = useState<string>("");
   const isCaptionsSupported = isSpeechRecognitionSupported();
 
   // Refs for WebRTC and socket management
@@ -182,6 +184,9 @@ export function Room(): React.JSX.Element {
 
       // Privacy: pause speech recognition immediately when muted
       captionControllerRef.current?.setMuted(!next);
+      if (!next) {
+        setInterimCaption("");
+      }
 
       if (socketRef.current?.connected && isJoinedRef.current) {
         socketRef.current.emit("media:state", {
@@ -313,16 +318,21 @@ export function Room(): React.JSX.Element {
     if (!isCaptionsSupported) return;
 
     const controller = new CaptionController({
+      initialLanguage: captionLanguage,
       onSegment: (segment) => {
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("transcript:segment", segment);
         }
+      },
+      onInterim: (text) => {
+        setInterimCaption(text);
       },
       onError: (msg) => {
         showStatus(msg);
       },
       onCaptionsOff: () => {
         setCaptionsEnabled(false);
+        setInterimCaption("");
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("media:state", {
             audio: audioEnabled,
@@ -340,7 +350,7 @@ export function Room(): React.JSX.Element {
       controller.destroy();
       captionControllerRef.current = null;
     };
-  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
+  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus, captionLanguage]);
 
   const handleToggleCaptions = useCallback(() => {
     if (!isCaptionsSupported) {
@@ -351,6 +361,9 @@ export function Room(): React.JSX.Element {
     setCaptionsEnabled((prev) => {
       const next = !prev;
       captionControllerRef.current?.setCaptionsEnabled(next);
+      if (!next) {
+        setInterimCaption("");
+      }
 
       if (socketRef.current?.connected && isJoinedRef.current) {
         socketRef.current.emit("media:state", {
@@ -363,6 +376,11 @@ export function Room(): React.JSX.Element {
       return next;
     });
   }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
+
+  const handleCaptionLanguageChange = useCallback((lang: string) => {
+    setCaptionLanguage(lang);
+    captionControllerRef.current?.setLanguage(lang);
+  }, []);
 
   const handleSelectAudioDevice = useCallback(
     async (deviceId: string) => {
@@ -617,6 +635,8 @@ export function Room(): React.JSX.Element {
     if (meeting && socketRef.current) {
       socketRef.current.emit("room:leave", { meetingId: meeting.id });
     }
+    captionControllerRef.current?.destroy();
+    setInterimCaption("");
     rtcManagerRef.current?.destroy();
     isJoinedRef.current = false;
     navigate(`/meetings/${meeting?.id || ""}`);
@@ -626,6 +646,8 @@ export function Room(): React.JSX.Element {
     if (!meeting) return;
     try {
       await endMeeting(meeting.id);
+      captionControllerRef.current?.destroy();
+      setInterimCaption("");
       rtcManagerRef.current?.destroy();
       isJoinedRef.current = false;
       navigate(`/meetings/${meeting.id}`);
@@ -737,6 +759,9 @@ export function Room(): React.JSX.Element {
         captions={liveCaptions}
         captionsEnabled={captionsEnabled}
         isCaptionsSupported={isCaptionsSupported}
+        captionLanguage={captionLanguage}
+        onCaptionLanguageChange={handleCaptionLanguageChange}
+        interimCaption={interimCaption}
         isHost={meeting.hostId === user?.id}
         isAdmin={user?.role === "ADMIN"}
         hostId={meeting.hostId}

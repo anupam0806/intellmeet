@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import { PeerConnectionManager } from "../src/lib/rtc.js";
-import { CaptionController } from "../src/lib/captions.js";
+import {
+  CaptionController,
+  getDefaultCaptionLanguage,
+  saveCaptionLanguage,
+  CAPTION_LANGUAGES,
+  CAPTION_LANGUAGE_STORAGE_KEY,
+} from "../src/lib/captions.js";
 import { CaptionsPanel } from "../src/components/room/CaptionsPanel.js";
 import { VideoTile } from "../src/components/room/VideoTile.js";
 
@@ -212,7 +218,7 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
       delete (globalThis as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
     });
 
-    it("starts continuous recognition and emits final segments", () => {
+    it("starts continuous recognition with interimResults true and emits final segments", () => {
       const onSegment = vi.fn();
       const onError = vi.fn();
       const onCaptionsOff = vi.fn();
@@ -223,7 +229,7 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
       expect(mockSpeechInstances.length).toBe(1);
       const instance = mockSpeechInstances[0];
       expect(instance?.continuous).toBe(true);
-      expect(instance?.interimResults).toBe(false);
+      expect(instance?.interimResults).toBe(true);
       expect(instance?.start).toHaveBeenCalled();
 
       // Simulate recognition final result
@@ -241,6 +247,123 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
         text: "Hello team, let us begin.",
         ts: expect.any(Number),
       });
+    });
+
+    it("handles interim results for speaker-local preview and clears on final result, mute, or off", () => {
+      const onSegment = vi.fn();
+      const onInterim = vi.fn();
+      const onError = vi.fn();
+      const onCaptionsOff = vi.fn();
+
+      const controller = new CaptionController({
+        onSegment,
+        onInterim,
+        onError,
+        onCaptionsOff,
+      });
+      controller.setCaptionsEnabled(true);
+
+      const instance = mockSpeechInstances[0];
+
+      // 1. Interim speech arriving
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: [
+          {
+            isFinal: false,
+            0: { transcript: "We need to fix" },
+          },
+        ],
+      });
+
+      expect(onInterim).toHaveBeenCalledWith("We need to fix");
+      expect(onSegment).not.toHaveBeenCalled();
+
+      // 2. Further interim speech
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: [
+          {
+            isFinal: false,
+            0: { transcript: "We need to fix the database issue" },
+          },
+        ],
+      });
+      expect(onInterim).toHaveBeenCalledWith("We need to fix the database issue");
+      expect(onSegment).not.toHaveBeenCalled();
+
+      // 3. Final result arriving clears interim and emits onSegment
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: [
+          {
+            isFinal: true,
+            0: { transcript: "We need to fix the database issue immediately." },
+          },
+        ],
+      });
+      expect(onSegment).toHaveBeenCalledWith({
+        text: "We need to fix the database issue immediately.",
+        ts: expect.any(Number),
+      });
+      expect(onInterim).toHaveBeenLastCalledWith("");
+
+      // 4. Test clearing on mute
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: [
+          {
+            isFinal: false,
+            0: { transcript: "Speaking while" },
+          },
+        ],
+      });
+      expect(onInterim).toHaveBeenCalledWith("Speaking while");
+
+      controller.setMuted(true);
+      expect(onInterim).toHaveBeenLastCalledWith("");
+    });
+
+    it("applies and persists selected language to SpeechRecognition.lang", () => {
+      const controller = new CaptionController({
+        initialLanguage: "en-GB",
+        onSegment: vi.fn(),
+        onError: vi.fn(),
+        onCaptionsOff: vi.fn(),
+      });
+
+      expect(controller.getLanguage()).toBe("en-GB");
+      controller.setCaptionsEnabled(true);
+
+      const instance1 = mockSpeechInstances[0];
+      expect(instance1?.lang).toBe("en-GB");
+
+      // Switch language to Hindi
+      controller.setLanguage("hi-IN");
+      expect(controller.getLanguage()).toBe("hi-IN");
+      expect(localStorage.getItem(CAPTION_LANGUAGE_STORAGE_KEY)).toBe("hi-IN");
+
+      // Stops previous instance and starts new one with hi-IN
+      expect(instance1?.stop).toHaveBeenCalled();
+      expect(mockSpeechInstances.length).toBe(2);
+      expect(mockSpeechInstances[1]?.lang).toBe("hi-IN");
+    });
+
+    it("resolves default language from navigator.language or fallback", () => {
+      localStorage.removeItem(CAPTION_LANGUAGE_STORAGE_KEY);
+
+      // Save custom language
+      saveCaptionLanguage("en-IN");
+      expect(getDefaultCaptionLanguage()).toBe("en-IN");
+
+      localStorage.removeItem(CAPTION_LANGUAGE_STORAGE_KEY);
+      // Fallback
+      expect(CAPTION_LANGUAGES.map((l) => l.code)).toEqual([
+        "en-IN",
+        "en-US",
+        "en-GB",
+        "hi-IN",
+      ]);
     });
 
     it("stops recognition immediately when microphone is muted and resumes when unmuted", () => {
@@ -363,6 +486,68 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
 
       expect(screen.getByTestId("captions-off-marker")).toBeInTheDocument();
       expect(screen.getByText("captions off")).toBeInTheDocument();
+    });
+
+    it("renders language picker with all supported options and calls onLanguageChange", () => {
+      const onLanguageChange = vi.fn();
+      render(
+        <CaptionsPanel
+          captions={[]}
+          isSupported={true}
+          captionsEnabled={true}
+          onToggleCaptions={vi.fn()}
+          currentLanguage="en-IN"
+          onLanguageChange={onLanguageChange}
+        />,
+      );
+
+      const select = screen.getByTestId("caption-language-select") as HTMLSelectElement;
+      expect(select).toBeInTheDocument();
+      expect(select.value).toBe("en-IN");
+
+      // Check all 4 language options
+      expect(screen.getByText("English (India)")).toBeInTheDocument();
+      expect(screen.getByText("English (US)")).toBeInTheDocument();
+      expect(screen.getByText("English (UK)")).toBeInTheDocument();
+      expect(screen.getByText("Hindi")).toBeInTheDocument();
+
+      // Change selection
+      fireEvent.change(select, { target: { value: "hi-IN" } });
+      expect(onLanguageChange).toHaveBeenCalledWith("hi-IN");
+    });
+
+    it("renders interim results in grey text for speaker", () => {
+      render(
+        <CaptionsPanel
+          captions={[
+            {
+              id: "cap-1",
+              speakerName: "Alice",
+              text: "Previous complete sentence.",
+              ts: Date.now() - 5000,
+            },
+          ]}
+          isSupported={true}
+          captionsEnabled={true}
+          onToggleCaptions={vi.fn()}
+          interimCaption="I am currently speaking right now..."
+          speakerName="Dev Patel"
+        />,
+      );
+
+      // Verify previous final caption is present
+      expect(screen.getByText("Previous complete sentence.")).toBeInTheDocument();
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+
+      // Verify interim caption is present with speaker name and grey text
+      const interimEl = screen.getByTestId("interim-caption");
+      expect(interimEl).toBeInTheDocument();
+      expect(screen.getByText("Dev Patel")).toBeInTheDocument();
+      expect(screen.getByText("transcribing...")).toBeInTheDocument();
+      expect(screen.getByText("I am currently speaking right now...")).toBeInTheDocument();
+
+      const interimText = screen.getByText("I am currently speaking right now...");
+      expect(interimText.style.color).toBe("var(--ink-soft)");
     });
   });
 });
