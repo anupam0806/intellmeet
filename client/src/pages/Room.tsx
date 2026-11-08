@@ -664,12 +664,12 @@ export function Room(): React.JSX.Element {
       <div
         style={{
           minHeight: "100vh",
-          backgroundColor: "var(--ink, #09090b)",
+          backgroundColor: "var(--ground)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          color: "var(--paper, #f4f4f5)",
+          color: "var(--ink)",
           fontSize: "14px",
         }}
       >
@@ -684,7 +684,7 @@ export function Room(): React.JSX.Element {
       <div
         style={{
           minHeight: "100vh",
-          backgroundColor: "var(--ink, #09090b)",
+          backgroundColor: "var(--ground)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -701,19 +701,19 @@ export function Room(): React.JSX.Element {
             gap: "12px",
           }}
         >
-          <AlertCircle size={32} style={{ color: "var(--accent-red, #e5484d)" }} />
-          <h2 style={{ margin: 0, fontSize: "18px", color: "var(--paper, #f4f4f5)" }}>Unable to enter room</h2>
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-soft, #a1a1aa)" }}>{error || "Meeting not found"}</p>
+          <AlertCircle size={32} style={{ color: "var(--error)" }} />
+          <h2 style={{ margin: 0, fontSize: "18px", color: "var(--ink)" }}>Unable to enter room</h2>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--ink-soft)" }}>{error || "Meeting not found"}</p>
           <button
             type="button"
             onClick={() => navigate("/meetings")}
             style={{
               marginTop: "8px",
               padding: "8px 16px",
-              backgroundColor: "var(--surface, #18181b)",
-              border: "1px solid var(--rule, #27272a)",
-              color: "var(--paper, #f4f4f5)",
-              borderRadius: "var(--radius, 6px)",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--rule)",
+              color: "var(--ink)",
+              borderRadius: "var(--radius)",
               fontSize: "13px",
               cursor: "pointer",
             }}

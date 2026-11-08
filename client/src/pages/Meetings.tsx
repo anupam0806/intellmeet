@@ -17,7 +17,7 @@ import {
   Calendar,
   Users,
   Clock,
-  Sparkles,
+  FileText,
   Radio,
   AlertCircle,
   RefreshCw,
@@ -310,12 +310,12 @@ export function Meetings(): React.JSX.Element {
               <Link
                 key={m.id}
                 to={`/meetings/${m.id}`}
-                className="group p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                className="group p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors hover:opacity-90"
               >
                 {/* Left side: color spine + title + host */}
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className="w-1.5 self-stretch rounded-full shrink-0"
+                    className="w-1.5 self-stretch rounded-lg shrink-0"
                     style={{ backgroundColor: getMeetingColor(m.colorIndex) }}
                     title={`Meeting Color ${m.colorIndex + 1}`}
                   />
@@ -370,21 +370,21 @@ export function Meetings(): React.JSX.Element {
                   {/* AI Status Badge */}
                   {m.aiStatus === "READY" && (
                     <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 text-2xs font-semibold rounded-full"
-                      style={{ backgroundColor: "rgba(46, 107, 74, 0.12)", color: "var(--success)" }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-2xs font-semibold rounded-lg"
+                      style={{ backgroundColor: "var(--ground)", color: "var(--success)" }}
                       title="AI Summary Ready"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <FileText className="w-3 h-3" />
                       <span>Summary</span>
                     </span>
                   )}
                   {m.aiStatus === "PENDING" && (
                     <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 text-2xs font-medium rounded-full animate-pulse"
-                      style={{ backgroundColor: "rgba(210, 74, 0, 0.12)", color: "var(--signal)" }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 text-2xs font-medium rounded-lg animate-pulse"
+                      style={{ backgroundColor: "var(--ground)", color: "var(--signal)" }}
                       title="AI Summary Generating"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <FileText className="w-3 h-3" />
                       <span>Generating</span>
                     </span>
                   )}
@@ -392,8 +392,8 @@ export function Meetings(): React.JSX.Element {
                   {/* Meeting Status Badge */}
                   {m.status === "LIVE" && (
                     <span
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full animate-pulse text-white"
-                      style={{ backgroundColor: "var(--meeting-1)" }}
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-lg animate-pulse"
+                      style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
                     >
                       <Radio className="w-3 h-3" />
                       <span>LIVE</span>

@@ -41,23 +41,23 @@ export function CaptionsPanel({
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        backgroundColor: "var(--surface, #18181b)",
-        borderLeft: "1px solid var(--rule, #27272a)",
-        color: "var(--paper, #f4f4f5)",
+        backgroundColor: "var(--surface)",
+        borderLeft: "1px solid var(--rule)",
+        color: "var(--ink)",
       }}
     >
       {/* Header */}
       <div
         style={{
           padding: "16px",
-          borderBottom: "1px solid var(--rule, #27272a)",
+          borderBottom: "1px solid var(--rule)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Subtitles size={18} style={{ color: "var(--signal, #d24a00)" }} />
+          <Subtitles size={18} style={{ color: "var(--signal)" }} />
           <span style={{ fontSize: "14px", fontWeight: 600 }}>Live Captions</span>
         </div>
 
@@ -69,10 +69,10 @@ export function CaptionsPanel({
               padding: "4px 10px",
               fontSize: "12px",
               fontWeight: 600,
-              borderRadius: "4px",
-              border: "1px solid var(--rule, #3f3f46)",
-              backgroundColor: captionsEnabled ? "var(--signal, #d24a00)" : "transparent",
-              color: captionsEnabled ? "#fff" : "var(--paper, #f4f4f5)",
+              borderRadius: "3px",
+              border: "1px solid var(--rule)",
+              backgroundColor: captionsEnabled ? "var(--signal)" : "transparent",
+              color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
               cursor: "pointer",
             }}
           >
@@ -88,17 +88,17 @@ export function CaptionsPanel({
           style={{
             margin: "12px 16px",
             padding: "10px 12px",
-            backgroundColor: "rgba(229, 72, 77, 0.12)",
-            border: "1px solid var(--accent-red, #e5484d)",
-            borderRadius: "6px",
+            backgroundColor: "var(--ground)",
+            border: "1px solid var(--error)",
+            borderRadius: "8px",
             display: "flex",
             alignItems: "center",
             gap: "8px",
             fontSize: "12px",
-            color: "var(--paper, #f4f4f5)",
+            color: "var(--error)",
           }}
         >
-          <AlertCircle size={16} style={{ color: "var(--accent-red, #e5484d)", flexShrink: 0 }} />
+          <AlertCircle size={16} style={{ color: "var(--error)", flexShrink: 0 }} />
           <span>Live captions need Chrome or Edge.</span>
         </div>
       )}
@@ -121,7 +121,7 @@ export function CaptionsPanel({
           <div
             style={{
               textAlign: "center",
-              color: "var(--ink-soft, #a1a1aa)",
+              color: "var(--ink-soft)",
               fontSize: "12px",
               marginTop: "40px",
               lineHeight: 1.6,
@@ -139,10 +139,10 @@ export function CaptionsPanel({
                 display: "flex",
                 flexDirection: "column",
                 gap: "2px",
-                backgroundColor: "rgba(0, 0, 0, 0.35)",
+                backgroundColor: "var(--ground)",
                 padding: "8px 10px",
-                borderRadius: "6px",
-                border: "1px solid var(--rule, #27272a)",
+                borderRadius: "8px",
+                border: "1px solid var(--rule)",
               }}
             >
               <div
@@ -151,10 +151,10 @@ export function CaptionsPanel({
                   alignItems: "center",
                   justifyContent: "space-between",
                   fontSize: "11px",
-                  color: "var(--ink-soft, #a1a1aa)",
+                  color: "var(--ink-soft)",
                 }}
               >
-                <strong style={{ color: "var(--paper, #f4f4f5)", fontWeight: 600 }}>
+                <strong style={{ color: "var(--ink)", fontWeight: 600 }}>
                   {c.speakerName}
                 </strong>
                 <span>{formatTime(c.ts)}</span>
@@ -164,8 +164,8 @@ export function CaptionsPanel({
                   margin: "4px 0 0 0",
                   fontSize: "14px",
                   lineHeight: 1.5,
-                  fontFamily: "Newsreader, Georgia, serif",
-                  color: "var(--paper, #f4f4f5)",
+                  fontFamily: "var(--font-serif)",
+                  color: "var(--ink)",
                 }}
               >
                 {c.text}

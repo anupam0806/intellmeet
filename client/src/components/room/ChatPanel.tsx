@@ -56,8 +56,8 @@ export function ChatPanel({
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        backgroundColor: "var(--surface, #18181b)",
-        borderLeft: "1px solid var(--rule, #27272a)",
+        backgroundColor: "var(--surface)",
+        borderLeft: "1px solid var(--rule)",
       }}
     >
       {/* Live region for accessibility */}
@@ -96,7 +96,7 @@ export function ChatPanel({
               alignItems: "center",
               justifyContent: "center",
               height: "100%",
-              color: "var(--ink-soft, #71717a)",
+              color: "var(--ink-soft)",
               fontSize: "13px",
               textAlign: "center",
             }}
@@ -117,7 +117,7 @@ export function ChatPanel({
                   style={{
                     fontSize: "12px",
                     fontWeight: 600,
-                    color: "var(--paper, #f4f4f5)",
+                    color: "var(--ink)",
                   }}
                 >
                   {msg.senderName}
@@ -125,7 +125,7 @@ export function ChatPanel({
                 <span
                   style={{
                     fontSize: "10px",
-                    color: "var(--ink-soft, #71717a)",
+                    color: "var(--ink-soft)",
                   }}
                 >
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -136,7 +136,7 @@ export function ChatPanel({
                   margin: 0,
                   fontSize: "13px",
                   lineHeight: "1.4",
-                  color: "var(--paper, #e4e4e7)",
+                  color: "var(--ink)",
                   wordBreak: "break-word",
                 }}
               >
@@ -154,7 +154,7 @@ export function ChatPanel({
           style={{
             padding: "4px 16px",
             fontSize: "11px",
-            color: "var(--ink-soft, #71717a)",
+            color: "var(--ink-soft)",
             fontStyle: "italic",
           }}
         >
@@ -167,7 +167,7 @@ export function ChatPanel({
         onSubmit={handleSend}
         style={{
           padding: "12px 16px",
-          borderTop: "1px solid var(--rule, #27272a)",
+          borderTop: "1px solid var(--rule)",
           display: "flex",
           gap: "8px",
         }}
@@ -180,12 +180,12 @@ export function ChatPanel({
           maxLength={2000}
           style={{
             flex: 1,
-            backgroundColor: "var(--ink, #09090b)",
-            border: "1px solid var(--rule, #27272a)",
-            borderRadius: "var(--radius, 6px)",
+            backgroundColor: "var(--ground)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
             padding: "8px 12px",
             fontSize: "13px",
-            color: "var(--paper, #f4f4f5)",
+            color: "var(--ink)",
             outline: "none",
           }}
         />
@@ -194,10 +194,10 @@ export function ChatPanel({
           disabled={!draft.trim()}
           style={{
             padding: "8px 12px",
-            backgroundColor: draft.trim() ? "var(--paper, #f4f4f5)" : "var(--rule, #27272a)",
-            color: draft.trim() ? "var(--ink, #09090b)" : "var(--ink-soft, #71717a)",
+            backgroundColor: draft.trim() ? "var(--ink)" : "var(--rule)",
+            color: draft.trim() ? "var(--surface)" : "var(--ink-soft)",
             border: "none",
-            borderRadius: "var(--radius, 6px)",
+            borderRadius: "var(--radius)",
             cursor: draft.trim() ? "pointer" : "default",
             display: "flex",
             alignItems: "center",

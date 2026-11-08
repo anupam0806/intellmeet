@@ -124,7 +124,7 @@ export function LobbyView({
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "var(--ink, #0c0c0e)",
+        backgroundColor: "var(--ground)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -149,7 +149,7 @@ export function LobbyView({
               alignItems: "center",
               gap: "6px",
               fontSize: "13px",
-              color: "var(--ink-soft, #8e8e93)",
+              color: "var(--ink-soft)",
               textDecoration: "none",
             }}
           >
@@ -164,13 +164,13 @@ export function LobbyView({
               margin: 0,
               fontSize: "24px",
               fontWeight: 700,
-              color: "var(--paper, #f7f7f8)",
+              color: "var(--ink)",
             }}
           >
             {meetingTitle}
           </h1>
-          <p style={{ margin: 0, fontSize: "14px", color: "var(--ink-soft, #8e8e93)" }}>
-            Joining as <strong style={{ color: "var(--paper, #f7f7f8)" }}>{userName}</strong>
+          <p style={{ margin: 0, fontSize: "14px", color: "var(--ink-soft)" }}>
+            Joining as <strong style={{ color: "var(--ink)" }}>{userName}</strong>
           </p>
         </div>
 
@@ -179,20 +179,20 @@ export function LobbyView({
           <div
             style={{
               padding: "12px 16px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: "rgba(229, 72, 77, 0.1)",
-              border: "1px solid var(--accent-red, #e5484d)",
+              borderRadius: "var(--radius)",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--error)",
               display: "flex",
               alignItems: "flex-start",
               gap: "10px",
-              color: "var(--paper, #f7f7f8)",
+              color: "var(--error)",
               fontSize: "13px",
             }}
           >
-            <AlertCircle size={18} style={{ color: "var(--accent-red, #e5484d)", flexShrink: 0, marginTop: "2px" }} />
+            <AlertCircle size={18} style={{ color: "var(--error)", flexShrink: 0, marginTop: "2px" }} />
             <div>
               <strong>Camera or microphone access is blocked.</strong>
-              <p style={{ margin: "4px 0 0 0", color: "var(--ink-soft, #c1c1c6)" }}>
+              <p style={{ margin: "4px 0 0 0", color: "var(--ink-soft)" }}>
                 To enable video and voice, click the permissions icon in your browser address bar and choose &quot;Allow&quot;. You can still join the call without them.
               </p>
             </div>
@@ -205,9 +205,9 @@ export function LobbyView({
             display: "grid",
             gridTemplateColumns: "1.3fr 1fr",
             gap: "24px",
-            backgroundColor: "var(--surface, #18181b)",
-            border: "1px solid var(--rule, #27272a)",
-            borderRadius: "var(--radius, 8px)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
             padding: "24px",
           }}
         >
@@ -218,10 +218,10 @@ export function LobbyView({
                 position: "relative",
                 width: "100%",
                 aspectRatio: "16 / 9",
-                backgroundColor: "#09090b",
-                borderRadius: "var(--radius, 8px)",
+                backgroundColor: "var(--ink)",
+                borderRadius: "var(--radius)",
                 overflow: "hidden",
-                border: "1px solid var(--rule, #27272a)",
+                border: "1px solid var(--rule)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -242,7 +242,7 @@ export function LobbyView({
                 }}
               />
               {(!videoEnabled || !localStream || localStream.getVideoTracks().length === 0) && (
-                <div style={{ color: "var(--ink-soft, #71717a)", fontSize: "14px" }}>
+                <div style={{ color: "var(--ink-soft)", fontSize: "14px" }}>
                   Camera is turned off
                 </div>
               )}
@@ -263,8 +263,8 @@ export function LobbyView({
                   style={{
                     padding: "8px",
                     borderRadius: "50%",
-                    backgroundColor: audioEnabled ? "rgba(255, 255, 255, 0.2)" : "var(--accent-red, #e5484d)",
-                    color: "#fff",
+                    backgroundColor: audioEnabled ? "var(--ground)" : "var(--error)",
+                    color: audioEnabled ? "var(--ink)" : "var(--on-signal)",
                     border: "none",
                     cursor: "pointer",
                     display: "flex",
@@ -281,8 +281,8 @@ export function LobbyView({
                   style={{
                     padding: "8px",
                     borderRadius: "50%",
-                    backgroundColor: videoEnabled ? "rgba(255, 255, 255, 0.2)" : "var(--accent-red, #e5484d)",
-                    color: "#fff",
+                    backgroundColor: videoEnabled ? "var(--ground)" : "var(--error)",
+                    color: videoEnabled ? "var(--ink)" : "var(--on-signal)",
                     border: "none",
                     cursor: "pointer",
                     display: "flex",
@@ -297,13 +297,13 @@ export function LobbyView({
 
             {/* Mic Level Indicator */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "12px", color: "var(--ink-soft, #71717a)" }}>Mic level</span>
+              <span style={{ fontSize: "12px", color: "var(--ink-soft)" }}>Mic level</span>
               <div
                 style={{
                   flex: 1,
                   height: "4px",
-                  backgroundColor: "var(--rule, #27272a)",
-                  borderRadius: "2px",
+                  backgroundColor: "var(--rule)",
+                  borderRadius: "3px",
                   overflow: "hidden",
                 }}
               >
@@ -311,7 +311,7 @@ export function LobbyView({
                   style={{
                     width: `${micVolume}%`,
                     height: "100%",
-                    backgroundColor: "var(--paper, #f4f4f5)",
+                    backgroundColor: "var(--success)",
                     transition: "width 80ms ease-out",
                   }}
                 />
@@ -325,7 +325,7 @@ export function LobbyView({
               {/* Audio input picker */}
               {audioDevices.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label htmlFor="audio-device-select" style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft, #a1a1aa)" }}>
+                  <label htmlFor="audio-device-select" style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)" }}>
                     Microphone
                   </label>
                   <select
@@ -336,11 +336,11 @@ export function LobbyView({
                       onSelectAudioDevice(e.target.value);
                     }}
                     style={{
-                      backgroundColor: "var(--ink, #09090b)",
-                      border: "1px solid var(--rule, #27272a)",
-                      borderRadius: "var(--radius, 6px)",
+                      backgroundColor: "var(--ground)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: "var(--radius)",
                       padding: "8px 10px",
-                      color: "var(--paper, #f4f4f5)",
+                      color: "var(--ink)",
                       fontSize: "13px",
                     }}
                   >
@@ -356,7 +356,7 @@ export function LobbyView({
               {/* Video input picker */}
               {videoDevices.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label htmlFor="video-device-select" style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft, #a1a1aa)" }}>
+                  <label htmlFor="video-device-select" style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)" }}>
                     Camera
                   </label>
                   <select
@@ -367,11 +367,11 @@ export function LobbyView({
                       onSelectVideoDevice(e.target.value);
                     }}
                     style={{
-                      backgroundColor: "var(--ink, #09090b)",
-                      border: "1px solid var(--rule, #27272a)",
-                      borderRadius: "var(--radius, 6px)",
+                      backgroundColor: "var(--ground)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: "var(--radius)",
                       padding: "8px 10px",
-                      color: "var(--paper, #f4f4f5)",
+                      color: "var(--ink)",
                       fontSize: "13px",
                     }}
                   >
@@ -391,13 +391,13 @@ export function LobbyView({
                 <div
                   style={{
                     padding: "12px",
-                    borderRadius: "var(--radius, 6px)",
-                    backgroundColor: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid var(--rule, #27272a)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--ground)",
+                    border: "1px solid var(--rule)",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
-                    color: "var(--ink-soft, #a1a1aa)",
+                    color: "var(--ink-soft)",
                     fontSize: "13px",
                   }}
                 >
@@ -410,10 +410,10 @@ export function LobbyView({
                 <div
                   style={{
                     padding: "12px",
-                    borderRadius: "var(--radius, 6px)",
-                    backgroundColor: "rgba(229, 72, 77, 0.1)",
-                    border: "1px solid var(--accent-red, #e5484d)",
-                    color: "var(--paper, #f4f4f5)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--ground)",
+                    border: "1px solid var(--error)",
+                    color: "var(--error)",
                     fontSize: "13px",
                   }}
                 >
@@ -425,10 +425,10 @@ export function LobbyView({
                 <div
                   style={{
                     padding: "12px",
-                    borderRadius: "var(--radius, 6px)",
-                    backgroundColor: "rgba(229, 72, 77, 0.1)",
-                    border: "1px solid var(--accent-red, #e5484d)",
-                    color: "var(--paper, #f4f4f5)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--ground)",
+                    border: "1px solid var(--error)",
+                    color: "var(--error)",
                     fontSize: "13px",
                   }}
                 >
@@ -440,10 +440,10 @@ export function LobbyView({
                 <div
                   style={{
                     padding: "12px",
-                    borderRadius: "var(--radius, 6px)",
-                    backgroundColor: "rgba(229, 72, 77, 0.1)",
-                    border: "1px solid var(--accent-red, #e5484d)",
-                    color: "var(--paper, #f4f4f5)",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--ground)",
+                    border: "1px solid var(--error)",
+                    color: "var(--error)",
                     fontSize: "13px",
                   }}
                 >
@@ -457,10 +457,10 @@ export function LobbyView({
                 disabled={isJoining || lobbyState === "meeting_ended" || lobbyState === "room_full" || lobbyState === "already_in_room"}
                 style={{
                   padding: "10px 20px",
-                  backgroundColor: "var(--paper, #f4f4f5)",
-                  color: "var(--ink, #09090b)",
+                  backgroundColor: "var(--signal)",
+                  color: "var(--on-signal)",
                   border: "none",
-                  borderRadius: "var(--radius, 6px)",
+                  borderRadius: "var(--radius)",
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: isJoining ? "wait" : "pointer",

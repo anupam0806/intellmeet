@@ -333,7 +333,7 @@ export function Signup(): React.JSX.Element {
                   justifyContent: "center",
                   color: "var(--ink-soft)",
                   cursor: "pointer",
-                  borderRadius: "4px",
+                  borderRadius: "3px",
                   lineHeight: 1,
                 }}
               >

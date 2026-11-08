@@ -58,8 +58,8 @@ export function ParticipantsPanel({
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        backgroundColor: "var(--surface, #18181b)",
-        borderLeft: "1px solid var(--rule, #27272a)",
+        backgroundColor: "var(--surface)",
+        borderLeft: "1px solid var(--rule)",
         padding: "16px",
       }}
     >
@@ -67,7 +67,7 @@ export function ParticipantsPanel({
         style={{
           fontSize: "13px",
           fontWeight: 600,
-          color: "var(--ink-soft, #a1a1aa)",
+          color: "var(--ink-soft)",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
           marginBottom: "12px",
@@ -93,9 +93,9 @@ export function ParticipantsPanel({
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "8px 10px",
-                borderRadius: "var(--radius, 6px)",
-                backgroundColor: "var(--ink, #09090b)",
-                border: "1px solid var(--rule, #27272a)",
+                borderRadius: "var(--radius)",
+                backgroundColor: "var(--ground)",
+                border: "1px solid var(--rule)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -104,8 +104,8 @@ export function ParticipantsPanel({
                     width: "28px",
                     height: "28px",
                     borderRadius: "50%",
-                    backgroundColor: "var(--rule, #3f3f46)",
-                    color: "var(--paper, #f4f4f5)",
+                    backgroundColor: "var(--rule)",
+                    color: "var(--ink)",
                     fontSize: "11px",
                     fontWeight: 600,
                     display: "flex",
@@ -120,13 +120,13 @@ export function ParticipantsPanel({
                     style={{
                       fontSize: "13px",
                       fontWeight: 500,
-                      color: "var(--paper, #f4f4f5)",
+                      color: "var(--ink)",
                     }}
                   >
                     {p.name}
                   </span>
                   {p.isHost && (
-                    <span style={{ fontSize: "10px", color: "var(--ink-soft, #a1a1aa)" }}>
+                    <span style={{ fontSize: "10px", color: "var(--ink-soft)" }}>
                       Host
                     </span>
                   )}
@@ -139,11 +139,11 @@ export function ParticipantsPanel({
                     data-testid="participant-captions-off"
                     style={{
                       fontSize: "10px",
-                      color: "var(--ink-soft, #a1a1aa)",
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      color: "var(--ink-soft)",
+                      backgroundColor: "var(--surface)",
                       padding: "1px 5px",
                       borderRadius: "3px",
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      border: "1px solid var(--rule)",
                     }}
                     title="Captions off"
                   >
@@ -151,14 +151,14 @@ export function ParticipantsPanel({
                   </span>
                 )}
                 {p.audio ? (
-                  <Mic size={14} style={{ color: "var(--paper, #f4f4f5)" }} />
+                  <Mic size={14} style={{ color: "var(--ink)" }} />
                 ) : (
-                  <MicOff size={14} style={{ color: "var(--accent-red, #e5484d)" }} />
+                  <MicOff size={14} style={{ color: "var(--error)" }} />
                 )}
                 {p.video ? (
-                  <Video size={14} style={{ color: "var(--paper, #f4f4f5)" }} />
+                  <Video size={14} style={{ color: "var(--ink)" }} />
                 ) : (
-                  <VideoOff size={14} style={{ color: "var(--ink-soft, #71717a)" }} />
+                  <VideoOff size={14} style={{ color: "var(--ink-soft)" }} />
                 )}
               </div>
             </div>

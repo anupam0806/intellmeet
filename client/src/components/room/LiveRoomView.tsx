@@ -101,7 +101,7 @@ export function LiveRoomView({
       style={{
         width: "100vw",
         height: "100vh",
-        backgroundColor: "var(--ink, #09090b)",
+        backgroundColor: "var(--ink)",
         display: "flex",
         overflow: "hidden",
         position: "relative",
@@ -116,14 +116,14 @@ export function LiveRoomView({
             top: "16px",
             left: "50%",
             transform: "translateX(-50%)",
-            backgroundColor: "rgba(24, 24, 27, 0.9)",
-            border: "1px solid var(--rule, #27272a)",
-            borderRadius: "var(--radius, 6px)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
             padding: "8px 16px",
-            color: "var(--paper, #f4f4f5)",
+            color: "var(--ink)",
             fontSize: "13px",
             zIndex: 50,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            boxShadow: "var(--shadow-menu)",
           }}
         >
           {statusMessage}
@@ -134,8 +134,8 @@ export function LiveRoomView({
       <aside
         style={{
           width: "64px",
-          backgroundColor: "var(--surface, #121214)",
-          borderRight: "1px solid var(--rule, #27272a)",
+          backgroundColor: "var(--surface)",
+          borderRight: "1px solid var(--rule)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -155,10 +155,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: selfAudio ? "var(--ink, #1c1c1f)" : "var(--accent-red, #e5484d)",
-              color: "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: selfAudio ? "var(--ground)" : "var(--error)",
+              color: selfAudio ? "var(--ink)" : "var(--on-signal)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -176,10 +176,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: selfVideo ? "var(--ink, #1c1c1f)" : "var(--accent-red, #e5484d)",
-              color: "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: selfVideo ? "var(--ground)" : "var(--error)",
+              color: selfVideo ? "var(--ink)" : "var(--on-signal)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -211,14 +211,14 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
+              borderRadius: "var(--radius)",
               backgroundColor: isScreenSharing
-                ? "var(--signal, #d24a00)"
+                ? "var(--signal)"
                 : isSomeoneElseSharing
-                ? "rgba(28, 28, 31, 0.5)"
-                : "var(--ink, #1c1c1f)",
-              color: isSomeoneElseSharing ? "var(--ink-soft, #71717a)" : "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+                ? "var(--ground)"
+                : "var(--ground)",
+              color: isSomeoneElseSharing ? "var(--ink-soft)" : isScreenSharing ? "var(--on-signal)" : "var(--ink)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -239,12 +239,12 @@ export function LiveRoomView({
               style={{
                 width: "40px",
                 height: "40px",
-                borderRadius: "var(--radius, 8px)",
+                borderRadius: "var(--radius)",
                 backgroundColor: captionsEnabled
-                  ? "var(--signal, #d24a00)"
-                  : "var(--ink, #1c1c1f)",
-                color: "#fff",
-                border: "1px solid var(--rule, #2d2d31)",
+                  ? "var(--signal)"
+                  : "var(--ground)",
+                color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
+                border: "1px solid var(--rule)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -263,7 +263,7 @@ export function LiveRoomView({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--ink-soft, #71717a)",
+                color: "var(--ink-soft)",
                 cursor: "not-allowed",
               }}
             >
@@ -279,10 +279,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: activeSideTab === "chat" ? "var(--paper, #f4f4f5)" : "var(--ink, #1c1c1f)",
-              color: activeSideTab === "chat" ? "var(--ink, #09090b)" : "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: activeSideTab === "chat" ? "var(--ground)" : "var(--surface)",
+              color: "var(--ink)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -301,10 +301,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: activeSideTab === "participants" ? "var(--paper, #f4f4f5)" : "var(--ink, #1c1c1f)",
-              color: activeSideTab === "participants" ? "var(--ink, #09090b)" : "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: activeSideTab === "participants" ? "var(--ground)" : "var(--surface)",
+              color: "var(--ink)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -322,10 +322,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: activeSideTab === "captions" ? "var(--paper, #f4f4f5)" : "var(--ink, #1c1c1f)",
-              color: activeSideTab === "captions" ? "var(--ink, #09090b)" : "#fff",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: activeSideTab === "captions" ? "var(--ground)" : "var(--surface)",
+              color: "var(--ink)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -346,10 +346,10 @@ export function LiveRoomView({
             style={{
               width: "40px",
               height: "40px",
-              borderRadius: "var(--radius, 8px)",
-              backgroundColor: "var(--ink, #1c1c1f)",
-              color: "var(--ink-soft, #8e8e93)",
-              border: "1px solid var(--rule, #2d2d31)",
+              borderRadius: "var(--radius)",
+              backgroundColor: "var(--surface)",
+              color: "var(--ink-soft)",
+              border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -368,9 +368,9 @@ export function LiveRoomView({
               style={{
                 width: "40px",
                 height: "40px",
-                borderRadius: "var(--radius, 8px)",
-                backgroundColor: "var(--accent-red, #e5484d)",
-                color: "#fff",
+                borderRadius: "var(--radius)",
+                backgroundColor: "var(--error)",
+                color: "var(--on-signal)",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
@@ -393,7 +393,7 @@ export function LiveRoomView({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "var(--ink, #09090b)",
+          backgroundColor: "var(--ground)",
         }}
       >
         <div
@@ -462,13 +462,13 @@ export function LiveRoomView({
           <div
             style={{
               padding: "12px 16px",
-              backgroundColor: "var(--surface, #18181b)",
-              borderLeft: "1px solid var(--rule, #27272a)",
-              borderBottom: "1px solid var(--rule, #27272a)",
+              backgroundColor: "var(--surface)",
+              borderLeft: "1px solid var(--rule)",
+              borderBottom: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              color: "var(--paper, #f4f4f5)",
+              color: "var(--ink)",
               fontSize: "13px",
               fontWeight: 600,
             }}
@@ -487,7 +487,7 @@ export function LiveRoomView({
               style={{
                 background: "none",
                 border: "none",
-                color: "var(--ink-soft, #71717a)",
+                color: "var(--ink-soft)",
                 cursor: "pointer",
                 padding: "2px",
               }}
@@ -536,7 +536,7 @@ export function LiveRoomView({
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backgroundColor: "var(--ink)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -548,9 +548,9 @@ export function LiveRoomView({
             style={{
               width: "100%",
               maxWidth: "400px",
-              backgroundColor: "var(--surface, #18181b)",
-              border: "1px solid var(--rule, #27272a)",
-              borderRadius: "var(--radius, 8px)",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--radius)",
               padding: "24px",
               display: "flex",
               flexDirection: "column",
@@ -562,7 +562,7 @@ export function LiveRoomView({
                 margin: 0,
                 fontSize: "18px",
                 fontWeight: 600,
-                color: "var(--paper, #f4f4f5)",
+                color: "var(--ink)",
               }}
             >
               End meeting for all?
@@ -571,7 +571,7 @@ export function LiveRoomView({
               style={{
                 margin: 0,
                 fontSize: "13px",
-                color: "var(--ink-soft, #a1a1aa)",
+                color: "var(--ink-soft)",
                 lineHeight: "1.4",
               }}
             >
@@ -584,9 +584,9 @@ export function LiveRoomView({
                 style={{
                   padding: "8px 14px",
                   backgroundColor: "transparent",
-                  border: "1px solid var(--rule, #27272a)",
-                  color: "var(--paper, #f4f4f5)",
-                  borderRadius: "var(--radius, 6px)",
+                  border: "1px solid var(--rule)",
+                  color: "var(--ink)",
+                  borderRadius: "var(--radius)",
                   fontSize: "13px",
                   cursor: "pointer",
                 }}
@@ -601,10 +601,10 @@ export function LiveRoomView({
                 }}
                 style={{
                   padding: "8px 14px",
-                  backgroundColor: "var(--accent-red, #e5484d)",
+                  backgroundColor: "var(--error)",
                   border: "none",
-                  color: "#fff",
-                  borderRadius: "var(--radius, 6px)",
+                  color: "var(--on-signal)",
+                  borderRadius: "var(--radius)",
                   fontSize: "13px",
                   fontWeight: 600,
                   cursor: "pointer",

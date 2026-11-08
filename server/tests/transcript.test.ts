@@ -164,7 +164,7 @@ describe("Phase P4: Transcript & Screen Share", () => {
   });
 
   describe("Socket: transcript:segment", () => {
-    it("stores segment with speaker from socket and broadcasts to room; ignores payload speaker", async () => {
+    it("stores segment with speaker from socket and broadcasts to room", async () => {
       const host = await createTestTeam("Alice Voice", "alicevoice@example.com", "Voice Team");
       const meetingRes = await request(app)
         .post("/api/v1/meetings")
@@ -189,12 +189,9 @@ describe("Phase P4: Transcript & Screen Share", () => {
       }>(hostSocket, "transcript:segment");
 
       const sentTs = Date.now();
-      // Attempt to spoof speakerId and speakerName in payload
       hostSocket.emit("transcript:segment", {
         text: "Hello everyone, welcome to the sprint planning.",
         ts: sentTs,
-        speakerId: "fake-spoofed-id",
-        speakerName: "Imposter",
       });
 
       const broadcast = await broadcastPromise;
@@ -209,6 +206,58 @@ describe("Phase P4: Transcript & Screen Share", () => {
       expect(dbRecord).not.toBeNull();
       expect(dbRecord?.speakerId?.toString()).toBe(host.user.id);
       expect(dbRecord?.speakerName).toBe("Alice Voice");
+
+      hostSocket.disconnect();
+    });
+
+    it("rejects payload carrying speakerId or speakerName as unknown keys with error event and stores/broadcasts nothing", async () => {
+      const host = await createTestTeam("Eve Unknown", "eveunknown@example.com", "Unknown Key Team");
+      const meetingRes = await request(app)
+        .post("/api/v1/meetings")
+        .set("Authorization", `Bearer ${host.token}`)
+        .send({ title: "Strict Schema Meeting" });
+      const meetingId = meetingRes.body.id as string;
+
+      const hostSocket = connectClient(host.token);
+      await new Promise<void>((resolve) => hostSocket.on("connect", resolve));
+
+      await new Promise<void>((resolve) => {
+        hostSocket.emit("room:join", { meetingId }, () => resolve());
+      });
+
+      let broadcastCount = 0;
+      hostSocket.on("transcript:segment", () => {
+        broadcastCount++;
+      });
+
+      const countBefore = await TranscriptSegment.countDocuments({ meetingId });
+
+      // 1. Payload carrying speakerId
+      const errSpeakerId = waitFor<{ code: string; message: string }>(hostSocket, "error");
+      hostSocket.emit("transcript:segment", {
+        text: "Attempt with speakerId",
+        ts: Date.now(),
+        speakerId: "fake-speaker-id",
+      });
+      const res1 = await errSpeakerId;
+      expect(res1.code).toBe("VALIDATION_ERROR");
+
+      // 2. Payload carrying speakerName
+      const errSpeakerName = waitFor<{ code: string; message: string }>(hostSocket, "error");
+      hostSocket.emit("transcript:segment", {
+        text: "Attempt with speakerName",
+        ts: Date.now(),
+        speakerName: "Fake Imposter",
+      });
+      const res2 = await errSpeakerName;
+      expect(res2.code).toBe("VALIDATION_ERROR");
+
+      // Small pause to confirm no broadcast or db insert happened
+      await new Promise((r) => setTimeout(r, 50));
+      expect(broadcastCount).toBe(0);
+
+      const countAfter = await TranscriptSegment.countDocuments({ meetingId });
+      expect(countAfter).toBe(countBefore);
 
       hostSocket.disconnect();
     });

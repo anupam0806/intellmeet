@@ -145,7 +145,7 @@ export function Dashboard(): React.JSX.Element {
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="h-48 rounded-xl border animate-pulse"
+              className="h-48 rounded-lg border animate-pulse"
               style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
             />
           ))}
@@ -155,9 +155,9 @@ export function Dashboard(): React.JSX.Element {
       {/* Error state */}
       {isError && (
         <div
-          className="p-4 rounded-xl border flex items-center justify-between"
+          className="p-4 rounded-lg border flex items-center justify-between"
           style={{
-            backgroundColor: "rgba(179, 38, 30, 0.08)",
+            backgroundColor: "var(--ground)",
             borderColor: "var(--error)",
             color: "var(--error)",
           }}
@@ -171,7 +171,7 @@ export function Dashboard(): React.JSX.Element {
           <button
             type="button"
             onClick={() => refetch()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-opacity hover:opacity-80"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-80"
             style={{ borderColor: "var(--error)", color: "var(--error)" }}
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -185,21 +185,21 @@ export function Dashboard(): React.JSX.Element {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Section 1: Live Now */}
           <section
-            className="rounded-xl border p-5 flex flex-col justify-between"
+            className="rounded-lg border p-5 flex flex-col justify-between"
             style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
           >
             <div>
               <div className="flex items-center justify-between pb-3 border-b mb-3" style={{ borderColor: "var(--rule)" }}>
                 <div className="flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
+                  <Radio className="w-4 h-4 animate-pulse" style={{ color: "var(--signal)" }} />
                   <h2 className="text-base font-bold tracking-tight" style={{ color: "var(--ink)" }}>
                     Live now
                   </h2>
                 </div>
                 {liveMeetings.length > 0 && (
                   <span
-                    className="px-2 py-0.5 text-xs font-semibold rounded-full"
-                    style={{ backgroundColor: "var(--meeting-1)", color: "#FFFFFF" }}
+                    className="px-2 py-0.5 text-xs font-semibold rounded-lg"
+                    style={{ backgroundColor: "var(--meeting-1)", color: "var(--on-signal)" }}
                   >
                     {liveMeetings.length}
                   </span>
@@ -240,7 +240,7 @@ export function Dashboard(): React.JSX.Element {
                       <button
                         type="button"
                         onClick={() => navigate(`/meetings/${m.id}`)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-md transition-opacity hover:opacity-90 shrink-0"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0"
                         style={{
                           backgroundColor: "var(--signal)",
                           color: "var(--on-signal)",
@@ -270,7 +270,7 @@ export function Dashboard(): React.JSX.Element {
 
           {/* Section 2: Upcoming */}
           <section
-            className="rounded-xl border p-5 flex flex-col justify-between"
+            className="rounded-lg border p-5 flex flex-col justify-between"
             style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
           >
             <div>
@@ -283,7 +283,7 @@ export function Dashboard(): React.JSX.Element {
                 </div>
                 {upcomingMeetings.length > 0 && (
                   <span
-                    className="px-2 py-0.5 text-xs font-medium rounded-full border"
+                    className="px-2 py-0.5 text-xs font-medium rounded-lg border"
                     style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
                   >
                     {upcomingMeetings.length}
@@ -347,7 +347,7 @@ export function Dashboard(): React.JSX.Element {
 
           {/* Section 3: My Tasks */}
           <section
-            className="rounded-xl border p-5 flex flex-col justify-between"
+            className="rounded-lg border p-5 flex flex-col justify-between"
             style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
           >
             <div>
@@ -359,7 +359,7 @@ export function Dashboard(): React.JSX.Element {
                   </h2>
                 </div>
                 <span
-                  className="px-2 py-0.5 text-xs font-medium rounded-full border"
+                  className="px-2 py-0.5 text-xs font-medium rounded-lg border"
                   style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
                 >
                   0 open

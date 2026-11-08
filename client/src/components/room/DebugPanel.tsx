@@ -71,17 +71,17 @@ export function DebugPanel({
           type="button"
           onClick={() => setIsOpen(true)}
           style={{
-            backgroundColor: "rgba(24, 24, 27, 0.95)",
-            border: "1px solid var(--rule, #3f3f46)",
-            borderRadius: "6px",
-            color: "var(--paper, #f4f4f5)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "3px",
+            color: "var(--ink)",
             padding: "6px 10px",
             fontSize: "12px",
             display: "flex",
             alignItems: "center",
             gap: "6px",
             cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            boxShadow: "var(--shadow-menu)",
           }}
           aria-label="Open WebRTC Debug Panel"
         >
@@ -93,22 +93,22 @@ export function DebugPanel({
           style={{
             width: "360px",
             maxHeight: "420px",
-            backgroundColor: "rgba(18, 18, 20, 0.96)",
-            border: "1px solid var(--rule, #3f3f46)",
-            borderRadius: "8px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
+            boxShadow: "var(--shadow-menu)",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            color: "var(--paper, #f4f4f5)",
+            color: "var(--ink)",
           }}
         >
           {/* Header */}
           <div
             style={{
               padding: "8px 12px",
-              backgroundColor: "var(--surface, #27272a)",
-              borderBottom: "1px solid var(--rule, #3f3f46)",
+              backgroundColor: "var(--ground)",
+              borderBottom: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -126,7 +126,7 @@ export function DebugPanel({
               style={{
                 background: "none",
                 border: "none",
-                color: "var(--ink-soft, #a1a1aa)",
+                color: "var(--ink-soft)",
                 cursor: "pointer",
                 padding: "2px",
               }}
@@ -149,7 +149,7 @@ export function DebugPanel({
             }}
           >
             {stats.length === 0 ? (
-              <div style={{ color: "var(--ink-soft, #a1a1aa)", textAlign: "center", padding: "16px 0" }}>
+              <div style={{ color: "var(--ink-soft)", textAlign: "center", padding: "16px 0" }}>
                 No active remote peers
               </div>
             ) : (
@@ -163,29 +163,29 @@ export function DebugPanel({
                   <div
                     key={peer.socketId}
                     style={{
-                      backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      borderRadius: "4px",
+                      backgroundColor: "var(--ground)",
+                      borderRadius: "3px",
                       padding: "8px",
-                      border: "1px solid var(--rule, #27272a)",
+                      border: "1px solid var(--rule)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: "var(--accent-teal, #29a383)" }}>
+                    <div style={{ fontWeight: 700, color: "var(--meeting-1)" }}>
                       {peer.name} ({peer.socketId.slice(0, 6)}...)
                     </div>
 
                     <div>
-                      <span style={{ color: "var(--ink-soft, #a1a1aa)" }}>Connection: </span>
+                      <span style={{ color: "var(--ink-soft)" }}>Connection: </span>
                       <span
                         style={{
                           color:
                             peer.connectionState === "connected"
-                              ? "#46a758"
+                              ? "var(--success)"
                               : peer.connectionState === "failed"
-                              ? "#e5484d"
-                              : "#e5a000",
+                              ? "var(--error)"
+                              : "var(--signal)",
                         }}
                       >
                         {peer.connectionState}
@@ -193,15 +193,15 @@ export function DebugPanel({
                     </div>
 
                     <div>
-                      <span style={{ color: "var(--ink-soft, #a1a1aa)" }}>ICE state: </span>
+                      <span style={{ color: "var(--ink-soft)" }}>ICE state: </span>
                       <span
                         style={{
                           color:
                             peer.iceConnectionState === "connected" || peer.iceConnectionState === "completed"
-                              ? "#46a758"
+                              ? "var(--success)"
                               : peer.iceConnectionState === "failed"
-                              ? "#e5484d"
-                              : "#e5a000",
+                              ? "var(--error)"
+                              : "var(--signal)",
                         }}
                       >
                         {peer.iceConnectionState}
@@ -209,23 +209,23 @@ export function DebugPanel({
                     </div>
 
                     <div>
-                      <span style={{ color: "var(--ink-soft, #a1a1aa)" }}>Inbound audio: </span>
+                      <span style={{ color: "var(--ink-soft)" }}>Inbound audio: </span>
                       <span>{formatBytes(peer.audioBytesReceived)}</span>
                     </div>
 
                     <div>
-                      <span style={{ color: "var(--ink-soft, #a1a1aa)" }}>Inbound video: </span>
+                      <span style={{ color: "var(--ink-soft)" }}>Inbound video: </span>
                       <span>{formatBytes(peer.videoBytesReceived)}</span>
                     </div>
 
                     <div>
-                      <span style={{ color: "var(--ink-soft, #a1a1aa)" }}>Remote audio element: </span>
+                      <span style={{ color: "var(--ink-soft)" }}>Remote audio element: </span>
                       <span>
                         {audioState.muted ? "Muted" : "Unmuted"} |{" "}
                         {audioState.playing ? (
-                          <span style={{ color: "#46a758" }}>Playing</span>
+                          <span style={{ color: "var(--success)" }}>Playing</span>
                         ) : (
-                          <span style={{ color: "#e5a000" }}>Paused/Waiting</span>
+                          <span style={{ color: "var(--signal)" }}>Paused/Waiting</span>
                         )}
                       </span>
                     </div>

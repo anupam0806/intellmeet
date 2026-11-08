@@ -61,10 +61,10 @@ export function JoinMeetingDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="join-meeting-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-150"
     >
       <div
-        className="w-full max-w-md rounded-xl border p-6 shadow-xl transition-all"
+        className="w-full max-w-md rounded-lg border p-6 shadow-xl transition-all"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
@@ -79,7 +79,7 @@ export function JoinMeetingDialog({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="p-1 rounded-md transition-colors hover:opacity-75 focus:outline-hidden"
+            className="p-1 rounded-lg transition-colors hover:opacity-75 focus:outline-hidden"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -88,9 +88,9 @@ export function JoinMeetingDialog({
 
         {error && (
           <div
-            className="mt-4 p-3 rounded-md text-sm border font-medium"
+            className="mt-4 p-3 rounded-lg text-sm border font-medium"
             style={{
-              backgroundColor: "rgba(179, 38, 30, 0.08)",
+              backgroundColor: "var(--ground)",
               borderColor: "var(--error)",
               color: "var(--error)",
             }}

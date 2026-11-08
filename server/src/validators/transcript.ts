@@ -4,8 +4,6 @@ export const socketTranscriptSegmentSchema = z
   .object({
     text: z.string().trim().min(1).max(1000),
     ts: z.number(),
-    speakerId: z.string().optional(),
-    speakerName: z.string().optional(),
   })
   .strict();
 

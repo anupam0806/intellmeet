@@ -154,10 +154,10 @@ export function VideoTile({
         position: "relative",
         width: "100%",
         height: "100%",
-        backgroundColor: "var(--ink-soft, #1c1c1f)",
-        borderRadius: "var(--radius, 8px)",
+        backgroundColor: "var(--ink)",
+        borderRadius: "var(--radius)",
         overflow: "hidden",
-        border: isActiveSpeaker || audioLevel > 20 ? `3px solid ${color}` : "1px solid var(--rule, #2d2d31)",
+        border: isActiveSpeaker || audioLevel > 20 ? `3px solid ${color}` : "1px solid var(--rule)",
         boxSizing: "border-box",
         display: "flex",
         alignItems: "center",
@@ -172,12 +172,12 @@ export function VideoTile({
             position: "absolute",
             top: "12px",
             left: "12px",
-            backgroundColor: "var(--signal, #d24a00)",
-            color: "#fff",
+            backgroundColor: "var(--signal)",
+            color: "var(--on-signal)",
             fontSize: "11px",
             fontWeight: 600,
             padding: "3px 8px",
-            borderRadius: "4px",
+            borderRadius: "3px",
             zIndex: 10,
             display: "flex",
             alignItems: "center",
@@ -213,7 +213,7 @@ export function VideoTile({
             alignItems: "center",
             justifyContent: "center",
             gap: "12px",
-            color: "var(--paper, #f7f7f8)",
+            color: "var(--surface)",
           }}
         >
           <div
@@ -227,12 +227,12 @@ export function VideoTile({
               justifyContent: "center",
               fontSize: "20px",
               fontWeight: 600,
-              color: "#fff",
+              color: "var(--on-signal)",
             }}
           >
             {initials}
           </div>
-          <span style={{ fontSize: "14px", color: "var(--ink-soft, #8e8e93)" }}>
+          <span style={{ fontSize: "14px", color: "var(--ink-soft)" }}>
             Camera off
           </span>
         </div>
@@ -258,12 +258,12 @@ export function VideoTile({
               padding: "6px 12px",
               fontSize: "12px",
               fontWeight: 600,
-              backgroundColor: "var(--accent-red, #e5484d)",
-              color: "#fff",
+              backgroundColor: "var(--error)",
+              color: "var(--on-signal)",
               border: "none",
-              borderRadius: "4px",
+              borderRadius: "3px",
               cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              boxShadow: "var(--shadow-menu)",
             }}
             aria-label="Click to enable audio"
           >
@@ -279,17 +279,16 @@ export function VideoTile({
           position: "absolute",
           bottom: "12px",
           left: "12px",
-          backgroundColor: "rgba(18, 18, 20, 0.85)",
-          backdropFilter: "blur(4px)",
+          backgroundColor: "var(--ground)",
           padding: "4px 8px",
-          borderRadius: "4px",
+          borderRadius: "3px",
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          color: "var(--paper, #f7f7f8)",
+          color: "var(--ink)",
           fontSize: "12px",
           fontWeight: 500,
-          border: "1px solid var(--rule, #2d2d31)",
+          border: "1px solid var(--rule)",
         }}
       >
         <span>
@@ -303,11 +302,11 @@ export function VideoTile({
             data-testid="captions-off-marker"
             style={{
               fontSize: "10px",
-              color: "var(--ink-soft, #a1a1aa)",
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
+              color: "var(--ink-soft)",
+              backgroundColor: "var(--surface)",
               padding: "1px 5px",
               borderRadius: "3px",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
+              border: "1px solid var(--rule)",
             }}
             title="Captions off"
           >
@@ -332,8 +331,8 @@ export function VideoTile({
               style={{
                 width: "2px",
                 height: `${Math.max(2, (audioLevel / 100) * 12)}px`,
-                backgroundColor: audioLevel > 10 ? "#46a758" : "var(--ink-soft, #71717a)",
-                borderRadius: "1px",
+                backgroundColor: audioLevel > 10 ? "var(--success)" : "var(--ink-soft)",
+                borderRadius: "3px",
                 transition: "height 60ms ease-out",
               }}
             />
@@ -341,8 +340,8 @@ export function VideoTile({
               style={{
                 width: "2px",
                 height: `${Math.max(2, (audioLevel / 100) * 12 * 0.8)}px`,
-                backgroundColor: audioLevel > 20 ? "#46a758" : "var(--ink-soft, #71717a)",
-                borderRadius: "1px",
+                backgroundColor: audioLevel > 20 ? "var(--success)" : "var(--ink-soft)",
+                borderRadius: "3px",
                 transition: "height 60ms ease-out",
               }}
             />
@@ -350,18 +349,18 @@ export function VideoTile({
               style={{
                 width: "2px",
                 height: `${Math.max(2, (audioLevel / 100) * 12 * 0.6)}px`,
-                backgroundColor: audioLevel > 40 ? "#46a758" : "var(--ink-soft, #71717a)",
-                borderRadius: "1px",
+                backgroundColor: audioLevel > 40 ? "var(--success)" : "var(--ink-soft)",
+                borderRadius: "3px",
                 transition: "height 60ms ease-out",
               }}
             />
           </div>
         ) : (
-          <MicOff size={13} style={{ color: "var(--accent-red, #e5484d)" }} aria-label="Microphone muted" />
+          <MicOff size={13} style={{ color: "var(--error)" }} aria-label="Microphone muted" />
         )}
 
         {!videoEnabled && (
-          <VideoOff size={13} style={{ color: "var(--ink-soft, #8e8e93)" }} aria-label="Camera off" />
+          <VideoOff size={13} style={{ color: "var(--ink-soft)" }} aria-label="Camera off" />
         )}
       </div>
 
@@ -371,13 +370,13 @@ export function VideoTile({
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backgroundColor: "var(--ink)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             gap: "10px",
-            color: "#fff",
+            color: "var(--surface)",
             padding: "16px",
             textAlign: "center",
           }}
@@ -393,10 +392,10 @@ export function VideoTile({
                 padding: "6px 12px",
                 fontSize: "12px",
                 fontWeight: 500,
-                backgroundColor: "var(--surface, #232326)",
-                border: "1px solid var(--rule, #3a3a3e)",
-                borderRadius: "4px",
-                color: "#fff",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--rule)",
+                borderRadius: "3px",
+                color: "var(--ink)",
                 cursor: "pointer",
               }}
             >
