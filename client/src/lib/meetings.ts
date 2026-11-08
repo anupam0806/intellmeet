@@ -1,4 +1,4 @@
-import { apiFetch } from "./api.js";
+import { apiFetch, getAccessToken } from "./api.js";
 
 export interface MeetingSummary {
   id: string;
@@ -42,6 +42,7 @@ export interface MeetingAi {
   provider?: string;
   model?: string;
   generatedAt?: string;
+  attempts?: number;
   error?: string;
 }
 
@@ -235,5 +236,65 @@ export async function postMeetingTranscript(
     body: JSON.stringify({ text }),
   });
 }
+
+export async function generateAiWriteup(meetingId: string): Promise<{ status: "PENDING" }> {
+  return apiFetch<{ status: "PENDING" }>(`/api/v1/meetings/${meetingId}/ai/generate`, {
+    method: "POST",
+  });
+}
+
+export async function updateActionItem(
+  meetingId: string,
+  itemId: string,
+  data: { title?: string; assigneeId?: string | null; dueDate?: string | null },
+): Promise<{ item: MeetingActionItem }> {
+  return apiFetch<{ item: MeetingActionItem }>(
+    `/api/v1/meetings/${meetingId}/action-items/${itemId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+export async function downloadMeetingExport(
+  meetingId: string,
+  format: "md" | "json",
+): Promise<void> {
+  const token = getAccessToken();
+  const apiBase = import.meta.env.VITE_API_BASE ?? "";
+  const response = await fetch(
+    `${apiBase}/api/v1/meetings/${meetingId}/export?format=${format}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Export failed with status ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get("content-disposition");
+  let filename = `meeting-export.${format}`;
+  if (contentDisposition) {
+    const match = /filename="([^"]+)"/.exec(contentDisposition);
+    if (match?.[1]) {
+      filename = match[1];
+    }
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  window.URL.revokeObjectURL(url);
+}
+
 
 

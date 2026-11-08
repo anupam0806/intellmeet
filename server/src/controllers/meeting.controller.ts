@@ -109,5 +109,53 @@ export class MeetingController {
       next(error);
     }
   }
+
+  static async generateAi(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const io = req.app.get("io");
+      const result = await MeetingService.generateAiWriteup(
+        req.params.id as string,
+        req.user!.id,
+        req.user!.role,
+        req.user!.teamId,
+        io,
+      );
+      res.status(202).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateActionItem(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await MeetingService.updateActionItem(
+        req.params.id as string,
+        req.params.itemId as string,
+        req.user!.id,
+        req.user!.role,
+        req.user!.teamId,
+        req.body,
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async export(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const format = (req.query.format as "md" | "json") || "md";
+      const result = await MeetingService.exportMeeting(
+        req.params.id as string,
+        req.user!.teamId,
+        format,
+      );
+      res.setHeader("Content-Type", result.contentType);
+      res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+      res.status(200).send(result.content);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

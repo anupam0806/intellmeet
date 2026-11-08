@@ -51,3 +51,26 @@
   outline-offset: 2px;
 }
 
+@keyframes stagedItemEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.action-item-staged {
+  animation: stagedItemEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-item-staged {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+

@@ -54,8 +54,8 @@ const envSchema = z
     AI_API_KEY: z.string().optional().default(""),
     AI_MODEL: z.string().optional().default(""),
     AI_MAX_INPUT_CHARS: z.preprocess(
-      (val) => (val === "" || val === undefined ? 20000 : val),
-      z.coerce.number().default(20000),
+      (val) => (val === "" || val === undefined ? 30000 : val),
+      z.coerce.number().default(30000),
     ),
     STUN_URLS: z
       .string()
@@ -95,6 +95,29 @@ const envSchema = z
           path: ["JWT_REFRESH_SECRET"],
           message: "JWT_REFRESH_SECRET is required",
         });
+      }
+      if (data.AI_PROVIDER === "openai") {
+        if (!data.AI_BASE_URL || data.AI_BASE_URL.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AI_BASE_URL"],
+            message: "AI_BASE_URL is required when AI_PROVIDER is openai",
+          });
+        }
+        if (!data.AI_API_KEY || data.AI_API_KEY.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AI_API_KEY"],
+            message: "AI_API_KEY is required when AI_PROVIDER is openai",
+          });
+        }
+        if (!data.AI_MODEL || data.AI_MODEL.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["AI_MODEL"],
+            message: "AI_MODEL is required when AI_PROVIDER is openai",
+          });
+        }
       }
     }
   });

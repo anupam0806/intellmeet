@@ -3,6 +3,7 @@ import { MeetingController } from "../controllers/meeting.controller.js";
 import { ChatController } from "../controllers/chat.controller.js";
 import { TranscriptController } from "../controllers/transcript.controller.js";
 import { requireAuth } from "../middleware/auth.js";
+import { aiGenerateRateLimiter } from "../middleware/rateLimit.js";
 import { validateBody, validateParams, validateQuery } from "../middleware/validate.js";
 import {
   createMeetingSchema,
@@ -10,6 +11,9 @@ import {
   joinMeetingSchema,
   meetingQuerySchema,
   meetingIdParamSchema,
+  actionItemIdParamSchema,
+  updateActionItemSchema,
+  exportMeetingQuerySchema,
 } from "../validators/meeting.js";
 
 export const meetingRouter = Router();
@@ -42,4 +46,25 @@ meetingRouter.patch(
 meetingRouter.delete("/:id", validateParams(meetingIdParamSchema), MeetingController.delete);
 meetingRouter.post("/:id/start", validateParams(meetingIdParamSchema), MeetingController.start);
 meetingRouter.post("/:id/end", validateParams(meetingIdParamSchema), MeetingController.end);
+
+meetingRouter.post(
+  "/:id/ai/generate",
+  aiGenerateRateLimiter,
+  validateParams(meetingIdParamSchema),
+  MeetingController.generateAi,
+);
+
+meetingRouter.patch(
+  "/:id/action-items/:itemId",
+  validateParams(actionItemIdParamSchema),
+  validateBody(updateActionItemSchema),
+  MeetingController.updateActionItem,
+);
+
+meetingRouter.get(
+  "/:id/export",
+  validateParams(meetingIdParamSchema),
+  validateQuery(exportMeetingQuerySchema),
+  MeetingController.export,
+);
 

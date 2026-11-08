@@ -3,6 +3,7 @@ import { env } from "./config/env.js";
 import { connectDB, getDatabaseStatus } from "./config/db.js";
 import { createApp } from "./app.js";
 import { createSocketServer } from "./sockets/index.js";
+import { recoverPendingAiGenerations } from "./services/ai/generate.js";
 import { logger } from "./utils/logger.js";
 
 async function bootstrap(): Promise<void> {
@@ -15,6 +16,11 @@ async function bootstrap(): Promise<void> {
   // Initialize Socket.io
   const io = createSocketServer(server);
   app.set("io", io);
+
+  // Recover any stranded PENDING AI generations on start
+  recoverPendingAiGenerations(undefined, io).catch((err: unknown) => {
+    logger.error({ err }, "Error recovering pending AI generations");
+  });
 
   server.listen(env.PORT, () => {
     logger.info(

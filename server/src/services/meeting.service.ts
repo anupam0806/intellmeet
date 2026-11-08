@@ -3,17 +3,19 @@ import mongoose, { type FilterQuery } from "mongoose";
 import type { Server as SocketIOServer } from "socket.io";
 import { Meeting, type IMeeting } from "../models/Meeting.js";
 import { ChatMessage } from "../models/ChatMessage.js";
+import { TranscriptSegment } from "../models/TranscriptSegment.js";
 import { User, type UserRole } from "../models/User.js";
+import { generateMeetingIntelligence, isAiGenerationActive } from "./ai/generate.js";
 import { ApiError } from "../middleware/errorHandler.js";
-import { logger } from "../utils/logger.js";
 import type {
   CreateMeetingInput,
   UpdateMeetingInput,
   MeetingQueryInput,
+  UpdateActionItemInput,
 } from "../validators/meeting.js";
 
-export function startAiGeneration(meetingId: string): void {
-  logger.info({ meetingId }, "AI generation queued (stub for Phase P5)");
+export function startAiGeneration(meetingId: string, io?: SocketIOServer): void {
+  void generateMeetingIntelligence(meetingId, undefined, io);
 }
 
 export async function generateUniqueRoomCode(): Promise<string> {
@@ -346,7 +348,7 @@ export class MeetingService {
 
     await meeting.save();
 
-    startAiGeneration(meeting._id.toString());
+    startAiGeneration(meeting._id.toString(), io);
 
     if (io) {
       const meetingIdStr = meeting._id.toString();
@@ -357,5 +359,241 @@ export class MeetingService {
     }
 
     return { meeting: formatMeeting(meeting) };
+  }
+
+  static async generateAiWriteup(
+    meetingId: string,
+    userId: string,
+    userRole: UserRole,
+    teamId: string,
+    io?: SocketIOServer,
+  ) {
+    const meeting = await Meeting.findOne({ _id: meetingId, teamId });
+    if (!meeting) {
+      throw new ApiError(404, "NOT_FOUND", "Meeting not found");
+    }
+
+    if (userRole !== "ADMIN" && meeting.hostId.toString() !== userId) {
+      throw new ApiError(403, "FORBIDDEN", "Only the host or an Admin can regenerate the AI write-up");
+    }
+
+    if (meeting.status !== "ENDED") {
+      throw new ApiError(409, "CONFLICT", "AI write-up can only be generated for ended meetings");
+    }
+
+    if (meeting.ai.status === "PENDING" || isAiGenerationActive(meeting._id.toString())) {
+      throw new ApiError(409, "AI_PENDING", "AI write-up generation is already in progress");
+    }
+
+    meeting.ai.status = "PENDING";
+    await meeting.save();
+
+    startAiGeneration(meeting._id.toString(), io);
+
+    return { status: "PENDING" as const };
+  }
+
+  static async updateActionItem(
+    meetingId: string,
+    itemId: string,
+    userId: string,
+    userRole: UserRole,
+    teamId: string,
+    input: UpdateActionItemInput,
+  ) {
+    const meeting = await Meeting.findOne({ _id: meetingId, teamId });
+    if (!meeting) {
+      throw new ApiError(404, "NOT_FOUND", "Meeting not found");
+    }
+
+    if (userRole !== "ADMIN" && meeting.hostId.toString() !== userId) {
+      throw new ApiError(403, "FORBIDDEN", "Only the host or an Admin can edit action items");
+    }
+
+    const item = meeting.ai.actionItems.find((ai) => ai._id.toString() === itemId);
+    if (!item) {
+      throw new ApiError(404, "NOT_FOUND", "Action item not found");
+    }
+
+    if (item.taskId) {
+      throw new ApiError(409, "ALREADY_CONVERTED", "Action item has already been converted to a task");
+    }
+
+    if (input.title !== undefined) {
+      item.title = input.title;
+    }
+
+    if (input.assigneeId !== undefined) {
+      if (input.assigneeId === null) {
+        item.assigneeId = undefined;
+        item.assigneeName = undefined;
+      } else {
+        const member = await User.findOne({ _id: input.assigneeId, teamId });
+        if (!member) {
+          throw new ApiError(404, "NOT_FOUND", "Assignee must be a member of this team");
+        }
+        item.assigneeId = member._id;
+        item.assigneeName = member.name;
+      }
+    }
+
+    if (input.dueDate !== undefined) {
+      if (input.dueDate === null) {
+        item.dueDate = undefined;
+      } else {
+        item.dueDate = new Date(input.dueDate);
+      }
+    }
+
+    await meeting.save();
+
+    return {
+      item: {
+        id: item._id.toString(),
+        title: item.title,
+        assigneeName: item.assigneeName,
+        assigneeId: item.assigneeId ? item.assigneeId.toString() : undefined,
+        dueDate: item.dueDate ? item.dueDate.toISOString() : undefined,
+        taskId: undefined,
+      },
+    };
+  }
+
+  static async exportMeeting(meetingId: string, teamId: string, format: "md" | "json") {
+    const meeting = await Meeting.findOne({ _id: meetingId, teamId }).populate("hostId", "name");
+    if (!meeting) {
+      throw new ApiError(404, "NOT_FOUND", "Meeting not found");
+    }
+
+    const segments = await TranscriptSegment.find({ meetingId: meeting._id, teamId }).sort({ ts: 1 });
+
+    const safeTitle =
+      (meeting.title || "meeting")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 50) || "meeting";
+
+    const datePrefix = (meeting.startedAt || meeting.createdAt).toISOString().slice(0, 10);
+    const filename = `${safeTitle}-${datePrefix}`;
+
+    const hostName =
+      (meeting.hostId as unknown as { name?: string })?.name || "Unknown";
+
+    const participants = (meeting.participants || []).map((p) => ({
+      name: p.name,
+      joinedAt: p.joinedAt.toISOString(),
+      leftAt: p.leftAt ? p.leftAt.toISOString() : undefined,
+    }));
+
+    if (format === "json") {
+      const data = {
+        title: meeting.title,
+        description: meeting.description || "",
+        host: hostName,
+        status: meeting.status,
+        date: (meeting.startedAt || meeting.createdAt).toISOString(),
+        durationSeconds: meeting.durationSeconds || 0,
+        participants,
+        summary: meeting.ai.summary || "",
+        keyPoints: meeting.ai.keyPoints || [],
+        decisions: meeting.ai.decisions || [],
+        actionItems: (meeting.ai.actionItems || []).map((ai) => ({
+          title: ai.title,
+          assigneeName: ai.assigneeName || null,
+          dueDate: ai.dueDate ? ai.dueDate.toISOString() : null,
+          taskId: ai.taskId ? ai.taskId.toString() : null,
+        })),
+        transcript: segments.map((s) => ({
+          timestamp: new Date(s.ts).toISOString(),
+          speaker: s.speakerName,
+          text: s.text,
+        })),
+      };
+
+      return {
+        contentType: "application/json; charset=utf-8",
+        filename: `${filename}.json`,
+        content: JSON.stringify(data, null, 2),
+      };
+    }
+
+    // Markdown format
+    const durationText =
+      meeting.durationSeconds !== undefined
+        ? `${Math.floor(meeting.durationSeconds / 60)}m ${meeting.durationSeconds % 60}s`
+        : "N/A";
+
+    const participantNames =
+      participants.length > 0 ? participants.map((p) => p.name).join(", ") : "None";
+
+    const keyPointsMd =
+      meeting.ai.keyPoints && meeting.ai.keyPoints.length > 0
+        ? meeting.ai.keyPoints.map((kp) => `- ${kp}`).join("\n")
+        : "_None recorded._";
+
+    const decisionsMd =
+      meeting.ai.decisions && meeting.ai.decisions.length > 0
+        ? meeting.ai.decisions.map((d) => `- ${d}`).join("\n")
+        : "_None recorded._";
+
+    const actionItemsMd =
+      meeting.ai.actionItems && meeting.ai.actionItems.length > 0
+        ? meeting.ai.actionItems
+            .map((ai) => {
+              const assignee = ai.assigneeName ? ` (Assignee: ${ai.assigneeName})` : "";
+              const due = ai.dueDate ? ` [Due: ${ai.dueDate.toISOString().slice(0, 10)}]` : "";
+              return `- [ ] ${ai.title}${assignee}${due}`;
+            })
+            .join("\n")
+        : "_None recorded._";
+
+    const transcriptMd =
+      segments.length > 0
+        ? segments
+            .map((s) => {
+              const d = new Date(s.ts);
+              const hh = String(d.getUTCHours()).padStart(2, "0");
+              const mm = String(d.getUTCMinutes()).padStart(2, "0");
+              return `**[${hh}:${mm}] ${s.speakerName}:** ${s.text}`;
+            })
+            .join("\n\n")
+        : "_No transcript recorded._";
+
+    const mdLines = [
+      `# ${meeting.title}`,
+      "",
+      `**Host:** ${hostName}  `,
+      `**Date:** ${(meeting.startedAt || meeting.createdAt).toISOString().slice(0, 10)}  `,
+      `**Duration:** ${durationText}  `,
+      `**Participants:** ${participantNames}`,
+      "",
+      "## Summary",
+      "",
+      meeting.ai.summary || "_No summary available._",
+      "",
+      "## Key Points",
+      "",
+      keyPointsMd,
+      "",
+      "## Decisions",
+      "",
+      decisionsMd,
+      "",
+      "## Action Items",
+      "",
+      actionItemsMd,
+      "",
+      "## Transcript",
+      "",
+      transcriptMd,
+      "",
+    ];
+
+    return {
+      contentType: "text/markdown; charset=utf-8",
+      filename: `${filename}.md`,
+      content: mdLines.join("\n"),
+    };
   }
 }

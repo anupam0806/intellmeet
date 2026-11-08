@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore.js";
+import { apiFetch } from "../lib/api.js";
+import { getSocket } from "../lib/socket.js";
 import {
   fetchMeeting,
   startMeeting,
@@ -12,6 +14,11 @@ import {
   formatDuration,
   getMeetingTranscript,
   postMeetingTranscript,
+  getMeetingChat,
+  generateAiWriteup,
+  updateActionItem,
+  downloadMeetingExport,
+  type Meeting,
 } from "../lib/meetings.js";
 import {
   Copy,
@@ -31,6 +38,11 @@ import {
   X,
   FileText,
   Upload,
+  Download,
+  RefreshCw,
+  MessageSquare,
+  Clock3,
+  Loader2,
 } from "lucide-react";
 
 export function MeetingDetail(): React.JSX.Element {
@@ -43,12 +55,25 @@ export function MeetingDetail(): React.JSX.Element {
   const [copiedLink, setCopiedLink] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Edit form state
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editScheduledAt, setEditScheduledAt] = useState("");
+
+  // Action item inline editing state
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editItemTitle, setEditItemTitle] = useState("");
+  const [editItemAssigneeId, setEditItemAssigneeId] = useState<string | null>(null);
+  const [editItemDueDate, setEditItemDueDate] = useState<string>("");
+
+  // Export progress
+  const [isExporting, setIsExporting] = useState<"md" | "json" | null>(null);
+
+  // Polling fallback state for PENDING write-up (up to 3 minutes)
+  const [pollStartTime, setPollStartTime] = useState<number | null>(null);
 
   const {
     data: meeting,
@@ -59,11 +84,132 @@ export function MeetingDetail(): React.JSX.Element {
     queryKey: ["meeting", id],
     queryFn: () => fetchMeeting(id!),
     enabled: Boolean(id),
+    refetchInterval:
+      pollStartTime !== null && Date.now() - pollStartTime < 180000 ? 5000 : false,
+  });
+
+  useEffect(() => {
+    if (meeting?.status === "ENDED" && meeting.ai.status === "PENDING") {
+      if (pollStartTime === null) {
+        setPollStartTime(Date.now());
+      }
+    } else {
+      setPollStartTime(null);
+    }
+  }, [meeting?.status, meeting?.ai.status, pollStartTime]);
+
+  // Socket listener for meeting:ai-ready
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) {
+      socket.connect();
+    }
+    const handleAiReady = (data: { meetingId: string; status: string }) => {
+      if (data.meetingId === id) {
+        void queryClient.invalidateQueries({ queryKey: ["meeting", id] });
+      }
+    };
+    socket.on("meeting:ai-ready", handleAiReady);
+    return () => {
+      socket.off("meeting:ai-ready", handleAiReady);
+    };
+  }, [id, queryClient]);
+
+  // Team query for assignee options
+  const teamQuery = useQuery({
+    queryKey: ["team"],
+    queryFn: () =>
+      apiFetch<{
+        id: string;
+        name: string;
+        members: Array<{ id: string; name: string; email: string; role: string }>;
+      }>("/api/v1/team"),
+  });
+  const teamMembers = teamQuery.data?.members || [];
+
+  // Chat query for Chat Log section
+  const chatQuery = useQuery({
+    queryKey: ["meeting-chat", id],
+    queryFn: () => getMeetingChat(id!),
+    enabled: Boolean(id && meeting?.status === "ENDED"),
   });
 
   const isHost = meeting?.hostId === currentUser?.id;
   const isAdmin = currentUser?.role === "ADMIN";
   const canManage = isHost || isAdmin;
+
+  // AI write-up generation mutation
+  const generateAiMutation = useMutation({
+    mutationFn: () => generateAiWriteup(id!),
+    onSuccess: () => {
+      setRegenerateConfirmOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["meeting", id] });
+    },
+    onError: (err: Error) => {
+      setActionError(err.message || "Failed to generate AI write-up");
+      setRegenerateConfirmOpen(false);
+    },
+  });
+
+  // Action item update mutation
+  const updateActionItemMutation = useMutation({
+    mutationFn: ({
+      itemId,
+      data,
+    }: {
+      itemId: string;
+      data: { title?: string; assigneeId?: string | null; dueDate?: string | null };
+    }) => updateActionItem(id!, itemId, data),
+    onSuccess: (res) => {
+      setEditingItemId(null);
+      queryClient.setQueryData(["meeting", id], (old: Meeting | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          ai: {
+            ...old.ai,
+            actionItems: old.ai.actionItems.map((item) =>
+              item.id === res.item.id ? res.item : item,
+            ),
+          },
+        };
+      });
+    },
+    onError: (err: Error) => {
+      setActionError(err.message || "Failed to update action item");
+    },
+  });
+
+  async function handleExport(format: "md" | "json") {
+    if (!meeting) return;
+    try {
+      setIsExporting(format);
+      await downloadMeetingExport(meeting.id, format);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setIsExporting(null);
+    }
+  }
+
+  function startEditingItem(item: { id: string; title: string; assigneeId?: string; dueDate?: string }) {
+    setEditingItemId(item.id);
+    setEditItemTitle(item.title);
+    setEditItemAssigneeId(item.assigneeId || null);
+    setEditItemDueDate(item.dueDate ? item.dueDate.slice(0, 10) : "");
+  }
+
+  function handleSaveItemEdit(itemId: string) {
+    if (!editItemTitle.trim()) return;
+    updateActionItemMutation.mutate({
+      itemId,
+      data: {
+        title: editItemTitle.trim(),
+        assigneeId: editItemAssigneeId,
+        dueDate: editItemDueDate ? editItemDueDate : null,
+      },
+    });
+  }
 
   // Mutations
   const startMutation = useMutation({
@@ -567,39 +713,469 @@ export function MeetingDetail(): React.JSX.Element {
       {/* State 3: ENDED */}
       {meeting.status === "ENDED" && (
         <div className="space-y-6">
-          {/* Write-up placeholder (implemented in P5) */}
-          <div
-            className="rounded-lg border p-8 space-y-4"
-            style={{
-              backgroundColor: "var(--surface)",
-              borderColor: "var(--rule)",
-            }}
-          >
-            <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--rule)" }}>
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5" style={{ color: "var(--signal)" }} />
-                <h3 className="text-lg font-bold" style={{ color: "var(--ink)" }}>
-                  Meeting Notes & AI Write-up
+          {/* AI Write-up Section */}
+          {meeting.ai.status === "PENDING" && (
+            <div
+              data-testid="ai-status-pending"
+              className="rounded-lg border p-6 space-y-3"
+              style={{
+                backgroundColor: "var(--surface)",
+                borderColor: "var(--rule)",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--signal)" }} />
+                <h3 className="text-base font-bold" style={{ color: "var(--ink)" }}>
+                  AI write-up in progress
                 </h3>
               </div>
-              <span
-                className="px-2.5 py-0.5 text-xs font-semibold rounded-lg"
-                style={{
-                  backgroundColor: "var(--ground)",
-                  color: "var(--signal)",
-                }}
-              >
-                Phase P5 Preview
-              </span>
-            </div>
-
-            <div className="py-6 text-center space-y-2" style={{ color: "var(--ink-soft)" }}>
-              <p className="text-sm font-medium">This meeting has ended.</p>
-              <p className="text-xs max-w-md mx-auto">
-                AI summary generation, key takeaways, decisions, and action item tracking will be automatically generated and displayed here in Phase P5.
+              <p className="text-xs leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                Generating summary, key points, decisions, and action items from the transcript and chat log. This page updates automatically when ready.
               </p>
             </div>
-          </div>
+          )}
+
+          {meeting.ai.status === "INSUFFICIENT" && (
+            <div
+              data-testid="ai-status-insufficient"
+              className="rounded-lg border p-6 space-y-3"
+              style={{
+                backgroundColor: "var(--surface)",
+                borderColor: "var(--rule)",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" style={{ color: "var(--ink-soft)" }} />
+                <h3 className="text-base font-bold" style={{ color: "var(--ink)" }}>
+                  Not enough content for write-up
+                </h3>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                There was not enough speech recorded (at least 5 transcript segments and 40 spoken words are required) to generate an accurate summary. You can paste a transcript or external notes below to generate the write-up.
+              </p>
+              {canManage && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setRegenerateConfirmOpen(true)}
+                    disabled={generateAiMutation.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundColor: "var(--ground)",
+                      borderColor: "var(--rule)",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{generateAiMutation.isPending ? "Generating..." : "Generate write-up"}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {meeting.ai.status === "FAILED" && (
+            <div
+              data-testid="ai-status-failed"
+              className="rounded-lg border p-6 space-y-3"
+              style={{
+                backgroundColor: "var(--surface)",
+                borderColor: "var(--error)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" style={{ color: "var(--error)" }} />
+                  <h3 className="text-base font-bold" style={{ color: "var(--error)" }}>
+                    AI write-up failed
+                  </h3>
+                </div>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => setRegenerateConfirmOpen(true)}
+                    disabled={generateAiMutation.isPending}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shadow-xs"
+                    style={{
+                      backgroundColor: "var(--signal)",
+                      color: "var(--on-signal)",
+                    }}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{generateAiMutation.isPending ? "Regenerating..." : "Regenerate"}</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                {meeting.ai.error || "The AI write-up could not be generated. Please try again."}
+              </p>
+            </div>
+          )}
+
+          {meeting.ai.status === "READY" && (
+            <div data-testid="ai-writeup-ready" className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              {/* Document column: Summary, Key Points, Decisions */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Summary Card */}
+                <div
+                  className="rounded-lg border p-6 space-y-3"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                  }}
+                >
+                  <div>
+                    <h3 className="text-xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+                      Summary
+                    </h3>
+                    <p className="text-2xs font-medium" style={{ color: "var(--ink-soft)" }}>
+                      Generated from the transcript and chat.
+                    </p>
+                  </div>
+                  <p
+                    data-testid="ai-summary"
+                    className="text-base leading-relaxed"
+                    style={{
+                      color: "var(--ink)",
+                      fontFamily: "Newsreader, Georgia, serif",
+                    }}
+                  >
+                    {meeting.ai.summary || "No summary available."}
+                  </p>
+                </div>
+
+                {/* Key points Card */}
+                <div
+                  className="rounded-lg border p-6 space-y-3"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                  }}
+                >
+                  <h3 className="text-lg font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+                    Key points
+                  </h3>
+                  {meeting.ai.keyPoints && meeting.ai.keyPoints.length > 0 ? (
+                    <ul
+                      data-testid="ai-key-points"
+                      className="space-y-2 list-disc list-inside text-sm leading-relaxed"
+                      style={{
+                        color: "var(--ink)",
+                        fontFamily: "Newsreader, Georgia, serif",
+                      }}
+                    >
+                      {meeting.ai.keyPoints.map((kp, idx) => (
+                        <li key={idx}>{kp}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p
+                      className="text-sm italic"
+                      style={{ color: "var(--ink-soft)", fontFamily: "Newsreader, Georgia, serif" }}
+                    >
+                      No key points identified.
+                    </p>
+                  )}
+                </div>
+
+                {/* Decisions Card */}
+                <div
+                  className="rounded-lg border p-6 space-y-3"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                  }}
+                >
+                  <h3 className="text-lg font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+                    Decisions
+                  </h3>
+                  {meeting.ai.decisions && meeting.ai.decisions.length > 0 ? (
+                    <ul
+                      data-testid="ai-decisions"
+                      className="space-y-2 list-disc list-inside text-sm leading-relaxed"
+                      style={{
+                        color: "var(--ink)",
+                        fontFamily: "Newsreader, Georgia, serif",
+                      }}
+                    >
+                      {meeting.ai.decisions.map((decision, idx) => (
+                        <li key={idx}>{decision}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p
+                      className="text-sm italic"
+                      style={{ color: "var(--ink-soft)", fontFamily: "Newsreader, Georgia, serif" }}
+                    >
+                      No decisions recorded.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Sticky Right Margin: Action items, Export, Regenerate */}
+              <div className="lg:col-span-1 lg:sticky lg:top-6 self-start space-y-6">
+                {/* Action items card */}
+                <div
+                  className="rounded-lg border p-5 space-y-4 shadow-2xs"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                  }}
+                >
+                  <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--rule)" }}>
+                    <h3 className="text-base font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+                      Action items
+                    </h3>
+                    <span
+                      className="px-2 py-0.5 text-2xs font-semibold rounded-md border"
+                      style={{
+                        backgroundColor: "var(--ground)",
+                        borderColor: "var(--rule)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      {meeting.ai.actionItems?.length || 0}
+                    </span>
+                  </div>
+
+                  {meeting.ai.actionItems && meeting.ai.actionItems.length > 0 ? (
+                    <div data-testid="ai-action-items-list" className="space-y-3">
+                      {meeting.ai.actionItems.map((item, index) => {
+                        const isEditing = editingItemId === item.id;
+
+                        return (
+                          <div
+                            key={item.id}
+                            data-testid={`action-item-${item.id}`}
+                            className="action-item-staged p-3 rounded-lg border space-y-2.5"
+                            style={{
+                              backgroundColor: "var(--ground)",
+                              borderColor: "var(--rule)",
+                              borderLeft: `3px solid ${getMeetingColor(meeting.colorIndex)}`,
+                              animationDelay: `${index * 70}ms`,
+                            }}
+                          >
+                            {isEditing ? (
+                              <div className="space-y-2.5 pt-1">
+                                <div>
+                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                    Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={editItemTitle}
+                                    onChange={(e) => setEditItemTitle(e.target.value)}
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    style={{
+                                      backgroundColor: "var(--surface)",
+                                      borderColor: "var(--rule)",
+                                      color: "var(--ink)",
+                                    }}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                    Assignee
+                                  </label>
+                                  <select
+                                    value={editItemAssigneeId || ""}
+                                    onChange={(e) => setEditItemAssigneeId(e.target.value || null)}
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    style={{
+                                      backgroundColor: "var(--surface)",
+                                      borderColor: "var(--rule)",
+                                      color: "var(--ink)",
+                                    }}
+                                  >
+                                    <option value="">Unassigned</option>
+                                    {teamMembers.map((m) => (
+                                      <option key={m.id} value={m.id}>
+                                        {m.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                    Due Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={editItemDueDate}
+                                    onChange={(e) => setEditItemDueDate(e.target.value)}
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    style={{
+                                      backgroundColor: "var(--surface)",
+                                      borderColor: "var(--rule)",
+                                      color: "var(--ink)",
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingItemId(null)}
+                                    className="px-2.5 py-1 text-2xs font-medium rounded-md border"
+                                    style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveItemEdit(item.id)}
+                                    disabled={updateActionItemMutation.isPending}
+                                    className="px-2.5 py-1 text-2xs font-semibold rounded-md"
+                                    style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+                                  >
+                                    {updateActionItemMutation.isPending ? "Saving..." : "Save"}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xs font-semibold leading-snug" style={{ color: "var(--ink)" }}>
+                                    {item.title}
+                                  </p>
+                                  {canManage && (
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingItem(item)}
+                                      aria-label="Edit action item"
+                                      className="p-1 rounded hover:opacity-80 shrink-0"
+                                      style={{ color: "var(--ink-soft)" }}
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 text-2xs pt-0.5" style={{ color: "var(--ink-soft)" }}>
+                                  {item.assigneeName ? (
+                                    <span
+                                      className="px-2 py-0.5 rounded-full border font-medium"
+                                      style={{
+                                        backgroundColor: "var(--surface)",
+                                        borderColor: "var(--rule)",
+                                        color: "var(--ink)",
+                                      }}
+                                    >
+                                      {item.assigneeName}
+                                    </span>
+                                  ) : (
+                                    <span className="italic">Unassigned</span>
+                                  )}
+
+                                  {item.dueDate && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock3 className="w-3 h-3" />
+                                      <span>{new Date(item.dueDate).toLocaleDateString()}</span>
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Disabled Convert to task button for Phase P5 */}
+                                <div className="pt-2 border-t space-y-1" style={{ borderColor: "var(--rule)" }}>
+                                  <button
+                                    type="button"
+                                    disabled
+                                    aria-disabled="true"
+                                    className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border opacity-50 cursor-not-allowed"
+                                    style={{
+                                      backgroundColor: "var(--surface)",
+                                      borderColor: "var(--rule)",
+                                      color: "var(--ink-soft)",
+                                    }}
+                                  >
+                                    Convert to task
+                                  </button>
+                                  <p className="text-2xs text-center" style={{ color: "var(--ink-soft)" }}>
+                                    Available once the tasks board is built
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs italic py-2" style={{ color: "var(--ink-soft)" }}>
+                      No action items identified.
+                    </p>
+                  )}
+                </div>
+
+                {/* Actions card: Export & Regenerate */}
+                <div
+                  className="rounded-lg border p-5 space-y-3.5 shadow-2xs"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                  }}
+                >
+                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--ink-soft)" }}>
+                    Actions & Export
+                  </h4>
+
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExport("md")}
+                      disabled={isExporting !== null}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{
+                        backgroundColor: "var(--ground)",
+                        borderColor: "var(--rule)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>{isExporting === "md" ? "Exporting Markdown..." : "Export as Markdown (.md)"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleExport("json")}
+                      disabled={isExporting !== null}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{
+                        backgroundColor: "var(--ground)",
+                        borderColor: "var(--rule)",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>{isExporting === "json" ? "Exporting JSON..." : "Export as JSON (.json)"}</span>
+                    </button>
+
+                    {canManage && (
+                      <div className="pt-2 border-t" style={{ borderColor: "var(--rule)" }}>
+                        <button
+                          type="button"
+                          onClick={() => setRegenerateConfirmOpen(true)}
+                          disabled={generateAiMutation.isPending}
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90"
+                          style={{
+                            backgroundColor: "var(--surface)",
+                            borderColor: "var(--rule)",
+                            color: "var(--ink)",
+                          }}
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${generateAiMutation.isPending ? "animate-spin" : ""}`} />
+                          <span>{generateAiMutation.isPending ? "Regenerating..." : "Regenerate write-up"}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Missing Speech Notice */}
           {missingSpeechParticipants.length > 0 && (
@@ -795,6 +1371,75 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
             )}
           </div>
+
+          {/* Chat Log Section */}
+          <div
+            data-testid="meeting-chat-section"
+            className="rounded-xl border p-8 space-y-6"
+            style={{
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--rule)",
+            }}
+          >
+            <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "var(--rule)" }}>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" style={{ color: "var(--ink)" }} />
+                <h3 className="text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  Meeting Chat Log
+                </h3>
+              </div>
+              <span
+                className="px-2.5 py-0.5 text-xs font-semibold rounded-full border"
+                style={{
+                  backgroundColor: "var(--ground)",
+                  borderColor: "var(--rule)",
+                  color: "var(--ink)",
+                }}
+              >
+                {chatQuery.data?.items.length ?? 0} messages
+              </span>
+            </div>
+
+            {chatQuery.isLoading ? (
+              <div className="py-8 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+                Loading chat log...
+              </div>
+            ) : (chatQuery.data?.items.length ?? 0) === 0 ? (
+              <div className="py-8 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+                No in-meeting chat messages were sent during this session.
+              </div>
+            ) : (
+              <div className="space-y-3 max-w-3xl">
+                {chatQuery.data?.items.map((msg) => {
+                  const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className="p-3 rounded-lg border space-y-1"
+                      style={{
+                        backgroundColor: "var(--ground)",
+                        borderColor: "var(--rule)",
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-xs" style={{ color: "var(--ink-soft)" }}>
+                        <span className="font-semibold" style={{ color: "var(--ink)" }}>
+                          {msg.senderName}
+                        </span>
+                        <span className="tabular-nums">{timeStr}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--ink)" }}>
+                        {msg.text}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -941,6 +1586,50 @@ export function MeetingDetail(): React.JSX.Element {
                 style={{ backgroundColor: "var(--error)", color: "var(--on-signal)" }}
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Regenerate AI Confirmation Modal */}
+      {regenerateConfirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+        >
+          <div
+            className="w-full max-w-md rounded-lg border p-6 shadow-xl space-y-4"
+            style={{
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--rule)",
+              color: "var(--ink)",
+            }}
+          >
+            <h2 className="text-lg font-bold" style={{ color: "var(--ink)" }}>
+              Regenerate Write-up
+            </h2>
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              Are you sure you want to regenerate the AI write-up? This will re-analyze the meeting transcript and chat to produce new summary notes, decisions, and action items.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-3 border-t" style={{ borderColor: "var(--rule)" }}>
+              <button
+                type="button"
+                onClick={() => setRegenerateConfirmOpen(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border"
+                style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => generateAiMutation.mutate()}
+                disabled={generateAiMutation.isPending}
+                className="px-4 py-2 text-sm font-semibold rounded-lg"
+                style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+              >
+                {generateAiMutation.isPending ? "Generating..." : "Regenerate"}
               </button>
             </div>
           </div>
