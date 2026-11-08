@@ -14,7 +14,17 @@ export interface PeerStreamInfo {
   stream: MediaStream;
   media: PeerMediaState;
   connectionState: RTCPeerConnectionState;
+  iceConnectionState: RTCIceConnectionState;
   isFailed?: boolean;
+}
+
+export interface PeerDebugStats {
+  socketId: string;
+  name: string;
+  connectionState: RTCPeerConnectionState;
+  iceConnectionState: RTCIceConnectionState;
+  audioBytesReceived: number;
+  videoBytesReceived: number;
 }
 
 interface PeerRecord {
@@ -103,6 +113,7 @@ export class PeerConnectionManager {
         captions: initialMedia?.captions ?? false,
       },
       connectionState: "new",
+      iceConnectionState: "new",
     };
 
     const record: PeerRecord = {
@@ -143,6 +154,7 @@ export class PeerConnectionManager {
     // Connection state changes
     pc.oniceconnectionstatechange = async () => {
       info.connectionState = pc.connectionState;
+      info.iceConnectionState = pc.iceConnectionState;
 
       if (pc.iceConnectionState === "failed") {
         if (!record.restartedIce) {
@@ -170,6 +182,7 @@ export class PeerConnectionManager {
 
     pc.onconnectionstatechange = () => {
       info.connectionState = pc.connectionState;
+      info.iceConnectionState = pc.iceConnectionState;
       if (pc.connectionState === "failed") {
         info.isFailed = true;
         this.onStatusMessage?.(`Connection lost with ${name}`);
@@ -283,6 +296,81 @@ export class PeerConnectionManager {
     } catch (err) {
       console.error("Failed to retry peer connection:", socketId, err);
     }
+  }
+
+  setTrackEnabled(kind: "audio" | "video", enabled: boolean) {
+    if (this.localStream) {
+      const tracks =
+        kind === "video" ? this.localStream.getVideoTracks() : this.localStream.getAudioTracks();
+      tracks.forEach((t) => {
+        t.enabled = enabled;
+      });
+    }
+
+    for (const [, peer] of this.peers) {
+      const senders = peer.pc.getSenders();
+      senders.forEach((s) => {
+        if (s.track && s.track.kind === kind) {
+          s.track.enabled = enabled;
+        }
+      });
+    }
+  }
+
+  async replaceTrack(track: MediaStreamTrack) {
+    if (this.localStream) {
+      const oldTracks = this.localStream.getTracks().filter((t) => t.kind === track.kind);
+      oldTracks.forEach((t) => {
+        this.localStream?.removeTrack(t);
+        t.stop();
+      });
+      this.localStream.addTrack(track);
+    }
+
+    for (const [, peer] of this.peers) {
+      const senders = peer.pc.getSenders();
+      const sender = senders.find((s) => s.track?.kind === track.kind);
+      if (sender) {
+        await sender.replaceTrack(track);
+      }
+    }
+  }
+
+  async getPeerDebugStats(): Promise<PeerDebugStats[]> {
+    const statsList: PeerDebugStats[] = [];
+    for (const [socketId, record] of this.peers) {
+      let audioBytesReceived = 0;
+      let videoBytesReceived = 0;
+      try {
+        if (typeof record.pc.getStats === "function") {
+          const stats = await record.pc.getStats();
+          if (stats && typeof stats.forEach === "function") {
+            stats.forEach((report: unknown) => {
+              const r = report as { type?: string; kind?: string; bytesReceived?: number };
+              if (r.type === "inbound-rtp") {
+                if (r.kind === "audio") {
+                  audioBytesReceived = r.bytesReceived ?? 0;
+                } else if (r.kind === "video") {
+                  videoBytesReceived = r.bytesReceived ?? 0;
+                }
+              }
+            });
+          }
+        }
+      } catch {
+        // Fallback for mock or unsupported stats
+      }
+
+      statsList.push({
+        socketId,
+        name: record.info.name,
+        connectionState: record.pc.connectionState || record.info.connectionState,
+        iceConnectionState: record.pc.iceConnectionState || record.info.iceConnectionState,
+        audioBytesReceived,
+        videoBytesReceived,
+      });
+    }
+    return statsList;
   }
 
   removePeer(socketId: string) {

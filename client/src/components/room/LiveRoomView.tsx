@@ -14,7 +14,8 @@ import {
 import { VideoTile } from "./VideoTile.js";
 import { ChatPanel } from "./ChatPanel.js";
 import { ParticipantsPanel } from "./ParticipantsPanel.js";
-import type { PeerStreamInfo } from "../../lib/rtc.js";
+import { DebugPanel } from "./DebugPanel.js";
+import type { PeerStreamInfo, PeerDebugStats } from "../../lib/rtc.js";
 import type { ChatMessageItem } from "../../lib/meetings.js";
 
 interface LiveRoomViewProps {
@@ -30,6 +31,7 @@ interface LiveRoomViewProps {
   chatMessages: ChatMessageItem[];
   typingUsers: string[];
   statusMessage?: string;
+  getDebugStats?: () => Promise<PeerDebugStats[]>;
   onToggleAudio: () => void;
   onToggleVideo: () => void;
   onSendMessage: (text: string) => void;
@@ -52,6 +54,7 @@ export function LiveRoomView({
   chatMessages,
   typingUsers,
   statusMessage,
+  getDebugStats,
   onToggleAudio,
   onToggleVideo,
   onSendMessage,
@@ -62,6 +65,16 @@ export function LiveRoomView({
 }: LiveRoomViewProps): React.JSX.Element {
   const [activeSideTab, setActiveSideTab] = useState<"chat" | "participants" | "captions" | null>(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [audioPlaybackStates, setAudioPlaybackStates] = useState<
+    Record<string, { muted: boolean; playing: boolean }>
+  >({});
+
+  const handleMediaStateChange = (id: string, state: { muted: boolean; playing: boolean }) => {
+    setAudioPlaybackStates((prev) => ({
+      ...prev,
+      [id]: state,
+    }));
+  };
 
   const canEndMeeting = isHost || isAdmin;
   const totalTiles = 1 + peers.length;
@@ -315,6 +328,7 @@ export function LiveRoomView({
           {peers.map((peer) => (
             <VideoTile
               key={peer.socketId}
+              peerId={peer.socketId}
               stream={peer.stream}
               name={peer.name}
               isSelf={false}
@@ -324,6 +338,7 @@ export function LiveRoomView({
               colorIndex={colorIndex}
               isFailed={peer.isFailed}
               onRetryConnection={() => onRetryPeerConnection(peer.socketId)}
+              onMediaStateChange={handleMediaStateChange}
             />
           ))}
         </div>
@@ -506,6 +521,13 @@ export function LiveRoomView({
             </div>
           </div>
         </div>
+      )}
+      {/* WebRTC Diagnostics Debug Panel in Development */}
+      {getDebugStats && (
+        <DebugPanel
+          getDebugStats={getDebugStats}
+          audioPlaybackStates={audioPlaybackStates}
+        />
       )}
     </div>
   );

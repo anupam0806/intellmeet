@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { MicOff, VideoOff, RefreshCw } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { MicOff, VideoOff, RefreshCw, Volume2 } from "lucide-react";
 import { getMeetingColor } from "../../lib/meetings.js";
 
 interface VideoTileProps {
@@ -12,7 +12,9 @@ interface VideoTileProps {
   isActiveSpeaker?: boolean;
   colorIndex?: number;
   isFailed?: boolean;
+  peerId?: string;
   onRetryConnection?: () => void;
+  onMediaStateChange?: (id: string, state: { muted: boolean; playing: boolean }) => void;
 }
 
 export function VideoTile({
@@ -25,16 +27,112 @@ export function VideoTile({
   isActiveSpeaker = false,
   colorIndex = 0,
   isFailed = false,
+  peerId = "",
   onRetryConnection,
+  onMediaStateChange,
 }: VideoTileProps): React.JSX.Element {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const color = getMeetingColor(colorIndex);
 
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [audioLevel, setAudioLevel] = useState<number>(0);
+
+  // 1. Permanent video and audio playback handling
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
+    const el = videoRef.current;
+    if (!el || !stream) return;
+
+    if (el.srcObject !== stream) {
+      el.srcObject = stream;
     }
-  }, [stream]);
+
+    const playPromise = el.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setAutoplayBlocked(false);
+          if (peerId) {
+            onMediaStateChange?.(peerId, { muted: el.muted, playing: true });
+          }
+        })
+        .catch(() => {
+          if (!isSelf) {
+            setAutoplayBlocked(true);
+            if (peerId) {
+              onMediaStateChange?.(peerId, { muted: el.muted, playing: false });
+            }
+          }
+        });
+    }
+  }, [stream, videoEnabled, isSelf, peerId, onMediaStateChange]);
+
+  // 2. Audio-level indicator via Web Audio AnalyserNode
+  useEffect(() => {
+    if (!stream || !audioEnabled) {
+      setAudioLevel(0);
+      return;
+    }
+
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      setAudioLevel(0);
+      return;
+    }
+
+    let audioContext: AudioContext | null = null;
+    let animationId: number | null = null;
+
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      audioContext = new AudioCtx();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 64;
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const checkVolume = () => {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] ?? 0;
+        }
+        const avg = sum / dataArray.length;
+        setAudioLevel(Math.min(100, Math.round((avg / 128) * 100)));
+        animationId = requestAnimationFrame(checkVolume);
+      };
+
+      checkVolume();
+    } catch {
+      // AudioContext unavailable in mock/test
+    }
+
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+      if (audioContext && audioContext.state !== "closed") {
+        void audioContext.close();
+      }
+    };
+  }, [stream, audioEnabled]);
+
+  const handleEnableAudio = () => {
+    if (videoRef.current) {
+      videoRef.current
+        .play()
+        .then(() => {
+          setAutoplayBlocked(false);
+          if (peerId) {
+            onMediaStateChange?.(peerId, { muted: videoRef.current!.muted, playing: true });
+          }
+        })
+        .catch(console.error);
+    }
+  };
 
   const initials = name
     .split(" ")
@@ -42,6 +140,8 @@ export function VideoTile({
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const isVideoVisible = videoEnabled && Boolean(stream && stream.getVideoTracks().length > 0);
 
   return (
     <div
@@ -52,29 +152,32 @@ export function VideoTile({
         backgroundColor: "var(--ink-soft, #1c1c1f)",
         borderRadius: "var(--radius, 8px)",
         overflow: "hidden",
-        border: isActiveSpeaker ? `3px solid ${color}` : "1px solid var(--rule, #2d2d31)",
+        border: isActiveSpeaker || audioLevel > 20 ? `3px solid ${color}` : "1px solid var(--rule, #2d2d31)",
         boxSizing: "border-box",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      {/* Video Element */}
-      {videoEnabled && stream && stream.getVideoTracks().length > 0 ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isSelf}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transform: isSelf ? "scaleX(-1)" : "none",
-          }}
-        />
-      ) : (
+      {/* Video Element - kept permanently mounted to avoid tearing down stream/audio */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={isSelf}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: isSelf ? "scaleX(-1)" : "none",
+          display: isVideoVisible ? "block" : "none",
+        }}
+      />
+
+      {/* Camera-off placeholder */}
+      {!isVideoVisible && (
         <div
+          data-testid="camera-off-placeholder"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -106,6 +209,41 @@ export function VideoTile({
         </div>
       )}
 
+      {/* Autoplay blocked overlay for remote peer */}
+      {!isSelf && autoplayBlocked && (
+        <div
+          style={{
+            position: "absolute",
+            top: "12px",
+            right: "12px",
+            zIndex: 10,
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleEnableAudio}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+              backgroundColor: "var(--accent-red, #e5484d)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            }}
+            aria-label="Click to enable audio"
+          >
+            <Volume2 size={14} />
+            Click to enable audio
+          </button>
+        </div>
+      )}
+
       {/* Name Tab at Bottom Left */}
       <div
         style={{
@@ -118,7 +256,7 @@ export function VideoTile({
           borderRadius: "4px",
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
           color: "var(--paper, #f7f7f8)",
           fontSize: "12px",
           fontWeight: 500,
@@ -129,9 +267,52 @@ export function VideoTile({
           {isSelf ? "You" : name}
           {isHost ? " (Host)" : ""}
         </span>
-        {!audioEnabled && (
+
+        {/* Audio status & Live Audio Level Indicator */}
+        {audioEnabled ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: "1.5px",
+              height: "12px",
+              width: "10px",
+            }}
+            title={`Audio level: ${audioLevel}%`}
+            aria-label={`Audio level: ${audioLevel}%`}
+          >
+            <div
+              style={{
+                width: "2px",
+                height: `${Math.max(2, (audioLevel / 100) * 12)}px`,
+                backgroundColor: audioLevel > 10 ? "#46a758" : "var(--ink-soft, #71717a)",
+                borderRadius: "1px",
+                transition: "height 60ms ease-out",
+              }}
+            />
+            <div
+              style={{
+                width: "2px",
+                height: `${Math.max(2, (audioLevel / 100) * 12 * 0.8)}px`,
+                backgroundColor: audioLevel > 20 ? "#46a758" : "var(--ink-soft, #71717a)",
+                borderRadius: "1px",
+                transition: "height 60ms ease-out",
+              }}
+            />
+            <div
+              style={{
+                width: "2px",
+                height: `${Math.max(2, (audioLevel / 100) * 12 * 0.6)}px`,
+                backgroundColor: audioLevel > 40 ? "#46a758" : "var(--ink-soft, #71717a)",
+                borderRadius: "1px",
+                transition: "height 60ms ease-out",
+              }}
+            />
+          </div>
+        ) : (
           <MicOff size={13} style={{ color: "var(--accent-red, #e5484d)" }} aria-label="Microphone muted" />
         )}
+
         {!videoEnabled && (
           <VideoOff size={13} style={{ color: "var(--ink-soft, #8e8e93)" }} aria-label="Camera off" />
         )}

@@ -45,7 +45,10 @@ export function LobbyView({
   // Bind video element to local stream
   useEffect(() => {
     if (videoRef.current && localStream) {
-      videoRef.current.srcObject = localStream;
+      if (videoRef.current.srcObject !== localStream) {
+        videoRef.current.srcObject = localStream;
+      }
+      void videoRef.current.play().catch(() => {});
     }
   }, [localStream, videoEnabled]);
 
@@ -224,20 +227,21 @@ export function LobbyView({
                 justifyContent: "center",
               }}
             >
-              {videoEnabled && localStream && localStream.getVideoTracks().length > 0 ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    transform: "scaleX(-1)",
-                  }}
-                />
-              ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: "scaleX(-1)",
+                  display:
+                    videoEnabled && localStream && localStream.getVideoTracks().length > 0 ? "block" : "none",
+                }}
+              />
+              {(!videoEnabled || !localStream || localStream.getVideoTracks().length === 0) && (
                 <div style={{ color: "var(--ink-soft, #71717a)", fontSize: "14px" }}>
                   Camera is turned off
                 </div>

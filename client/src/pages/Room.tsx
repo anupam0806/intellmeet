@@ -455,6 +455,10 @@ export function Room(): React.JSX.Element {
     void rtcManagerRef.current?.restartPeer(socketId);
   }, []);
 
+  const handleGetDebugStats = useCallback(async () => {
+    return (await rtcManagerRef.current?.getPeerDebugStats()) || [];
+  }, []);
+
   // 8. General cleanup on component unmount
   useEffect(() => {
     return () => {
@@ -549,6 +553,7 @@ export function Room(): React.JSX.Element {
         chatMessages={chatMessages}
         typingUsers={typingUsers}
         statusMessage={statusMessage}
+        getDebugStats={handleGetDebugStats}
         onToggleAudio={handleToggleAudio}
         onToggleVideo={handleToggleVideo}
         onSendMessage={handleSendMessage}
