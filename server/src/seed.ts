@@ -1,3 +1,4 @@
+import "./config/env.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import { Team } from "./models/Team.js";
