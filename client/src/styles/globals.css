@@ -17,5 +17,37 @@
     outline: 2px solid var(--ink);
     outline-offset: 2px;
   }
+
+  /* Hide Edge / IE default password reveal and clear controls */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.password-toggle-btn:hover {
+  color: var(--ink);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 

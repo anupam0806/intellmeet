@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Eye, EyeOff } from "lucide-react";
 import { apiFetch, ApiClientError } from "../lib/api.js";
 import { useAuthStore, User } from "../store/authStore.js";
 
@@ -20,6 +21,13 @@ export function Login(): React.JSX.Element {
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      setShowPassword(false);
+    };
+  }, []);
 
   const {
     register,
@@ -35,6 +43,7 @@ export function Login(): React.JSX.Element {
   };
 
   const onSubmit = async (data: LoginFormData) => {
+    setShowPassword(false);
     setServerError(null);
     try {
       const res = await apiFetch<{ accessToken: string; user: User }>("/api/v1/auth/login", {
@@ -128,7 +137,13 @@ export function Login(): React.JSX.Element {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <form
+            onSubmit={(e) => {
+              setShowPassword(false);
+              handleSubmit(onSubmit)(e);
+            }}
+            noValidate
+          >
             <div style={{ marginBottom: "16px" }}>
               <label
                 htmlFor="email"
@@ -167,23 +182,50 @@ export function Login(): React.JSX.Element {
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                {...register("password")}
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  height: "40px",
-                  padding: "0 12px",
-                  borderRadius: "var(--radius)",
-                  border: errors.password ? "1px solid var(--error)" : "1px solid var(--rule)",
-                  backgroundColor: "var(--surface)",
-                  color: "var(--ink)",
-                  fontSize: "15px",
-                }}
-              />
+              <div style={{ position: "relative", width: "100%" }}>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  {...register("password")}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    height: "40px",
+                    padding: "0 40px 0 12px",
+                    borderRadius: "var(--radius)",
+                    border: errors.password ? "1px solid var(--error)" : "1px solid var(--rule)",
+                    backgroundColor: "var(--surface)",
+                    color: "var(--ink)",
+                    fontSize: "15px",
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  style={{
+                    position: "absolute",
+                    right: "8px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--ink-soft)",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                    lineHeight: 1,
+                  }}
+                >
+                  {showPassword ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+                </button>
+              </div>
               {errors.password && (
                 <span style={{ display: "block", color: "var(--error)", fontSize: "13px", marginTop: "4px" }}>
                   {errors.password.message}

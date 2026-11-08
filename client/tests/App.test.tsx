@@ -22,7 +22,7 @@ describe("Auth Pages UI", () => {
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try demo" })).toBeInTheDocument();
     expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
   });
 
   it("renders the signup screen with Create and Join tabs", () => {
