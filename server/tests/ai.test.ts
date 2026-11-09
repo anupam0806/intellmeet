@@ -551,4 +551,230 @@ describe("Phase P5: AI Write-up & Meeting Intelligence", () => {
       expect(crossRes.status).toBe(404);
     });
   });
+
+  describe("FIX: Durable AI Run Guard", () => {
+    it("two simultaneous claims produce exactly one run", async () => {
+      const meeting = await Meeting.create({
+        teamId: team1.user.teamId,
+        title: "Concurrent AI Claim Meeting",
+        hostId: team1.user.id,
+        roomCode: "ai-concurrent-01",
+        colorIndex: 1,
+        status: "ENDED",
+        endedAt: new Date(),
+        ai: {
+          status: "PENDING",
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          attempts: 0,
+        },
+      });
+
+      // Add >= 5 segments so it doesn't fail content check
+      for (let i = 0; i < 5; i++) {
+        await TranscriptSegment.create({
+          meetingId: meeting._id,
+          teamId: team1.user.teamId,
+          speakerName: "Maya",
+          text: `This is a long transcript sentence number ${i} to satisfy minimum words.`,
+          ts: Date.now() + i * 1000,
+        });
+      }
+
+      let generateCallCount = 0;
+      const customProvider: AiProvider = {
+        name: "test-lock-provider",
+        model: "mock-model",
+        async generate() {
+          generateCallCount++;
+          // Add a tiny delay to simulate network latency
+          await new Promise((r) => setTimeout(r, 50));
+          return JSON.stringify({
+            summary: "Single run verified.",
+            keyPoints: ["Point 1"],
+            decisions: ["Decision 1"],
+            actionItems: [{ title: "Action item", assigneeName: "Maya" }],
+          });
+        },
+      };
+
+      await Promise.all([
+        generateMeetingIntelligence(meeting._id.toString(), customProvider),
+        generateMeetingIntelligence(meeting._id.toString(), customProvider),
+      ]);
+
+      expect(generateCallCount).toBe(1);
+    });
+
+    it("a stale lock is reclaimed", async () => {
+      const meeting = await Meeting.create({
+        teamId: team1.user.teamId,
+        title: "Stale Lock Meeting",
+        hostId: team1.user.id,
+        roomCode: "ai-stale-01",
+        colorIndex: 2,
+        status: "ENDED",
+        endedAt: new Date(),
+        ai: {
+          status: "PENDING",
+          lockedAt: new Date(Date.now() - 6 * 60 * 1000), // 6 minutes ago (> 5m)
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          attempts: 0,
+        },
+      });
+
+      for (let i = 0; i < 5; i++) {
+        await TranscriptSegment.create({
+          meetingId: meeting._id,
+          teamId: team1.user.teamId,
+          speakerName: "Maya",
+          text: `Valid transcript words to reclaim stale lock sentence ${i}.`,
+          ts: Date.now() + i * 1000,
+        });
+      }
+
+      let ran = false;
+      const customProvider: AiProvider = {
+        name: "test-stale-provider",
+        model: "mock-model",
+        async generate() {
+          ran = true;
+          return JSON.stringify({
+            summary: "Reclaimed stale lock successfully.",
+            keyPoints: ["Point 1"],
+            decisions: [],
+            actionItems: [],
+          });
+        },
+      };
+
+      await generateMeetingIntelligence(meeting._id.toString(), customProvider);
+      expect(ran).toBe(true);
+
+      const updated = await Meeting.findById(meeting._id);
+      expect(updated?.ai.status).toBe("READY");
+      expect(updated?.ai.lockedAt).toBeUndefined();
+    });
+
+    it("the lock is cleared after success", async () => {
+      const meeting = await Meeting.create({
+        teamId: team1.user.teamId,
+        title: "Lock Clear Success Meeting",
+        hostId: team1.user.id,
+        roomCode: "ai-clear-success-01",
+        colorIndex: 3,
+        status: "ENDED",
+        endedAt: new Date(),
+        ai: {
+          status: "PENDING",
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          attempts: 0,
+        },
+      });
+
+      for (let i = 0; i < 5; i++) {
+        await TranscriptSegment.create({
+          meetingId: meeting._id,
+          teamId: team1.user.teamId,
+          speakerName: "Maya",
+          text: `Success sentence with enough words for transcript segment number ${i}.`,
+          ts: Date.now() + i * 1000,
+        });
+      }
+
+      const customProvider: AiProvider = {
+        name: "test-success-provider",
+        model: "mock-model",
+        async generate() {
+          return JSON.stringify({
+            summary: "Cleared lock on success.",
+            keyPoints: ["Point 1"],
+            decisions: [],
+            actionItems: [],
+          });
+        },
+      };
+
+      await generateMeetingIntelligence(meeting._id.toString(), customProvider);
+
+      const updated = await Meeting.findById(meeting._id);
+      expect(updated?.ai.status).toBe("READY");
+      expect(updated?.ai.lockedAt).toBeUndefined();
+    });
+
+    it("the lock is cleared after failure", async () => {
+      const meeting = await Meeting.create({
+        teamId: team1.user.teamId,
+        title: "Lock Clear Failure Meeting",
+        hostId: team1.user.id,
+        roomCode: "ai-clear-fail-01",
+        colorIndex: 4,
+        status: "ENDED",
+        endedAt: new Date(),
+        ai: {
+          status: "PENDING",
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          attempts: 0,
+        },
+      });
+
+      for (let i = 0; i < 5; i++) {
+        await TranscriptSegment.create({
+          meetingId: meeting._id,
+          teamId: team1.user.teamId,
+          speakerName: "Maya",
+          text: `Failure sentence with enough words for transcript segment number ${i}.`,
+          ts: Date.now() + i * 1000,
+        });
+      }
+
+      const failingProvider: AiProvider = {
+        name: "test-fail-provider",
+        model: "mock-model",
+        async generate() {
+          throw new Error("Simulated provider failure");
+        },
+      };
+
+      await generateMeetingIntelligence(meeting._id.toString(), failingProvider);
+
+      const updated = await Meeting.findById(meeting._id);
+      expect(updated?.ai.status).toBe("FAILED");
+      expect(updated?.ai.lockedAt).toBeUndefined();
+    });
+
+    it("POST /meetings/:id/ai/generate returns 409 AI_PENDING when a run is active", async () => {
+      const meeting = await Meeting.create({
+        teamId: team1.user.teamId,
+        title: "Active Run Guard Meeting",
+        hostId: team1.user.id,
+        roomCode: "ai-active-guard-01",
+        colorIndex: 5,
+        status: "ENDED",
+        endedAt: new Date(),
+        ai: {
+          status: "PENDING",
+          lockedAt: new Date(Date.now() - 1 * 60 * 1000), // 1 minute ago (< 5m, active)
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          attempts: 0,
+        },
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/meetings/${meeting._id}/ai/generate`)
+        .set("Authorization", `Bearer ${team1.token}`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe("AI_PENDING");
+    });
+  });
 });

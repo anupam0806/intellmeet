@@ -31,6 +31,7 @@ export interface IAiMetadata {
   generatedAt?: Date;
   attempts: number;
   error?: string;
+  lockedAt?: Date;
 }
 
 export interface IMeeting extends Document {
@@ -88,6 +89,7 @@ const aiMetadataSchema = new Schema<IAiMetadata>(
     generatedAt: { type: Date },
     attempts: { type: Number, default: 0 },
     error: { type: String },
+    lockedAt: { type: Date },
   },
   { _id: false },
 );

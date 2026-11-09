@@ -12,11 +12,14 @@ import { OpenAiCompatibleProvider } from "./openaiCompatible.js";
 import { MockAiProvider } from "./mock.js";
 import { buildSystemPrompt, buildUserPrompt, type TimelineItem } from "./prompts.js";
 
-// Active generations lock set to guard against concurrent runs
-const activeGenerations = new Set<string>();
-
-export function isAiGenerationActive(meetingId: string): boolean {
-  return activeGenerations.has(meetingId);
+export async function isAiGenerationActive(meetingId: string): Promise<boolean> {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const meeting = await Meeting.findOne({
+    _id: meetingId,
+    "ai.status": "PENDING",
+    "ai.lockedAt": { $gt: fiveMinutesAgo },
+  });
+  return Boolean(meeting);
 }
 
 export function getAiProvider(): AiProvider {
@@ -115,30 +118,46 @@ export async function generateMeetingIntelligence(
   customProvider?: AiProvider,
   io?: SocketIOServer,
 ): Promise<void> {
-  // Prevent duplicate concurrent execution for the same meeting
-  if (activeGenerations.has(meetingId)) {
-    logger.warn({ meetingId }, "AI generation already in progress for meeting");
-    return;
-  }
-
-  activeGenerations.add(meetingId);
-
   try {
-    const meeting = await Meeting.findById(meetingId);
-    if (!meeting) {
+    const existing = await Meeting.findById(meetingId);
+    if (!existing) {
       logger.error({ meetingId }, "Meeting not found for AI generation");
       return;
     }
 
     // Must be in ENDED status
-    if (meeting.status !== "ENDED") {
-      logger.warn({ meetingId, status: meeting.status }, "Cannot generate AI for non-ended meeting");
+    if (existing.status !== "ENDED") {
+      logger.warn({ meetingId, status: existing.status }, "Cannot generate AI for non-ended meeting");
       return;
     }
 
-    // Set status to PENDING atomically
-    meeting.ai.status = "PENDING";
-    await meeting.save();
+    if (existing.ai.status === "NONE") {
+      existing.ai.status = "PENDING";
+      await existing.save();
+    }
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const claimFilter = {
+      _id: existing._id,
+      teamId: existing.teamId,
+      "ai.status": "PENDING",
+      $or: [
+        { "ai.lockedAt": { $exists: false } },
+        { "ai.lockedAt": null },
+        { "ai.lockedAt": { $lt: fiveMinutesAgo } },
+      ],
+    };
+
+    const meeting = await Meeting.findOneAndUpdate(
+      claimFilter,
+      { $set: { "ai.lockedAt": new Date() } },
+      { new: true },
+    );
+
+    if (!meeting) {
+      logger.warn({ meetingId }, "AI generation run could not be claimed or is already in progress");
+      return;
+    }
 
     // 1. Load team-scoped transcript segments and chat messages
     const [segments, chatMessages, teamMembers] = await Promise.all([
@@ -164,6 +183,7 @@ export async function generateMeetingIntelligence(
       meeting.ai.actionItems = [];
       meeting.ai.generatedAt = new Date();
       meeting.ai.error = undefined;
+      meeting.ai.lockedAt = undefined;
       await meeting.save();
 
       emitAiReady(meeting.teamId.toString(), meeting._id.toString(), "INSUFFICIENT", io);
@@ -228,6 +248,7 @@ export async function generateMeetingIntelligence(
       meeting.ai.status = "FAILED";
       meeting.ai.attempts = attemptsCount;
       meeting.ai.error = "Failed to parse or validate meeting intelligence.";
+      meeting.ai.lockedAt = undefined;
       await meeting.save();
 
       emitAiReady(meeting.teamId.toString(), meeting._id.toString(), "FAILED", io);
@@ -257,6 +278,7 @@ export async function generateMeetingIntelligence(
     meeting.ai.generatedAt = new Date();
     meeting.ai.attempts = attemptsCount;
     meeting.ai.error = undefined;
+    meeting.ai.lockedAt = undefined;
 
     await meeting.save();
 
@@ -268,14 +290,13 @@ export async function generateMeetingIntelligence(
       if (meeting) {
         meeting.ai.status = "FAILED";
         meeting.ai.error = "An error occurred during AI intelligence generation.";
+        meeting.ai.lockedAt = undefined;
         await meeting.save();
         emitAiReady(meeting.teamId.toString(), meeting._id.toString(), "FAILED", io);
       }
     } catch {
       // Ignore fallback save error
     }
-  } finally {
-    activeGenerations.delete(meetingId);
   }
 }
 
@@ -289,11 +310,17 @@ export async function recoverPendingAiGenerations(
   customProvider?: AiProvider,
   io?: SocketIOServer,
 ): Promise<void> {
-  const cutoff = new Date(Date.now() - 60 * 1000); // More than 1 minute old
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const cutoff = new Date(Date.now() - 60 * 1000); // 1 minute old
   const pendingMeetings = await Meeting.find({
     status: "ENDED",
     "ai.status": "PENDING",
     endedAt: { $lte: cutoff },
+    $or: [
+      { "ai.lockedAt": { $exists: false } },
+      { "ai.lockedAt": null },
+      { "ai.lockedAt": { $lt: fiveMinutesAgo } },
+    ],
   }).sort({ endedAt: 1 });
 
   for (const m of pendingMeetings) {

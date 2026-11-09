@@ -5,7 +5,7 @@ import { Meeting, type IMeeting } from "../models/Meeting.js";
 import { ChatMessage } from "../models/ChatMessage.js";
 import { TranscriptSegment } from "../models/TranscriptSegment.js";
 import { User, type UserRole } from "../models/User.js";
-import { generateMeetingIntelligence, isAiGenerationActive } from "./ai/generate.js";
+import { generateMeetingIntelligence } from "./ai/generate.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import type {
   CreateMeetingInput,
@@ -381,11 +381,18 @@ export class MeetingService {
       throw new ApiError(409, "CONFLICT", "AI write-up can only be generated for ended meetings");
     }
 
-    if (meeting.ai.status === "PENDING" || isAiGenerationActive(meeting._id.toString())) {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const isRunActive =
+      meeting.ai.status === "PENDING" &&
+      meeting.ai.lockedAt &&
+      meeting.ai.lockedAt > fiveMinutesAgo;
+
+    if (isRunActive) {
       throw new ApiError(409, "AI_PENDING", "AI write-up generation is already in progress");
     }
 
     meeting.ai.status = "PENDING";
+    meeting.ai.lockedAt = undefined;
     await meeting.save();
 
     startAiGeneration(meeting._id.toString(), io);
