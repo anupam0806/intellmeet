@@ -1,5 +1,5 @@
 import type mongoose from "mongoose";
-import type { SocketIOServer } from "socket.io";
+import type { Server as SocketIOServer } from "socket.io";
 import { Task, type TaskStatus } from "../models/Task.js";
 import { User } from "../models/User.js";
 import { Meeting } from "../models/Meeting.js";

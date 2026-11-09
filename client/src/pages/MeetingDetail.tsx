@@ -17,8 +17,10 @@ import {
   getMeetingChat,
   generateAiWriteup,
   updateActionItem,
+  convertActionItemToTask,
   downloadMeetingExport,
   type Meeting,
+  type MeetingActionItem,
 } from "../lib/meetings.js";
 import {
   Copy,
@@ -210,6 +212,54 @@ export function MeetingDetail(): React.JSX.Element {
       },
     });
   }
+
+  // Convert action item to task
+  const [convertItem, setConvertItem] = useState<MeetingActionItem | null>(null);
+  const [convertAssigneeId, setConvertAssigneeId] = useState<string | null>(null);
+  const [convertDueDate, setConvertDueDate] = useState<string>("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 3500);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  function openConvertDialog(item: MeetingActionItem) {
+    setConvertItem(item);
+    setConvertAssigneeId(item.assigneeId || null);
+    setConvertDueDate(item.dueDate ? item.dueDate.slice(0, 10) : "");
+  }
+
+  const convertActionItemMutation = useMutation({
+    mutationFn: ({
+      itemId,
+      data,
+    }: {
+      itemId: string;
+      data: { assigneeId?: string | null; dueDate?: string | null };
+    }) => convertActionItemToTask(id!, itemId, data),
+    onSuccess: (res, variables) => {
+      setToastMessage("Task created");
+      setConvertItem(null);
+      queryClient.setQueryData(["meeting", id], (old: Meeting | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          ai: {
+            ...old.ai,
+            actionItems: old.ai.actionItems.map((item) =>
+              item.id === variables.itemId ? { ...item, taskId: res.task.id } : item,
+            ),
+          },
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err: Error) => {
+      setActionError(err.message || "Failed to convert action item to task");
+    },
+  });
 
   // Mutations
   const startMutation = useMutation({
@@ -498,8 +548,8 @@ export function MeetingDetail(): React.JSX.Element {
 
               <span className="flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
-                {meeting.participants.length} participant
-                {meeting.participants.length === 1 ? "" : "s"}
+                {(meeting.participants || []).length} participant
+                {(meeting.participants || []).length === 1 ? "" : "s"}
               </span>
             </div>
           </div>
@@ -1078,24 +1128,52 @@ export function MeetingDetail(): React.JSX.Element {
                                   )}
                                 </div>
 
-                                {/* Disabled Convert to task button for Phase P5 */}
-                                <div className="pt-2 border-t space-y-1" style={{ borderColor: "var(--rule)" }}>
-                                  <button
-                                    type="button"
-                                    disabled
-                                    aria-disabled="true"
-                                    className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border opacity-50 cursor-not-allowed"
-                                    style={{
-                                      backgroundColor: "var(--surface)",
-                                      borderColor: "var(--rule)",
-                                      color: "var(--ink-soft)",
-                                    }}
-                                  >
-                                    Convert to task
-                                  </button>
-                                  <p className="text-2xs text-center" style={{ color: "var(--ink-soft)" }}>
-                                    Available once the tasks board is built
-                                  </p>
+                                {/* Convert to task / View task */}
+                                <div className="pt-2 border-t" style={{ borderColor: "var(--rule)" }}>
+                                  {item.taskId ? (
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span
+                                        className="px-2 py-0.5 text-2xs font-medium rounded border opacity-70"
+                                        style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
+                                      >
+                                        Converted
+                                      </span>
+                                      <Link
+                                        to={`/tasks?highlight=${item.taskId}`}
+                                        className="text-xs font-semibold underline decoration-1 underline-offset-2 hover:opacity-80 transition-opacity"
+                                        style={{ color: "var(--signal)" }}
+                                      >
+                                        View task
+                                      </Link>
+                                    </div>
+                                  ) : canManage ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openConvertDialog(item)}
+                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border hover:opacity-80 transition-opacity"
+                                      style={{
+                                        backgroundColor: "var(--surface)",
+                                        borderColor: "var(--rule)",
+                                        color: "var(--ink)",
+                                      }}
+                                    >
+                                      Convert to task
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      disabled
+                                      aria-disabled="true"
+                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border opacity-50 cursor-not-allowed"
+                                      style={{
+                                        backgroundColor: "var(--surface)",
+                                        borderColor: "var(--rule)",
+                                        color: "var(--ink-soft)",
+                                      }}
+                                    >
+                                      Convert to task
+                                    </button>
+                                  )}
                                 </div>
                               </>
                             )}
@@ -1633,6 +1711,145 @@ export function MeetingDetail(): React.JSX.Element {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Convert Action Item to Task Dialog */}
+      {convertItem && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="convert-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+        >
+          <div
+            className="w-full max-w-md rounded-lg border p-6 space-y-4 shadow-xl"
+            style={{
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--rule)",
+              color: "var(--ink)",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <h2 id="convert-dialog-title" className="text-base font-bold" style={{ color: "var(--ink)" }}>
+                Convert to task
+              </h2>
+              <button
+                type="button"
+                onClick={() => setConvertItem(null)}
+                aria-label="Close"
+                className="p-1 rounded hover:opacity-80"
+                style={{ color: "var(--ink-soft)" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                  Title
+                </label>
+                <div
+                  className="p-2.5 rounded-md border text-xs font-medium"
+                  style={{
+                    backgroundColor: "var(--smoke)",
+                    borderColor: "var(--rule)",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {convertItem.title}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="convert-assignee" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                  Assignee
+                </label>
+                <select
+                  id="convert-assignee"
+                  value={convertAssigneeId || ""}
+                  onChange={(e) => setConvertAssigneeId(e.target.value ? e.target.value : null)}
+                  className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                    color: "var(--ink)",
+                  }}
+                >
+                  <option value="">Unassigned</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="convert-due-date" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                  Due date
+                </label>
+                <input
+                  id="convert-due-date"
+                  type="date"
+                  value={convertDueDate}
+                  onChange={(e) => setConvertDueDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--rule)",
+                    color: "var(--ink)",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t" style={{ borderColor: "var(--rule)" }}>
+              <button
+                type="button"
+                onClick={() => setConvertItem(null)}
+                className="px-3 py-1.5 text-xs font-semibold rounded-md border hover:opacity-80"
+                style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={convertActionItemMutation.isPending}
+                onClick={() => {
+                  convertActionItemMutation.mutate({
+                    itemId: convertItem.id,
+                    data: {
+                      assigneeId: convertAssigneeId,
+                      dueDate: convertDueDate || null,
+                    },
+                  });
+                }}
+                className="px-3 py-1.5 text-xs font-semibold rounded-md hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+              >
+                {convertActionItemMutation.isPending ? "Converting..." : "Convert to task"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold flex items-center gap-2"
+          style={{
+            backgroundColor: "var(--surface)",
+            borderColor: "var(--rule)",
+            color: "var(--ink)",
+          }}
+        >
+          <Check className="w-3.5 h-3.5" style={{ color: "var(--signal)" }} />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { TaskService } from "../services/task.service.js";
 import type { TaskQueryInput } from "../validators/task.js";
-import type { SocketIOServer } from "socket.io";
+import type { Server as SocketIOServer } from "socket.io";
 
 export class TaskController {
   static async list(req: Request, res: Response, next: NextFunction): Promise<void> {

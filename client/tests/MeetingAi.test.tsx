@@ -165,7 +165,7 @@ describe("Meeting Page: AI Write-up & Ended State (Phase P5)", () => {
     expect(screen.getByText("Deploy hotfix immediately to staging")).toBeInTheDocument();
   });
 
-  it("renders action items with disabled Convert button and note", async () => {
+  it("renders action items with active Convert button for host/Admin in P6", async () => {
     vi.spyOn(meetingsApi, "fetchMeeting").mockResolvedValue(mockBaseMeeting);
 
     render(
@@ -183,8 +183,7 @@ describe("Meeting Page: AI Write-up & Ended State (Phase P5)", () => {
     expect(screen.getByText("Dev Patel")).toBeInTheDocument();
 
     const convertBtn = screen.getByRole("button", { name: "Convert to task" });
-    expect(convertBtn).toBeDisabled();
-    expect(screen.getByText("Available once the tasks board is built")).toBeInTheDocument();
+    expect(convertBtn).not.toBeDisabled();
   });
 
   it("supports inline editing of action item", async () => {

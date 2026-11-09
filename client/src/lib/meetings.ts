@@ -258,6 +258,21 @@ export async function updateActionItem(
   );
 }
 
+export async function convertActionItemToTask(
+  meetingId: string,
+  itemId: string,
+  data: { assigneeId?: string | null; dueDate?: string | null } = {},
+): Promise<{ task: { id: string } }> {
+  return apiFetch<{ task: { id: string } }>(
+    `/api/v1/meetings/${meetingId}/action-items/${itemId}/convert`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+}
+
 export async function downloadMeetingExport(
   meetingId: string,
   format: "md" | "json",
