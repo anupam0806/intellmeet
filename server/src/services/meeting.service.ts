@@ -4,14 +4,18 @@ import type { Server as SocketIOServer } from "socket.io";
 import { Meeting, type IMeeting } from "../models/Meeting.js";
 import { ChatMessage } from "../models/ChatMessage.js";
 import { TranscriptSegment } from "../models/TranscriptSegment.js";
+import { Task } from "../models/Task.js";
 import { User, type UserRole } from "../models/User.js";
 import { generateMeetingIntelligence } from "./ai/generate.js";
+import { notifyTaskAssigned } from "./notification.service.js";
+import type { FormattedTask } from "./task.service.js";
 import { ApiError } from "../middleware/errorHandler.js";
 import type {
   CreateMeetingInput,
   UpdateMeetingInput,
   MeetingQueryInput,
   UpdateActionItemInput,
+  ConvertActionItemInput,
 } from "../validators/meeting.js";
 
 export function startAiGeneration(meetingId: string, io?: SocketIOServer): void {
@@ -259,6 +263,16 @@ export class MeetingService {
       // Ignore if collection not ready
     }
 
+    // Keep converted tasks but clear their sourceMeetingId and sourceActionItemId
+    try {
+      await Task.updateMany(
+        { sourceMeetingId: meeting._id },
+        { $unset: { sourceMeetingId: "", sourceActionItemId: "" } },
+      );
+    } catch {
+      // Ignore if Task collection not ready
+    }
+
     await Meeting.deleteOne({ _id: meeting._id });
   }
 
@@ -464,6 +478,137 @@ export class MeetingService {
         taskId: undefined,
       },
     };
+  }
+
+  static async convertActionItemToTask(
+    meetingId: string,
+    itemId: string,
+    userId: string,
+    userRole: UserRole,
+    teamId: string,
+    input: ConvertActionItemInput,
+    io?: SocketIOServer,
+  ) {
+    const meeting = await Meeting.findOne({ _id: meetingId, teamId });
+    if (!meeting) {
+      throw new ApiError(404, "NOT_FOUND", "Meeting not found");
+    }
+
+    if (userRole !== "ADMIN" && meeting.hostId.toString() !== userId) {
+      throw new ApiError(403, "FORBIDDEN", "Only the host or an Admin can convert action items to tasks");
+    }
+
+    if (meeting.status !== "ENDED") {
+      throw new ApiError(409, "CONFLICT", "Action items can only be converted for ended meetings");
+    }
+
+    const item = meeting.ai.actionItems.find((ai) => ai._id.toString() === itemId);
+    if (!item) {
+      throw new ApiError(404, "NOT_FOUND", "Action item not found");
+    }
+
+    if (item.taskId) {
+      throw new ApiError(409, "ALREADY_CONVERTED", "Action item has already been converted to a task");
+    }
+
+    // Validate override assigneeId if provided
+    let finalAssigneeId: mongoose.Types.ObjectId | undefined = item.assigneeId;
+    let finalAssigneeName: string | undefined = item.assigneeName;
+
+    if (input.assigneeId !== undefined) {
+      if (input.assigneeId === null) {
+        finalAssigneeId = undefined;
+        finalAssigneeName = undefined;
+      } else {
+        const member = await User.findOne({ _id: input.assigneeId, teamId });
+        if (!member) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Assignee must be a member of this team");
+        }
+        finalAssigneeId = member._id;
+        finalAssigneeName = member.name;
+      }
+    }
+
+    let finalDueDate: Date | undefined = item.dueDate;
+    if (input.dueDate !== undefined) {
+      if (input.dueDate === null) {
+        finalDueDate = undefined;
+      } else {
+        finalDueDate = new Date(input.dueDate);
+      }
+    }
+
+    // Atomic claim on the action item with a new Task ID
+    const newTaskId = new mongoose.Types.ObjectId();
+    const claimedMeeting = await Meeting.findOneAndUpdate(
+      {
+        _id: meetingId,
+        teamId,
+        "ai.actionItems._id": itemId,
+        $or: [
+          { "ai.actionItems.taskId": { $exists: false } },
+          { "ai.actionItems.taskId": null },
+        ],
+      },
+      {
+        $set: { "ai.actionItems.$.taskId": newTaskId },
+      },
+      { new: true },
+    );
+
+    if (!claimedMeeting) {
+      throw new ApiError(409, "ALREADY_CONVERTED", "Action item has already been converted to a task");
+    }
+
+    try {
+      const lastTodo = await Task.findOne({ teamId, status: "TODO" }).sort({ order: -1 }).select("order");
+      const order = lastTodo !== null && lastTodo !== undefined ? lastTodo.order + 1 : 0;
+
+      const task = await Task.create({
+        _id: newTaskId,
+        teamId,
+        title: item.title,
+        status: "TODO",
+        order,
+        assigneeId: finalAssigneeId,
+        createdBy: userId,
+        dueDate: finalDueDate,
+        sourceMeetingId: meeting._id,
+        sourceActionItemId: item._id,
+      });
+
+      const formattedTask: FormattedTask = {
+        id: task._id.toString(),
+        title: task.title,
+        status: task.status,
+        order: task.order,
+        assigneeId: task.assigneeId ? task.assigneeId.toString() : undefined,
+        assigneeName: finalAssigneeName,
+        createdBy: task.createdBy.toString(),
+        dueDate: task.dueDate ? task.dueDate.toISOString() : undefined,
+        sourceMeetingId: meeting._id.toString(),
+        sourceMeetingTitle: meeting.title,
+        sourceMeetingColorIndex: meeting.colorIndex,
+        createdAt: task.createdAt.toISOString(),
+      };
+
+      if (task.assigneeId) {
+        notifyTaskAssigned(formattedTask, task.assigneeId.toString());
+      }
+
+      if (io) {
+        io.to(`team:${teamId}`).emit("task:created", formattedTask);
+      }
+
+      return { task: formattedTask };
+    } catch (err) {
+      // Rollback claim on failure
+      await Meeting.updateOne(
+        { _id: meetingId, "ai.actionItems._id": itemId },
+        { $unset: { "ai.actionItems.$.taskId": "" } },
+      );
+      throw err;
+    }
   }
 
   static async exportMeeting(meetingId: string, teamId: string, format: "md" | "json") {

@@ -120,6 +120,24 @@ export const updateActionItemSchema = z
 
 export type UpdateActionItemInput = z.infer<typeof updateActionItemSchema>;
 
+export const convertActionItemSchema = z
+  .object({
+    assigneeId: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid assignee ID format")
+      .nullable()
+      .optional(),
+    dueDate: z
+      .string()
+      .datetime({ message: "dueDate must be an ISO 8601 date string" })
+      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
+      .nullable()
+      .optional(),
+  })
+  .strict();
+
+export type ConvertActionItemInput = z.infer<typeof convertActionItemSchema>;
+
 export const exportMeetingQuerySchema = z
   .object({
     format: z.enum(["md", "json"], { required_error: "Format must be md or json" }),

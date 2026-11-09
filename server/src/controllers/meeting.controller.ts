@@ -142,6 +142,24 @@ export class MeetingController {
     }
   }
 
+  static async convertActionItem(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const io = req.app.get("io");
+      const result = await MeetingService.convertActionItemToTask(
+        req.params.id as string,
+        req.params.itemId as string,
+        req.user!.id,
+        req.user!.role,
+        req.user!.teamId,
+        req.body,
+        io,
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async export(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const format = (req.query.format as "md" | "json") || "md";

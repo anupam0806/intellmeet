@@ -13,6 +13,7 @@ import {
   meetingIdParamSchema,
   actionItemIdParamSchema,
   updateActionItemSchema,
+  convertActionItemSchema,
   exportMeetingQuerySchema,
 } from "../validators/meeting.js";
 
@@ -59,6 +60,13 @@ meetingRouter.patch(
   validateParams(actionItemIdParamSchema),
   validateBody(updateActionItemSchema),
   MeetingController.updateActionItem,
+);
+
+meetingRouter.post(
+  "/:id/action-items/:itemId/convert",
+  validateParams(actionItemIdParamSchema),
+  validateBody(convertActionItemSchema),
+  MeetingController.convertActionItem,
 );
 
 meetingRouter.get(
