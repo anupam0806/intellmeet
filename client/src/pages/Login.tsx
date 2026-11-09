@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +32,45 @@ export function Login(): React.JSX.Element {
   const [serverError, setServerError] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
+  const tryDemoBtnRef = useRef<HTMLButtonElement | null>(null);
+  const firstPersonaBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const closeDemoPanel = useCallback(() => {
+    setIsDemoOpen(false);
+    tryDemoBtnRef.current?.focus();
+  }, []);
+
+  const handleToggleDemo = () => {
+    if (isDemoOpen) {
+      closeDemoPanel();
+    } else {
+      setIsDemoOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    if (isDemoOpen) {
+      firstPersonaBtnRef.current?.focus();
+    }
+  }, [isDemoOpen]);
+
+  useEffect(() => {
+    if (!isDemoOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeDemoPanel();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDemoOpen, closeDemoPanel]);
 
   useEffect(() => {
     return () => {
@@ -113,6 +152,7 @@ export function Login(): React.JSX.Element {
           borderRadius: "var(--radius)",
           border: "1px solid var(--rule)",
           overflow: "hidden",
+          position: "relative",
         }}
       >
         {/* Left Column: Log in Form */}
@@ -265,73 +305,105 @@ export function Login(): React.JSX.Element {
             </button>
           </form>
 
-          {/* Try the demo section */}
-          <div style={{ marginTop: "24px" }}>
-            <h2
+          {/* Try the demo button & panel */}
+          <div style={{ marginTop: "16px", marginBottom: "20px" }}>
+            <button
+              type="button"
+              id="try-demo-button"
+              ref={tryDemoBtnRef}
+              onClick={handleToggleDemo}
+              aria-expanded={isDemoOpen}
+              aria-controls="demo-accounts-panel"
+              disabled={isSubmitting || demoLoading !== null}
               style={{
+                width: "100%",
+                height: "40px",
+                borderRadius: "var(--radius)",
+                border: "1px solid var(--rule)",
+                backgroundColor: "transparent",
+                color: "var(--ink)",
                 fontSize: "15px",
                 fontWeight: 600,
-                color: "var(--ink)",
-                margin: "0 0 4px 0",
+                cursor: isSubmitting || demoLoading !== null ? "not-allowed" : "pointer",
+                opacity: isSubmitting || demoLoading !== null ? 0.7 : 1,
               }}
             >
-              Try the demo
-            </h2>
-            <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 12px 0" }}>
-              Sign in instantly as any team member to explore the workspace.
-            </p>
+              Try demo
+            </button>
 
-            <div
-              style={{
-                border: "1px solid var(--rule)",
-                borderRadius: "var(--radius)",
-                overflow: "hidden",
-                marginBottom: "20px",
-              }}
-            >
-              {DEMO_PERSONAS.map((p, index) => (
-                <div
-                  key={p.persona}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px 14px",
-                    backgroundColor: "var(--surface)",
-                    borderBottom: index < DEMO_PERSONAS.length - 1 ? "1px solid var(--rule)" : "none",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink)" }}>
-                      {p.name}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "var(--ink-soft)" }}>
-                      {p.role}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDemoLogin(p.persona)}
-                    disabled={isSubmitting || demoLoading !== null}
+            {isDemoOpen && (
+              <div
+                id="demo-accounts-panel"
+                role="region"
+                aria-label="Demo accounts"
+                className="demo-panel-container"
+              >
+                <div style={{ marginBottom: "16px" }}>
+                  <h2
                     style={{
-                      height: "32px",
-                      padding: "0 12px",
-                      borderRadius: "var(--radius)",
-                      border: "1px solid var(--rule)",
-                      backgroundColor: "transparent",
-                      color: "var(--ink)",
-                      fontSize: "13px",
+                      fontSize: "17px",
                       fontWeight: 600,
-                      cursor: demoLoading !== null ? "not-allowed" : "pointer",
-                      opacity: demoLoading === p.persona ? 0.7 : 1,
+                      color: "var(--ink)",
+                      margin: "0 0 4px 0",
                     }}
                   >
-                    {demoLoading === p.persona ? "Connecting..." : `Continue as ${p.firstName}`}
-                  </button>
+                    Try demo
+                  </h2>
+                  <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: 0 }}>
+                    Sign in instantly as any team member to explore the workspace.
+                  </p>
                 </div>
-              ))}
-            </div>
+
+                <div
+                  style={{
+                    border: "1px solid var(--rule)",
+                    borderRadius: "var(--radius)",
+                    overflow: "hidden",
+                  }}
+                >
+                  {DEMO_PERSONAS.map((p, index) => (
+                    <div
+                      key={p.persona}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "12px 14px",
+                        backgroundColor: "var(--surface)",
+                        borderBottom: index < DEMO_PERSONAS.length - 1 ? "1px solid var(--rule)" : "none",
+                        gap: "12px",
+                      }}
+                    >
+                      <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--ink)" }}>
+                        {p.name}, {p.role}
+                      </span>
+
+                      <button
+                        type="button"
+                        ref={index === 0 ? firstPersonaBtnRef : undefined}
+                        onClick={() => handleDemoLogin(p.persona)}
+                        disabled={isSubmitting || demoLoading !== null}
+                        style={{
+                          height: "32px",
+                          padding: "0 12px",
+                          borderRadius: "var(--radius)",
+                          border: "1px solid var(--rule)",
+                          backgroundColor: "transparent",
+                          color: "var(--ink)",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          cursor: demoLoading !== null ? "not-allowed" : "pointer",
+                          opacity: demoLoading === p.persona ? 0.7 : 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {demoLoading === p.persona ? "Connecting..." : `Continue as ${p.firstName}`}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <p style={{ fontSize: "13px", color: "var(--ink-soft)", margin: "0 0 16px 0" }}>
@@ -348,6 +420,7 @@ export function Login(): React.JSX.Element {
 
         {/* Right Column: Sample Action List (Seeded Meeting Preview) */}
         <div
+          aria-hidden={isDemoOpen}
           style={{
             backgroundColor: "var(--ground)",
             padding: "40px",
@@ -381,7 +454,7 @@ export function Login(): React.JSX.Element {
                 Finalize checkout error handling
               </div>
               <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to Maya Chen · Due Friday
+                Assigned to Product Lead · Due Friday
               </div>
             </div>
 
@@ -398,7 +471,7 @@ export function Login(): React.JSX.Element {
                 Review mobile layout responsiveness
               </div>
               <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to Dev Patel · Due Monday
+                Assigned to UI Designer · Due Monday
               </div>
             </div>
 
@@ -415,7 +488,7 @@ export function Login(): React.JSX.Element {
                 Update customer onboarding notes
               </div>
               <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to Lena Fischer · Due Wednesday
+                Assigned to Operations Lead · Due Wednesday
               </div>
             </div>
           </div>

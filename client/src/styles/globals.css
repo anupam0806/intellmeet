@@ -73,4 +73,34 @@
   }
 }
 
+/* Demo panel on Login page */
+.demo-panel-container {
+  margin-top: 16px;
+  background-color: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .demo-panel-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    margin-top: 0;
+    padding: 40px;
+    border-radius: 0;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid var(--rule);
+    z-index: 10;
+    overflow-y: auto;
+  }
+}
+
+
 
