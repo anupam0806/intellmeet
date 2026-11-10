@@ -13,6 +13,8 @@ import { teamRouter } from "./routes/team.routes.js";
 import { userRouter } from "./routes/user.routes.js";
 import { meetingRouter } from "./routes/meeting.routes.js";
 import { taskRouter } from "./routes/task.routes.js";
+import { notificationRouter } from "./routes/notification.routes.js";
+import { analyticsRouter } from "./routes/analytics.routes.js";
 import { rtcRouter } from "./routes/rtc.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
@@ -83,6 +85,8 @@ export function createApp(): express.Application {
   app.use("/api/v1/users", userRouter);
   app.use("/api/v1/meetings", meetingRouter);
   app.use("/api/v1/tasks", taskRouter);
+  app.use("/api/v1/notifications", notificationRouter);
+  app.use("/api/v1/analytics", analyticsRouter);
   app.use("/api/v1/rtc", rtcRouter);
   app.use("/rtc", rtcRouter);
   app.use("/api/v1/health", healthRouter);

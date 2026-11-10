@@ -11,6 +11,7 @@ import type { AiProvider } from "./provider.js";
 import { OpenAiCompatibleProvider } from "./openaiCompatible.js";
 import { MockAiProvider } from "./mock.js";
 import { buildSystemPrompt, buildUserPrompt, type TimelineItem } from "./prompts.js";
+import { notifyMeetingSummaryReady } from "../notification.service.js";
 
 export async function isAiGenerationActive(meetingId: string): Promise<boolean> {
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -283,6 +284,18 @@ export async function generateMeetingIntelligence(
     await meeting.save();
 
     emitAiReady(meeting.teamId.toString(), meeting._id.toString(), "READY", io);
+
+    try {
+      await notifyMeetingSummaryReady(
+        meeting._id.toString(),
+        meeting.title,
+        meeting.hostId.toString(),
+        meeting.teamId.toString(),
+        io,
+      );
+    } catch {
+      // Do not fail generation if notification delivery encounters an error
+    }
   } catch {
     logger.error({ meetingId }, "Unexpected error in generateMeetingIntelligence");
     try {

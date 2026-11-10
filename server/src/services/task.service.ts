@@ -180,7 +180,7 @@ export class TaskService {
     };
 
     if (task.assigneeId) {
-      notifyTaskAssigned(formatted, task.assigneeId.toString());
+      await notifyTaskAssigned({ ...formatted, teamId }, task.assigneeId.toString(), userId, io);
     }
 
     if (io) {
@@ -387,7 +387,7 @@ export class TaskService {
     };
 
     if (newAssigneeId && newAssigneeId !== oldAssigneeId) {
-      notifyTaskAssigned(formatted, newAssigneeId);
+      await notifyTaskAssigned({ ...formatted, teamId }, newAssigneeId, userId, io);
     }
 
     if (io) {

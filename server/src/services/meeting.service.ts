@@ -593,7 +593,7 @@ export class MeetingService {
       };
 
       if (task.assigneeId) {
-        notifyTaskAssigned(formattedTask, task.assigneeId.toString());
+        await notifyTaskAssigned({ ...formattedTask, teamId }, task.assigneeId.toString(), userId, io);
       }
 
       if (io) {

@@ -75,9 +75,12 @@ export function initSocketServer(io: Server): void {
   io.on("connection", (socket: Socket) => {
     logger.debug({ socketId: socket.id, userId: socket.data.userId }, "Socket connected");
 
-    // Automatically join the team room on connect
+    // Automatically join the team room and user-specific room on connect
     if (socket.data.teamId) {
       socket.join(`team:${socket.data.teamId}`);
+    }
+    if (socket.data.userId) {
+      socket.join(`user:${socket.data.userId}`);
     }
 
     registerRoomHandlers(io, socket);
