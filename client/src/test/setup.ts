@@ -49,3 +49,15 @@ if (typeof window !== "undefined") {
   });
 }
 
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+if (typeof window !== "undefined") {
+  window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+}
+
+
