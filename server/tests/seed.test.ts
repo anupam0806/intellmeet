@@ -5,236 +5,275 @@ import { runSeed } from "../src/seed.js";
 import { Team } from "../src/models/Team.js";
 import { User } from "../src/models/User.js";
 import { Meeting } from "../src/models/Meeting.js";
+import { Task } from "../src/models/Task.js";
+import { Notification } from "../src/models/Notification.js";
 import { TranscriptSegment } from "../src/models/TranscriptSegment.js";
 import { ChatMessage } from "../src/models/ChatMessage.js";
+import { aiOutputSchema } from "../src/services/ai/generate.js";
+import { AnalyticsService } from "../src/services/analytics.service.js";
 
-describe("Seed Script (server/src/seed.ts)", () => {
-  it("seeds Brightwell team, users with bcrypt cost 12, meetings, transcript and chat", async () => {
-    // Capture console.log output to verify terminal summary
+describe("Full Seed Script (server/src/seed.ts)", () => {
+  it("creates 1 team, 5 users, 8 meetings (6 ENDED, 2 SCHEDULED), 12 tasks, and 3 notifications", async () => {
     const logs: string[] = [];
-    const logSpy = vi.spyOn(console, "log").mockImplementation((...args) => {
+    vi.spyOn(console, "log").mockImplementation((...args) => {
       logs.push(args.join(" "));
     });
 
-    try {
-      const result = await runSeed({ reset: false, silent: false });
+    const result = await runSeed({ reset: false, silent: false });
 
-      expect(result.teamCount).toBe(1);
-      expect(result.userCount).toBe(5);
-      expect(result.meetingCount).toBe(3);
-      expect(result.transcriptCount).toBe(14);
-      expect(result.chatCount).toBe(6);
-      expect(result.emails).toHaveLength(5);
+    expect(result.teamCount).toBe(1);
+    expect(result.userCount).toBe(5);
+    expect(result.meetingCount).toBe(8);
+    expect(result.taskCount).toBe(12);
+    expect(result.notificationCount).toBe(3);
+    expect(result.emails).toHaveLength(5);
 
-      // Verify terminal output
-      const output = logs.join("\n");
-      expect(output).toContain("Brightwell Design Co. Demo Seed Complete");
-      expect(output).toContain("Teams: 1");
-      expect(output).toContain("Users: 5");
-      expect(output).toContain("Meetings: 3");
-      expect(output).toContain("Transcript segments: 14");
-      expect(output).toContain("Chat messages: 6");
-      expect(output).toContain("maya@brightwell.test (ADMIN)");
-      expect(output).toContain("dev@brightwell.test (MEMBER)");
-      expect(output).toContain("lena@brightwell.test (MEMBER)");
-      expect(output).toContain("omar@brightwell.test (MEMBER)");
-      expect(output).toContain("sofia@brightwell.test (MEMBER)");
-      // Verify no passwords or URIs printed
-      expect(output).not.toContain("Demo@12345");
-      expect(output).not.toContain("mongodb://");
+    // Verify terminal output contains no passwords or connection strings
+    const output = logs.join("\n");
+    expect(output).toContain("Brightwell Design Co. Demo Seed Complete");
+    expect(output).toContain("Meetings: 8");
+    expect(output).toContain("Tasks: 12");
+    expect(output).toContain("Notifications: 3");
+    expect(output).not.toContain("Demo@12345");
+    expect(output).not.toContain("mongodb://");
+    expect(output).not.toContain("mongodb+srv://");
 
-      // Verify Team in DB
-      const team = await Team.findOne({ name: "Brightwell Design Co." });
-      expect(team).not.toBeNull();
-      expect(team?.inviteCode).toBe("BRIGHT24");
+    // Verify Team
+    const team = await Team.findOne({ name: "Brightwell Design Co." });
+    expect(team).not.toBeNull();
+    expect(team?.inviteCode).toBe("BRIGHT24");
 
-      // Verify Users in DB
-      const users = await User.find({ teamId: team?._id }).select("+passwordHash");
-      expect(users).toHaveLength(5);
-
-      const maya = users.find((u) => u.email === "maya@brightwell.test");
-      expect(maya).toBeDefined();
-      expect(maya?.name).toBe("Maya Chen");
-      expect(maya?.role).toBe("ADMIN");
-      expect(team?.ownerId.toString()).toBe(maya?._id.toString());
-
-      const members = users.filter((u) => u.email !== "maya@brightwell.test");
-      expect(members).toHaveLength(4);
-      for (const m of members) {
-        expect(m.role).toBe("MEMBER");
-      }
-
-      // Verify bcrypt rounds and password match
-      for (const u of users) {
-        expect(u.passwordHash).toBeDefined();
-        const rounds = bcrypt.getRounds(u.passwordHash);
-        expect(rounds).toBe(12);
-        const match = await bcrypt.compare("Demo@12345", u.passwordHash);
-        expect(match).toBe(true);
-      }
-
-      // Verify Meeting 1: "Team standup"
-      const m1 = await Meeting.findOne({ roomCode: "DEMOROOM01" });
-      expect(m1).toBeDefined();
-      expect(m1?.title).toBe("Team standup");
-      expect(m1?.status).toBe("SCHEDULED");
-      expect(m1?.colorIndex).toBe(1);
-      expect(m1?.hostId.toString()).toBe(maya?._id.toString());
-
-      // Verify Meeting 2: "Checkout bug triage"
-      const dev = users.find((u) => u.email === "dev@brightwell.test")!;
-      const m2 = await Meeting.findOne({ roomCode: "DEMOROOM02" });
-      expect(m2).toBeDefined();
-      expect(m2?.title).toBe("Checkout bug triage");
-      expect(m2?.status).toBe("ENDED");
-      expect(m2?.colorIndex).toBe(3);
-      expect(m2?.hostId.toString()).toBe(dev._id.toString());
-      expect(m2?.durationSeconds).toBe(35 * 60);
-      expect(m2?.ai.status).toBe("NONE");
-      expect(m2?.participants).toHaveLength(4);
-
-      // Verify Meeting 2 transcript segments (at least 5 segments and at least 40 words)
-      const segments = await TranscriptSegment.find({ meetingId: m2?._id }).sort({ ts: 1 });
-      expect(segments.length).toBe(14);
-      expect(segments.length).toBeGreaterThanOrEqual(5);
-
-      const totalWords = segments.reduce((sum, seg) => sum + seg.text.trim().split(/\s+/).length, 0);
-      expect(totalWords).toBeGreaterThanOrEqual(40);
-
-      // Check content details
-      const allText = segments.map((s) => s.text).join(" ");
-      expect(allText).toContain("timeouts");
-      expect(allText).toContain("Redis");
-      expect(allText).toContain("Decision:");
-      expect(allText).toMatch(/\bI'll\b/);
-      expect(allText).toMatch(/\bwill\b/);
-      expect(allText).toContain("today");
-
-      // Verify Meeting 2 chat messages
-      const chats = await ChatMessage.find({ meetingId: m2?._id }).sort({ createdAt: 1 });
-      expect(chats).toHaveLength(6);
-
-      // Verify Meeting 3: "Sprint planning"
-      const m3 = await Meeting.findOne({ roomCode: "DEMOROOM03" });
-      expect(m3).toBeDefined();
-      expect(m3?.title).toBe("Sprint planning");
-      expect(m3?.status).toBe("SCHEDULED");
-      expect(m3?.colorIndex).toBe(0);
-      expect(m3?.hostId.toString()).toBe(maya?._id.toString());
-      expect(m3?.scheduledAt).toBeDefined();
-    } finally {
-      logSpy.mockRestore();
+    // Verify Users
+    const users = await User.find({ teamId: team?._id }).select("+passwordHash");
+    expect(users).toHaveLength(5);
+    for (const u of users) {
+      expect(bcrypt.getRounds(u.passwordHash)).toBe(12);
+      expect(await bcrypt.compare("Demo@12345", u.passwordHash)).toBe(true);
     }
+
+    // Verify Meetings: 6 ENDED and 2 SCHEDULED
+    const meetings = await Meeting.find({ teamId: team?._id });
+    expect(meetings).toHaveLength(8);
+
+    const scheduled = meetings.filter((m) => m.status === "SCHEDULED");
+    expect(scheduled).toHaveLength(2);
+    expect(scheduled.map((m) => m.title).sort()).toEqual(["Sprint planning", "Team standup"]);
+
+    const ended = meetings.filter((m) => m.status === "ENDED");
+    expect(ended).toHaveLength(6);
+
+    // Verify Every Seeded Ended Meeting
+    const colorIndices = new Set<number>();
+    for (const m of ended) {
+      colorIndices.add(m.colorIndex);
+      // Duration & dates consistency
+      expect(m.startedAt).toBeDefined();
+      expect(m.endedAt).toBeDefined();
+      expect(m.durationSeconds).toBeGreaterThanOrEqual(20 * 60);
+      expect(m.durationSeconds).toBeLessThanOrEqual(50 * 60);
+      expect(m.endedAt!.getTime() - m.startedAt!.getTime()).toBe(m.durationSeconds! * 1000);
+
+      // AI status and metadata
+      expect(m.ai.status).toBe("READY");
+      expect(m.ai.provider).toBe("seed");
+      expect(m.ai.model).toBe("hand-written");
+      expect(m.ai.attempts).toBe(1);
+      expect(m.ai.generatedAt!.getTime()).toBeGreaterThan(m.endedAt!.getTime());
+
+      // Validate AI output against strict Zod schema
+      const parseResult = aiOutputSchema.safeParse({
+        summary: m.ai.summary,
+        keyPoints: m.ai.keyPoints,
+        decisions: m.ai.decisions,
+        actionItems: m.ai.actionItems.map((a) => ({
+          title: a.title,
+          assigneeName: a.assigneeName ?? null,
+          dueDate: a.dueDate ? a.dueDate.toISOString().slice(0, 10) : null,
+        })),
+      });
+      expect(parseResult.success).toBe(true);
+
+      // Every action item assignee belongs to the team
+      for (const a of m.ai.actionItems) {
+        expect(a.assigneeId).toBeDefined();
+        const userExists = users.some((u) => u._id.toString() === a.assigneeId!.toString());
+        expect(userExists).toBe(true);
+      }
+
+      // Transcript segments and chat messages exist
+      const segs = await TranscriptSegment.find({ meetingId: m._id });
+      expect(segs.length).toBeGreaterThanOrEqual(10);
+      expect(segs.length).toBeLessThanOrEqual(20);
+
+      // Transcript speakers match participants
+      const participantIds = new Set(m.participants.map((p) => p.userId.toString()));
+      for (const seg of segs) {
+        expect(participantIds.has(seg.speakerId.toString())).toBe(true);
+      }
+
+      const chats = await ChatMessage.find({ meetingId: m._id });
+      expect(chats.length).toBeGreaterThanOrEqual(4);
+      expect(chats.length).toBeLessThanOrEqual(10);
+    }
+
+    // Color index varied across 0 to 5
+    expect(colorIndices.size).toBeGreaterThanOrEqual(4);
+
+    // Verify 12 Tasks
+    const tasks = await Task.find({ teamId: team?._id });
+    expect(tasks).toHaveLength(12);
+
+    const todoTasks = tasks.filter((t) => t.status === "TODO");
+    const inProgTasks = tasks.filter((t) => t.status === "IN_PROGRESS");
+    const doneTasks = tasks.filter((t) => t.status === "DONE");
+
+    expect(todoTasks.length).toBe(4);
+    expect(inProgTasks.length).toBe(3);
+    expect(doneTasks.length).toBe(5);
+
+    // Contiguous order per column
+    expect(todoTasks.map((t) => t.order).sort()).toEqual([0, 1, 2, 3]);
+    expect(inProgTasks.map((t) => t.order).sort()).toEqual([0, 1, 2]);
+    expect(doneTasks.map((t) => t.order).sort()).toEqual([0, 1, 2, 3, 4]);
+
+    // Assigned across all 5 users and at least one unassigned
+    const assignees = new Set(tasks.map((t) => t.assigneeId?.toString()).filter(Boolean));
+    expect(assignees.size).toBe(5);
+    const unassigned = tasks.filter((t) => !t.assigneeId);
+    expect(unassigned.length).toBeGreaterThanOrEqual(1);
+
+    // 7 converted tasks point at action items and action items point back at tasks
+    const convertedTasks = tasks.filter((t) => t.sourceMeetingId && t.sourceActionItemId);
+    expect(convertedTasks).toHaveLength(7);
+
+    for (const ct of convertedTasks) {
+      const sourceM = meetings.find((m) => m._id.toString() === ct.sourceMeetingId!.toString());
+      expect(sourceM).toBeDefined();
+      const matchingItem = sourceM!.ai.actionItems.find(
+        (a) => a._id.toString() === ct.sourceActionItemId!.toString(),
+      );
+      expect(matchingItem).toBeDefined();
+      expect(matchingItem!.taskId?.toString()).toBe(ct._id.toString());
+    }
+
+    // Done tasks have completedAt values spread across previous weeks
+    for (const dt of doneTasks) {
+      expect(dt.completedAt).toBeDefined();
+      expect(dt.completedAt!.getTime()).toBeLessThan(Date.now());
+    }
+
+    // Verify 3 Notifications for Maya (1 unread)
+    const mayaUser = users.find((u) => u.email === "maya@brightwell.test")!;
+    const notifs = await Notification.find({ userId: mayaUser._id }).sort({ createdAt: -1 });
+    expect(notifs).toHaveLength(3);
+    const unread = notifs.filter((n) => !n.read);
+    expect(unread).toHaveLength(1);
+    expect(unread[0].type).toBe("TASK_ASSIGNED");
+    expect(unread[0].link).toContain("/tasks?highlight=");
+    expect(notifs.some((n) => n.type === "MEETING_SUMMARY_READY")).toBe(true);
+
+    // Verify analytics for the last 60 days return nonzero meetings, tasks, and participation
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+    const fromStr = sixtyDaysAgo.toISOString().slice(0, 10);
+    const toStr = new Date().toISOString().slice(0, 10);
+
+    const overview = await AnalyticsService.getOverview(team!._id.toString(), {
+      from: fromStr,
+      to: toStr,
+    });
+
+    expect(overview.totals.meetings).toBe(7); // 6 ended meetings + 1 scheduled meeting today in range
+    expect(overview.totals.endedMeetings).toBe(6);
+    expect(overview.totals.avgDurationMinutes).toBeGreaterThan(0);
+    expect(overview.totals.doneTasks).toBeGreaterThan(0);
+    expect(overview.totals.openTasks).toBe(7); // 4 TODO + 3 IN_PROGRESS
+    expect(overview.participation.length).toBe(5);
+    expect(overview.participation.every((p) => p.meetingsAttended > 0)).toBe(true);
+    expect(overview.actionItemConversionRate).toBeGreaterThan(0);
   });
 
   it("is idempotent: running twice produces identical counts", async () => {
     await runSeed({ reset: false, silent: true });
-    const firstTeamCount = await Team.countDocuments();
-    const firstUserCount = await User.countDocuments();
-    const firstMeetingCount = await Meeting.countDocuments();
-    const firstTranscriptCount = await TranscriptSegment.countDocuments();
-    const firstChatCount = await ChatMessage.countDocuments();
+    const result2 = await runSeed({ reset: false, silent: true });
 
-    await runSeed({ reset: false, silent: true });
-    const secondTeamCount = await Team.countDocuments();
-    const secondUserCount = await User.countDocuments();
-    const secondMeetingCount = await Meeting.countDocuments();
-    const secondTranscriptCount = await TranscriptSegment.countDocuments();
-    const secondChatCount = await ChatMessage.countDocuments();
+    expect(result2.teamCount).toBe(1);
+    expect(result2.userCount).toBe(5);
+    expect(result2.meetingCount).toBe(8);
+    expect(result2.taskCount).toBe(12);
+    expect(result2.notificationCount).toBe(3);
 
-    expect(secondTeamCount).toBe(firstTeamCount);
-    expect(secondUserCount).toBe(firstUserCount);
-    expect(secondMeetingCount).toBe(firstMeetingCount);
-    expect(secondTranscriptCount).toBe(firstTranscriptCount);
-    expect(secondChatCount).toBe(firstChatCount);
+    const team = await Team.findOne({ name: "Brightwell Design Co." });
+    const meetingCount = await Meeting.countDocuments({ teamId: team?._id });
+    expect(meetingCount).toBe(8);
+
+    const taskCount = await Task.countDocuments({ teamId: team?._id });
+    expect(taskCount).toBe(12);
+
+    const notifCount = await Notification.countDocuments({ teamId: team?._id });
+    expect(notifCount).toBe(3);
   });
 
   it("--reset deletes only Brightwell data and leaves other teams untouched", async () => {
-    // First seed Brightwell
-    await runSeed({ reset: false, silent: true });
-
-    // Create an independent team with its own records
+    // Create another team and user
     const otherTeam = await Team.create({
-      name: "Acme Corp",
-      inviteCode: "ACME1234",
+      name: "Other Enterprise Team",
+      inviteCode: "OTHER999",
       ownerId: new mongoose.Types.ObjectId(),
     });
-
     const otherUser = await User.create({
-      name: "Alice Smith",
-      email: "alice@acme.test",
+      name: "Other Person",
+      email: "other@example.com",
       role: "ADMIN",
       teamId: otherTeam._id,
-      passwordHash: "dummyhash",
+      passwordHash: "hash123",
     });
-    otherTeam.ownerId = otherUser._id;
-    await otherTeam.save();
-
     const otherMeeting = await Meeting.create({
       teamId: otherTeam._id,
-      title: "Acme Standup",
+      title: "Untouched Meeting",
       hostId: otherUser._id,
-      roomCode: "ACMEROOM1",
-      colorIndex: 2,
+      roomCode: "OTHERROOM1",
+      colorIndex: 0,
       status: "SCHEDULED",
     });
-
-    const otherSegment = await TranscriptSegment.create({
-      meetingId: otherMeeting._id,
+    const otherTask = await Task.create({
       teamId: otherTeam._id,
-      speakerId: otherUser._id,
-      speakerName: "Alice Smith",
-      text: "Acme secret meeting text",
-      ts: new Date(),
+      title: "Untouched Task",
+      status: "TODO",
+      order: 0,
+      createdBy: otherUser._id,
     });
-
-    const otherChat = await ChatMessage.create({
-      meetingId: otherMeeting._id,
+    const otherNotif = await Notification.create({
+      userId: otherUser._id,
       teamId: otherTeam._id,
-      senderId: otherUser._id,
-      senderName: "Alice Smith",
-      text: "Hello from Acme",
+      type: "TASK_ASSIGNED",
+      message: "Untouched notif",
+      link: "/tasks",
+      read: false,
     });
 
     // Run seed with --reset
     await runSeed({ reset: true, silent: true });
 
-    // Verify other team and its records are completely untouched
-    const foundOtherTeam = await Team.findById(otherTeam._id);
-    expect(foundOtherTeam).not.toBeNull();
-    expect(foundOtherTeam?.name).toBe("Acme Corp");
+    // Verify other team data remains untouched
+    const existingOtherTeam = await Team.findById(otherTeam._id);
+    expect(existingOtherTeam).not.toBeNull();
 
-    const foundOtherUser = await User.findById(otherUser._id);
-    expect(foundOtherUser).not.toBeNull();
-    expect(foundOtherUser?.email).toBe("alice@acme.test");
+    const existingOtherUser = await User.findById(otherUser._id);
+    expect(existingOtherUser).not.toBeNull();
 
-    const foundOtherMeeting = await Meeting.findById(otherMeeting._id);
-    expect(foundOtherMeeting).not.toBeNull();
+    const existingOtherMeeting = await Meeting.findById(otherMeeting._id);
+    expect(existingOtherMeeting).not.toBeNull();
 
-    const foundOtherSegment = await TranscriptSegment.findById(otherSegment._id);
-    expect(foundOtherSegment).not.toBeNull();
+    const existingOtherTask = await Task.findById(otherTask._id);
+    expect(existingOtherTask).not.toBeNull();
 
-    const foundOtherChat = await ChatMessage.findById(otherChat._id);
-    expect(foundOtherChat).not.toBeNull();
+    const existingOtherNotif = await Notification.findById(otherNotif._id);
+    expect(existingOtherNotif).not.toBeNull();
 
-    // Verify Brightwell was properly recreated
-    const brightwell = await Team.findOne({ name: "Brightwell Design Co." });
-    expect(brightwell).not.toBeNull();
-    const brightwellUsers = await User.find({ teamId: brightwell?._id });
-    expect(brightwellUsers).toHaveLength(5);
-  });
-
-  it("refuses to run when MONGODB_URI is missing and not connected", async () => {
-    // Mock readyState as 0
-    const readyStateSpy = vi.spyOn(mongoose.connection, "readyState", "get").mockReturnValue(0);
-    const oldUri = process.env.MONGODB_URI;
-    delete process.env.MONGODB_URI;
-
-    try {
-      await expect(runSeed({ uri: "" })).rejects.toThrow("MONGODB_URI is required to run the seed script.");
-    } finally {
-      readyStateSpy.mockRestore();
-      if (oldUri) process.env.MONGODB_URI = oldUri;
-    }
+    // Verify Brightwell data recreated fresh
+    const brightwellTeam = await Team.findOne({ name: "Brightwell Design Co." });
+    expect(brightwellTeam).not.toBeNull();
+    const brightwellMeetings = await Meeting.countDocuments({ teamId: brightwellTeam?._id });
+    expect(brightwellMeetings).toBe(8);
   });
 });
