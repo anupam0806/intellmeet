@@ -108,7 +108,8 @@ describe("Full Seed Script (server/src/seed.ts)", () => {
       // Transcript speakers match participants
       const participantIds = new Set(m.participants.map((p) => p.userId.toString()));
       for (const seg of segs) {
-        expect(participantIds.has(seg.speakerId.toString())).toBe(true);
+        expect(seg.speakerId).toBeDefined();
+        expect(participantIds.has(seg.speakerId!.toString())).toBe(true);
       }
 
       const chats = await ChatMessage.find({ meetingId: m._id });
