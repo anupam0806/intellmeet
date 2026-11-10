@@ -64,22 +64,23 @@ export function JoinMeetingDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-150"
     >
       <div
-        className="w-full max-w-md rounded-lg border p-6 shadow-xl transition-all"
+        className="w-full max-w-md rounded-lg border p-6 transition-all"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
           color: "var(--ink)",
+          boxShadow: "var(--shadow-menu)",
         }}
       >
         <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: "var(--rule)" }}>
           <h2 id="join-meeting-title" className="text-xl font-bold tracking-tight">
-            Join with Code
+            Join with code
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="p-1 rounded-lg transition-colors hover:opacity-75 focus:outline-hidden"
+            className="p-1 rounded-lg transition-colors hover:opacity-75"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -101,8 +102,8 @@ export function JoinMeetingDialog({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label htmlFor="join-code" className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
-              Room Code *
+            <label htmlFor="join-code" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink)" }}>
+              Room code *
             </label>
             <div className="relative">
               <Hash className="absolute left-3 top-3 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
@@ -114,9 +115,9 @@ export function JoinMeetingDialog({
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
                 placeholder="e.g. 7k3m9p2x4q"
-                className="w-full pl-9 pr-3 py-2 text-sm font-mono tracking-wider rounded-lg border transition-colors focus:outline-hidden"
+                className="w-full pl-9 pr-3 py-2 text-sm font-mono tracking-wider rounded-lg border transition-colors"
                 style={{
-                  backgroundColor: "var(--ground)",
+                  backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
                   color: "var(--ink)",
                 }}

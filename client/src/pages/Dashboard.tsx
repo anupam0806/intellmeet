@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore.js";
 import { fetchMeetings, getMeetingColor, type MeetingSummary } from "../lib/meetings.js";
+import { fetchTasks, type Task } from "../lib/tasks.js";
 import { CreateMeetingDialog } from "../components/CreateMeetingDialog.js";
 import { JoinMeetingDialog } from "../components/JoinMeetingDialog.js";
 import {
@@ -12,11 +13,25 @@ import {
   Clock,
   CheckCircle2,
   Calendar,
-  ArrowRight,
   Radio,
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
+
+function isOverdue(dueDateStr?: string, status?: string): boolean {
+  if (!dueDateStr || status === "DONE") return false;
+  const due = new Date(dueDateStr);
+  const now = new Date();
+  // Strip time for clean date comparison
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return due < todayStart;
+}
+
+function formatDueDate(dueDateStr?: string): string {
+  if (!dueDateStr) return "";
+  const d = new Date(dueDateStr);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+}
 
 export function Dashboard(): React.JSX.Element {
   const navigate = useNavigate();
@@ -26,368 +41,792 @@ export function Dashboard(): React.JSX.Element {
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
+  // 1. Fetch team meetings
+  const meetingsQuery = useQuery({
     queryKey: ["meetings", "dashboard"],
     queryFn: () => fetchMeetings({ limit: 50 }),
   });
 
-  const allMeetings: MeetingSummary[] = data?.items || [];
+  // 2. Fetch my tasks
+  const tasksQuery = useQuery({
+    queryKey: ["tasks", "dashboard", user?.id],
+    queryFn: () => fetchTasks({ assigneeId: user?.id }),
+    enabled: Boolean(user?.id),
+  });
 
-  // 1. Calculate live now
-  const liveMeetings = allMeetings.filter((m) => m.status === "LIVE");
+  const allMeetings: MeetingSummary[] = meetingsQuery.data?.items || [];
+  const allMyTasks: Task[] = tasksQuery.data?.items || [];
 
-  // 2. Calculate upcoming scheduled
-  const upcomingMeetings = allMeetings
-    .filter((m) => m.status === "SCHEDULED")
-    .sort((a, b) => {
-      const aTime = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
-      const bTime = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
-      return aTime - bTime;
-    });
+  // Filter open tasks assigned to me
+  const openTasks = useMemo(() => {
+    return allMyTasks.filter((t) => t.status !== "DONE");
+  }, [allMyTasks]);
 
-  // 3. Calculate meetings this week (Monday 00:00 UTC to Sunday 23:59 UTC)
-  const now = new Date();
-  const dayOfWeek = (now.getUTCDay() + 6) % 7; // Monday = 0
-  const startOfWeek = new Date(now);
-  startOfWeek.setUTCDate(now.getUTCDate() - dayOfWeek);
-  startOfWeek.setUTCHours(0, 0, 0, 0);
+  // Group open tasks by status: IN_PROGRESS first, then TODO
+  const inProgressTasks = useMemo(() => {
+    return openTasks.filter((t) => t.status === "IN_PROGRESS");
+  }, [openTasks]);
 
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 7);
+  const todoTasks = useMemo(() => {
+    return openTasks.filter((t) => t.status === "TODO");
+  }, [openTasks]);
 
-  const meetingsThisWeekCount = allMeetings.filter((m) => {
-    const targetDate = m.scheduledAt ? new Date(m.scheduledAt) : undefined;
-    if (targetDate) {
-      return targetDate >= startOfWeek && targetDate < endOfWeek;
-    }
-    return m.status === "LIVE" || m.status === "SCHEDULED";
-  }).length;
+  // Live now meetings
+  const liveMeetings = useMemo(() => {
+    return allMeetings.filter((m) => m.status === "LIVE");
+  }, [allMeetings]);
 
-  // 4. Calculate summaries ready to review
-  const summariesReadyCount = allMeetings.filter((m) => m.aiStatus === "READY").length;
+  // Upcoming scheduled meetings
+  const upcomingMeetings = useMemo(() => {
+    return allMeetings
+      .filter((m) => m.status === "SCHEDULED")
+      .sort((a, b) => {
+        const aTime = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+        const bTime = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+        return aTime - bTime;
+      });
+  }, [allMeetings]);
+
+  // Calculate meetings this week (Monday 00:00 UTC to Sunday 23:59:59 UTC)
+  const meetingsThisWeekCount = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = (now.getUTCDay() + 6) % 7; // Monday = 0
+    const startOfWeek = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayOfWeek, 0, 0, 0));
+    const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    return allMeetings.filter((m) => {
+      if (m.scheduledAt) {
+        const s = new Date(m.scheduledAt);
+        return s >= startOfWeek && s < endOfWeek;
+      }
+      if (m.startedAt) {
+        const s = new Date(m.startedAt);
+        return s >= startOfWeek && s < endOfWeek;
+      }
+      return m.status === "LIVE" || m.status === "SCHEDULED";
+    }).length;
+  }, [allMeetings]);
+
+  // Write-ups ready to review (ended meetings with ai.status READY)
+  const summariesReadyCount = useMemo(() => {
+    return allMeetings.filter((m) => m.aiStatus === "READY").length;
+  }, [allMeetings]);
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
+    <div style={{ maxWidth: "1120px", margin: "0 auto", padding: "32px 0", width: "100%" }}>
       {/* Top action header & headline */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6" style={{ borderColor: "var(--rule)" }}>
-        <div>
-          <p className="text-xs uppercase font-semibold tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
-            Welcome back, {user?.name || "there"}
-          </p>
-          <h1 className="text-2xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: "16px",
+          borderBottom: "1px solid var(--rule)",
+          paddingBottom: "24px",
+          marginBottom: "32px",
+        }}
+      >
+        <div style={{ maxWidth: "780px" }}>
+          {/* Headline sentence with 44px style per docs/06 */}
+          <h1
+            style={{
+              fontSize: "clamp(26px, 4vw, 44px)",
+              fontWeight: 700,
+              lineHeight: 1.15,
+              color: "var(--ink)",
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
+          >
             You have{" "}
             <Link
               to="/meetings"
-              className="underline decoration-2 underline-offset-4 hover:opacity-80 transition-opacity"
-              style={{ color: "var(--signal)" }}
+              style={{
+                color: "var(--signal)",
+                textDecoration: "underline",
+                textUnderlineOffset: "4px",
+              }}
             >
               {meetingsThisWeekCount} {meetingsThisWeekCount === 1 ? "meeting" : "meetings"}
             </Link>{" "}
             this week,{" "}
             <Link
-              to="/meetings?status=ENDED"
-              className="underline decoration-2 underline-offset-4 hover:opacity-80 transition-opacity"
-              style={{ color: "var(--signal)" }}
+              to="/tasks?assigneeId=me"
+              style={{
+                color: "var(--signal)",
+                textDecoration: "underline",
+                textUnderlineOffset: "4px",
+              }}
             >
-              {summariesReadyCount} {summariesReadyCount === 1 ? "summary" : "summaries"}
-            </Link>{" "}
-            ready to review, and{" "}
-            <Link
-              to="/tasks"
-              className="underline decoration-2 underline-offset-4 hover:opacity-80 transition-opacity"
-              style={{ color: "var(--ink)" }}
-            >
-              0 open tasks
+              {openTasks.length} open {openTasks.length === 1 ? "task" : "tasks"}
             </Link>
-            .
+            , and{" "}
+            <Link
+              to="/meetings?status=ENDED"
+              style={{
+                color: "var(--signal)",
+                textDecoration: "underline",
+                textUnderlineOffset: "4px",
+              }}
+            >
+              {summariesReadyCount} {summariesReadyCount === 1 ? "write-up" : "write-ups"}
+            </Link>{" "}
+            ready to review.
           </h1>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Action buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-lg border transition-colors hover:opacity-80"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 14px",
+              fontSize: "14px",
+              fontWeight: 500,
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--rule)",
               backgroundColor: "var(--surface)",
-              borderColor: "var(--rule)",
               color: "var(--ink)",
+              cursor: "pointer",
             }}
           >
-            <Hash className="w-4 h-4" />
+            <Hash size={16} strokeWidth={1.75} />
             <span>Join with code</span>
           </button>
 
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 shadow-xs"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              fontSize: "14px",
+              fontWeight: 600,
+              borderRadius: "var(--radius)",
+              border: "none",
               backgroundColor: "var(--signal)",
               color: "var(--on-signal)",
+              cursor: "pointer",
             }}
           >
-            <Plus className="w-4 h-4" />
+            <Plus size={16} strokeWidth={2} />
             <span>New meeting</span>
           </button>
         </div>
       </div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="h-48 rounded-lg border animate-pulse"
-              style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Error state */}
-      {isError && (
-        <div
-          className="p-4 rounded-lg border flex items-center justify-between"
+      {/* Main 3 Sections Grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: "24px",
+        }}
+      >
+        {/* Section 1: Live now */}
+        <section
           style={{
-            backgroundColor: "var(--ground)",
-            borderColor: "var(--error)",
-            color: "var(--error)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "280px",
           }}
         >
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p className="text-sm font-medium">
-              {error instanceof Error ? error.message : "Failed to load dashboard data."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-80"
-            style={{ borderColor: "var(--error)", color: "var(--error)" }}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid var(--rule)",
+              paddingBottom: "12px",
+              marginBottom: "16px",
+            }}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Retry</span>
-          </button>
-        </div>
-      )}
-
-      {/* Three-column Dashboard Sections */}
-      {!isLoading && !isError && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Section 1: Live Now */}
-          <section
-            className="rounded-lg border p-5 flex flex-col justify-between"
-            style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
-          >
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b mb-3" style={{ borderColor: "var(--rule)" }}>
-                <div className="flex items-center gap-2">
-                  <Radio className="w-4 h-4 animate-pulse" style={{ color: "var(--signal)" }} />
-                  <h2 className="text-base font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-                    Live now
-                  </h2>
-                </div>
-                {liveMeetings.length > 0 && (
-                  <span
-                    className="px-2 py-0.5 text-xs font-semibold rounded-lg"
-                    style={{ backgroundColor: "var(--meeting-1)", color: "var(--on-signal)" }}
-                  >
-                    {liveMeetings.length}
-                  </span>
-                )}
-              </div>
-
-              {liveMeetings.length === 0 ? (
-                <div className="py-8 text-center" style={{ color: "var(--ink-soft)" }}>
-                  <Video className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm font-medium">No meetings live right now</p>
-                  <p className="text-xs mt-1">Start a meeting from Upcoming or create a new one.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {liveMeetings.map((m) => (
-                    <div
-                      key={m.id}
-                      className="p-3 rounded-lg border flex items-center justify-between transition-colors hover:opacity-95"
-                      style={{
-                        backgroundColor: "var(--ground)",
-                        borderColor: "var(--rule)",
-                        borderLeftWidth: "4px",
-                        borderLeftColor: getMeetingColor(m.colorIndex),
-                      }}
-                    >
-                      <div className="min-w-0 pr-3">
-                        <Link
-                          to={`/meetings/${m.id}`}
-                          className="font-semibold text-sm truncate block hover:underline"
-                          style={{ color: "var(--ink)" }}
-                        >
-                          {m.title}
-                        </Link>
-                        <p className="text-xs mt-0.5 truncate" style={{ color: "var(--ink-soft)" }}>
-                          Host: {m.hostName} · {m.participantCount} in room
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/meetings/${m.id}`)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0"
-                        style={{
-                          backgroundColor: "var(--signal)",
-                          color: "var(--on-signal)",
-                        }}
-                      >
-                        Join
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Radio size={16} strokeWidth={2} style={{ color: "var(--signal)" }} />
+              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                Live now
+              </h2>
             </div>
-
             {liveMeetings.length > 0 && (
-              <div className="pt-3 border-t mt-4" style={{ borderColor: "var(--rule)" }}>
-                <Link
-                  to="/meetings?status=LIVE"
-                  className="text-xs font-semibold flex items-center justify-between transition-opacity hover:opacity-80"
-                  style={{ color: "var(--signal)" }}
-                >
-                  <span>View all live rooms</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            )}
-          </section>
-
-          {/* Section 2: Upcoming */}
-          <section
-            className="rounded-lg border p-5 flex flex-col justify-between"
-            style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
-          >
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b mb-3" style={{ borderColor: "var(--rule)" }}>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" style={{ color: "var(--ink-soft)" }} />
-                  <h2 className="text-base font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-                    Upcoming
-                  </h2>
-                </div>
-                {upcomingMeetings.length > 0 && (
-                  <span
-                    className="px-2 py-0.5 text-xs font-medium rounded-lg border"
-                    style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
-                  >
-                    {upcomingMeetings.length}
-                  </span>
-                )}
-              </div>
-
-              {upcomingMeetings.length === 0 ? (
-                <div className="py-8 text-center" style={{ color: "var(--ink-soft)" }}>
-                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm font-medium">No scheduled meetings</p>
-                  <p className="text-xs mt-1">Schedule a new session for your team.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingMeetings.slice(0, 4).map((m) => (
-                    <Link
-                      key={m.id}
-                      to={`/meetings/${m.id}`}
-                      className="p-3 rounded-lg border block transition-colors hover:opacity-90"
-                      style={{
-                        backgroundColor: "var(--ground)",
-                        borderColor: "var(--rule)",
-                        borderLeftWidth: "4px",
-                        borderLeftColor: getMeetingColor(m.colorIndex),
-                      }}
-                    >
-                      <p className="font-semibold text-sm truncate" style={{ color: "var(--ink)" }}>
-                        {m.title}
-                      </p>
-                      <div className="flex items-center justify-between text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
-                        <span>Host: {m.hostName}</span>
-                        <span>
-                          {m.scheduledAt
-                            ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "Ready to start"}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="pt-3 border-t mt-4" style={{ borderColor: "var(--rule)" }}>
-              <Link
-                to="/meetings?status=SCHEDULED"
-                className="text-xs font-semibold flex items-center justify-between transition-opacity hover:opacity-80"
-                style={{ color: "var(--signal)" }}
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  backgroundColor: "var(--signal)",
+                  color: "var(--on-signal)",
+                  borderRadius: "var(--radius-chip)",
+                  padding: "1px 6px",
+                }}
               >
-                <span>View all upcoming</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </section>
+                {liveMeetings.length}
+              </span>
+            )}
+          </div>
 
-          {/* Section 3: My Tasks */}
-          <section
-            className="rounded-lg border p-5 flex flex-col justify-between"
-            style={{ backgroundColor: "var(--surface)", borderColor: "var(--rule)" }}
-          >
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b mb-3" style={{ borderColor: "var(--rule)" }}>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" style={{ color: "var(--ink-soft)" }} />
-                  <h2 className="text-base font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-                    My tasks
-                  </h2>
-                </div>
-                <span
-                  className="px-2 py-0.5 text-xs font-medium rounded-lg border"
-                  style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
-                >
-                  0 open
-                </span>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            {meetingsQuery.isLoading ? (
+              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+                Loading live rooms...
               </div>
-
-              <div className="py-8 text-center" style={{ color: "var(--ink-soft)" }}>
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm font-medium">No tasks assigned yet</p>
-                <p className="text-xs mt-1">
-                  Action items converted from meeting write-ups will populate here.
+            ) : meetingsQuery.isError ? (
+              <div
+                style={{
+                  padding: "16px",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--error)",
+                  color: "var(--error)",
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AlertCircle size={14} />
+                  <span>Failed to load live meetings.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => meetingsQuery.refetch()}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--error)",
+                    borderRadius: "var(--radius-chip)",
+                    color: "var(--error)",
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                    fontSize: "11px",
+                  }}
+                >
+                  <RefreshCw size={10} style={{ display: "inline", marginRight: "4px" }} />
+                  Retry
+                </button>
+              </div>
+            ) : liveMeetings.length === 0 ? (
+              <div
+                style={{
+                  margin: "auto",
+                  padding: "32px 16px",
+                  textAlign: "center",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <Video size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No meetings live right now</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
+                  Start one from Upcoming or create a new room.
                 </p>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {liveMeetings.map((m) => (
+                  <div
+                    key={m.id}
+                    style={{
+                      padding: "12px 14px",
+                      backgroundColor: "var(--ground)",
+                      border: "1px solid var(--rule)",
+                      borderLeftWidth: "6px",
+                      borderLeftColor: getMeetingColor(m.colorIndex),
+                      borderRadius: "var(--radius)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <Link
+                        to={`/meetings/${m.id}`}
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "var(--ink)",
+                          textDecoration: "none",
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {m.title}
+                      </Link>
+                      <span style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "2px", display: "block" }}>
+                        Host: {m.hostName} · {m.participantCount} in room
+                      </span>
+                    </div>
 
-            <div className="pt-3 border-t mt-4" style={{ borderColor: "var(--rule)" }}>
-              <Link
-                to="/tasks"
-                className="text-xs font-semibold flex items-center justify-between transition-opacity hover:opacity-80"
-                style={{ color: "var(--signal)" }}
-              >
-                <span>Open task board</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/meetings/${m.id}`)}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        backgroundColor: "var(--signal)",
+                        color: "var(--on-signal)",
+                        border: "none",
+                        borderRadius: "var(--radius-chip)",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Join
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+            <Link
+              to="/meetings?status=LIVE"
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
+              }}
+            >
+              View all live rooms
+            </Link>
+          </div>
+        </section>
+
+        {/* Section 2: Upcoming */}
+        <section
+          style={{
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "280px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid var(--rule)",
+              paddingBottom: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Calendar size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
+              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                Upcoming
+              </h2>
             </div>
-          </section>
-        </div>
-      )}
+            {upcomingMeetings.length > 0 && (
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  border: "1px solid var(--rule)",
+                  color: "var(--ink-soft)",
+                  borderRadius: "var(--radius-chip)",
+                  padding: "1px 6px",
+                }}
+              >
+                {upcomingMeetings.length}
+              </span>
+            )}
+          </div>
+
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            {meetingsQuery.isLoading ? (
+              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+                Loading scheduled meetings...
+              </div>
+            ) : meetingsQuery.isError ? (
+              <div
+                style={{
+                  padding: "16px",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--error)",
+                  color: "var(--error)",
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AlertCircle size={14} />
+                  <span>Failed to load upcoming meetings.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => meetingsQuery.refetch()}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--error)",
+                    borderRadius: "var(--radius-chip)",
+                    color: "var(--error)",
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                    fontSize: "11px",
+                  }}
+                >
+                  <RefreshCw size={10} style={{ display: "inline", marginRight: "4px" }} />
+                  Retry
+                </button>
+              </div>
+            ) : upcomingMeetings.length === 0 ? (
+              <div
+                style={{
+                  margin: "auto",
+                  padding: "32px 16px",
+                  textAlign: "center",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <Clock size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No scheduled meetings</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
+                  Schedule a session for your team.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {upcomingMeetings.slice(0, 4).map((m) => (
+                  <Link
+                    key={m.id}
+                    to={`/meetings/${m.id}`}
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "var(--ground)",
+                      border: "1px solid var(--rule)",
+                      borderLeftWidth: "6px",
+                      borderLeftColor: getMeetingColor(m.colorIndex),
+                      borderRadius: "var(--radius)",
+                      textDecoration: "none",
+                      display: "block",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                        margin: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {m.title}
+                    </p>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "12px",
+                        color: "var(--ink-soft)",
+                        marginTop: "4px",
+                      }}
+                    >
+                      <span>Host: {m.hostName}</span>
+                      <span>
+                        {m.scheduledAt
+                          ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Scheduled"}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+            <Link
+              to="/meetings?status=SCHEDULED"
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
+              }}
+            >
+              View all upcoming
+            </Link>
+          </div>
+        </section>
+
+        {/* Section 3: My Tasks */}
+        <section
+          style={{
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "280px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid var(--rule)",
+              paddingBottom: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <CheckCircle2 size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
+              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                My tasks
+              </h2>
+            </div>
+            {openTasks.length > 0 && (
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  border: "1px solid var(--rule)",
+                  color: "var(--ink-soft)",
+                  borderRadius: "var(--radius-chip)",
+                  padding: "1px 6px",
+                }}
+              >
+                {openTasks.length} open
+              </span>
+            )}
+          </div>
+
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            {tasksQuery.isLoading ? (
+              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+                Loading your tasks...
+              </div>
+            ) : tasksQuery.isError ? (
+              <div
+                style={{
+                  padding: "16px",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--error)",
+                  color: "var(--error)",
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AlertCircle size={14} />
+                  <span>Failed to load tasks.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => tasksQuery.refetch()}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--error)",
+                    borderRadius: "var(--radius-chip)",
+                    color: "var(--error)",
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                    fontSize: "11px",
+                  }}
+                >
+                  <RefreshCw size={10} style={{ display: "inline", marginRight: "4px" }} />
+                  Retry
+                </button>
+              </div>
+            ) : openTasks.length === 0 ? (
+              <div
+                style={{
+                  margin: "auto",
+                  padding: "32px 16px",
+                  textAlign: "center",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <CheckCircle2 size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No tasks assigned yet</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
+                  Action items converted from meeting write-ups will appear here.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* In progress group */}
+                {inProgressTasks.length > 0 && (
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "var(--signal)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      In progress ({inProgressTasks.length})
+                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {inProgressTasks.map((t) => {
+                        const overdue = isOverdue(t.dueDate, t.status);
+                        return (
+                          <Link
+                            key={t.id}
+                            to={`/tasks?highlight=${t.id}`}
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "var(--ground)",
+                              border: "1px solid var(--rule)",
+                              borderLeftWidth: "4px",
+                              borderLeftColor:
+                                t.sourceMeetingColorIndex !== undefined
+                                  ? getMeetingColor(t.sourceMeetingColorIndex)
+                                  : "var(--rule)",
+                              borderRadius: "var(--radius-chip)",
+                              textDecoration: "none",
+                              display: "block",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                color: "var(--ink)",
+                                margin: 0,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t.title}
+                            </p>
+                            {t.dueDate && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
+                                <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
+                                {overdue && (
+                                  <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
+                                )}
+                              </div>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* To do group */}
+                {todoTasks.length > 0 && (
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "var(--ink-soft)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      To do ({todoTasks.length})
+                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {todoTasks.map((t) => {
+                        const overdue = isOverdue(t.dueDate, t.status);
+                        return (
+                          <Link
+                            key={t.id}
+                            to={`/tasks?highlight=${t.id}`}
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "var(--ground)",
+                              border: "1px solid var(--rule)",
+                              borderLeftWidth: "4px",
+                              borderLeftColor:
+                                t.sourceMeetingColorIndex !== undefined
+                                  ? getMeetingColor(t.sourceMeetingColorIndex)
+                                  : "var(--rule)",
+                              borderRadius: "var(--radius-chip)",
+                              textDecoration: "none",
+                              display: "block",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                color: "var(--ink)",
+                                margin: 0,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t.title}
+                            </p>
+                            {t.dueDate && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
+                                <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
+                                {overdue && (
+                                  <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
+                                )}
+                              </div>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+            <Link
+              to="/tasks"
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
+              }}
+            >
+              Open task board
+            </Link>
+          </div>
+        </section>
+      </div>
 
       {/* Dialogs */}
       <CreateMeetingDialog

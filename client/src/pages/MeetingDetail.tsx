@@ -384,9 +384,9 @@ export function MeetingDetail(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-6 animate-pulse">
-        <div className="w-24 h-6 rounded-md" style={{ backgroundColor: "var(--surface)" }} />
-        <div className="h-40 rounded-xl" style={{ backgroundColor: "var(--surface)" }} />
-        <div className="h-64 rounded-xl" style={{ backgroundColor: "var(--surface)" }} />
+        <div className="w-24 h-6 rounded-lg" style={{ backgroundColor: "var(--surface)" }} />
+        <div className="h-40 rounded-lg" style={{ backgroundColor: "var(--surface)" }} />
+        <div className="h-64 rounded-lg" style={{ backgroundColor: "var(--surface)" }} />
       </div>
     );
   }
@@ -452,7 +452,7 @@ export function MeetingDetail(): React.JSX.Element {
 
       {/* Main Card Header */}
       <div
-        className="rounded-lg border p-6 shadow-xs relative overflow-hidden"
+        className="rounded-lg border p-6 relative overflow-hidden"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
@@ -603,7 +603,7 @@ export function MeetingDetail(): React.JSX.Element {
           }}
         >
           <div>
-            <span className="text-2xs font-semibold uppercase tracking-wider block" style={{ color: "var(--ink-soft)" }}>
+            <span className="text-xs font-semibold block" style={{ color: "var(--ink-soft)" }}>
               Room Code
             </span>
             <span className="text-lg font-mono font-bold tracking-wider" style={{ color: "var(--ink)" }}>
@@ -675,7 +675,7 @@ export function MeetingDetail(): React.JSX.Element {
                 type="button"
                 onClick={() => startMutation.mutate()}
                 disabled={startMutation.isPending}
-                className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 shadow-sm"
+                className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
                 style={{
                   backgroundColor: "var(--signal)",
                   color: "var(--on-signal)",
@@ -712,11 +712,11 @@ export function MeetingDetail(): React.JSX.Element {
         >
           <div className="space-y-2">
             <span
-              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg animate-pulse"
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-bold rounded-[3px]"
               style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
             >
-              <Radio className="w-3.5 h-3.5" />
-              <span>LIVE NOW</span>
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <span>Live</span>
             </span>
             <h3 className="text-xl font-bold" style={{ color: "var(--ink)" }}>
               This meeting is currently in progress
@@ -730,7 +730,7 @@ export function MeetingDetail(): React.JSX.Element {
             <button
               type="button"
               onClick={() => navigate(`/room/${meeting.roomCode}`)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 shadow-sm"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: "var(--signal)",
                 color: "var(--on-signal)",
@@ -845,7 +845,7 @@ export function MeetingDetail(): React.JSX.Element {
                     type="button"
                     onClick={() => setRegenerateConfirmOpen(true)}
                     disabled={generateAiMutation.isPending}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90"
                     style={{
                       backgroundColor: "var(--signal)",
                       color: "var(--on-signal)",
@@ -967,7 +967,7 @@ export function MeetingDetail(): React.JSX.Element {
               <div className="lg:col-span-1 lg:sticky lg:top-6 self-start space-y-6">
                 {/* Action items card */}
                 <div
-                  className="rounded-lg border p-5 space-y-4 shadow-2xs"
+                  className="rounded-lg border p-5 space-y-4"
                   style={{
                     backgroundColor: "var(--surface)",
                     borderColor: "var(--rule)",
@@ -978,7 +978,7 @@ export function MeetingDetail(): React.JSX.Element {
                       Action items
                     </h3>
                     <span
-                      className="px-2 py-0.5 text-2xs font-semibold rounded-md border"
+                      className="px-2 py-0.5 text-2xs font-semibold rounded-[3px] border"
                       style={{
                         backgroundColor: "var(--ground)",
                         borderColor: "var(--rule)",
@@ -1009,14 +1009,14 @@ export function MeetingDetail(): React.JSX.Element {
                             {isEditing ? (
                               <div className="space-y-2.5 pt-1">
                                 <div>
-                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Title
                                   </label>
                                   <input
                                     type="text"
                                     value={editItemTitle}
                                     onChange={(e) => setEditItemTitle(e.target.value)}
-                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border"
                                     style={{
                                       backgroundColor: "var(--surface)",
                                       borderColor: "var(--rule)",
@@ -1026,13 +1026,13 @@ export function MeetingDetail(): React.JSX.Element {
                                 </div>
 
                                 <div>
-                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Assignee
                                   </label>
                                   <select
                                     value={editItemAssigneeId || ""}
                                     onChange={(e) => setEditItemAssigneeId(e.target.value || null)}
-                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border"
                                     style={{
                                       backgroundColor: "var(--surface)",
                                       borderColor: "var(--rule)",
@@ -1049,14 +1049,14 @@ export function MeetingDetail(): React.JSX.Element {
                                 </div>
 
                                 <div>
-                                  <label className="block text-2xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Due Date
                                   </label>
                                   <input
                                     type="date"
                                     value={editItemDueDate}
                                     onChange={(e) => setEditItemDueDate(e.target.value)}
-                                    className="w-full px-2.5 py-1.5 text-xs rounded-md border"
+                                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border"
                                     style={{
                                       backgroundColor: "var(--surface)",
                                       borderColor: "var(--rule)",
@@ -1069,7 +1069,7 @@ export function MeetingDetail(): React.JSX.Element {
                                   <button
                                     type="button"
                                     onClick={() => setEditingItemId(null)}
-                                    className="px-2.5 py-1 text-2xs font-medium rounded-md border"
+                                    className="px-2.5 py-1 text-2xs font-medium rounded-lg border"
                                     style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
                                   >
                                     Cancel
@@ -1078,7 +1078,7 @@ export function MeetingDetail(): React.JSX.Element {
                                     type="button"
                                     onClick={() => handleSaveItemEdit(item.id)}
                                     disabled={updateActionItemMutation.isPending}
-                                    className="px-2.5 py-1 text-2xs font-semibold rounded-md"
+                                    className="px-2.5 py-1 text-2xs font-semibold rounded-lg"
                                     style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
                                   >
                                     {updateActionItemMutation.isPending ? "Saving..." : "Save"}
@@ -1096,7 +1096,7 @@ export function MeetingDetail(): React.JSX.Element {
                                       type="button"
                                       onClick={() => startEditingItem(item)}
                                       aria-label="Edit action item"
-                                      className="p-1 rounded hover:opacity-80 shrink-0"
+                                      className="p-1 rounded-lg hover:opacity-80 shrink-0"
                                       style={{ color: "var(--ink-soft)" }}
                                     >
                                       <Edit2 className="w-3.5 h-3.5" />
@@ -1107,7 +1107,7 @@ export function MeetingDetail(): React.JSX.Element {
                                 <div className="flex flex-wrap items-center gap-2 text-2xs pt-0.5" style={{ color: "var(--ink-soft)" }}>
                                   {item.assigneeName ? (
                                     <span
-                                      className="px-2 py-0.5 rounded-full border font-medium"
+                                      className="px-2 py-0.5 rounded-[3px] border font-medium"
                                       style={{
                                         backgroundColor: "var(--surface)",
                                         borderColor: "var(--rule)",
@@ -1133,7 +1133,7 @@ export function MeetingDetail(): React.JSX.Element {
                                   {item.taskId ? (
                                     <div className="flex items-center justify-between text-xs">
                                       <span
-                                        className="px-2 py-0.5 text-2xs font-medium rounded border opacity-70"
+                                        className="px-2 py-0.5 text-2xs font-medium rounded-[3px] border opacity-70"
                                         style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
                                       >
                                         Converted
@@ -1150,7 +1150,7 @@ export function MeetingDetail(): React.JSX.Element {
                                     <button
                                       type="button"
                                       onClick={() => openConvertDialog(item)}
-                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border hover:opacity-80 transition-opacity"
+                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg border hover:opacity-80 transition-opacity"
                                       style={{
                                         backgroundColor: "var(--surface)",
                                         borderColor: "var(--rule)",
@@ -1164,7 +1164,7 @@ export function MeetingDetail(): React.JSX.Element {
                                       type="button"
                                       disabled
                                       aria-disabled="true"
-                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-md border opacity-50 cursor-not-allowed"
+                                      className="w-full py-1.5 px-3 text-xs font-semibold rounded-lg border opacity-50 cursor-not-allowed"
                                       style={{
                                         backgroundColor: "var(--surface)",
                                         borderColor: "var(--rule)",
@@ -1190,13 +1190,13 @@ export function MeetingDetail(): React.JSX.Element {
 
                 {/* Actions card: Export & Regenerate */}
                 <div
-                  className="rounded-lg border p-5 space-y-3.5 shadow-2xs"
+                  className="rounded-lg border p-5 space-y-3.5"
                   style={{
                     backgroundColor: "var(--surface)",
                     borderColor: "var(--rule)",
                   }}
                 >
-                  <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--ink-soft)" }}>
+                  <h4 className="text-xs font-bold" style={{ color: "var(--ink-soft)" }}>
                     Actions & Export
                   </h4>
 
@@ -1344,7 +1344,7 @@ export function MeetingDetail(): React.JSX.Element {
                   onChange={(e) => setPasteText(e.target.value)}
                   maxLength={50000}
                   placeholder="Paste transcript text here (up to 50,000 characters)..."
-                  className="w-full rounded-lg border p-3 text-sm focus:outline-hidden"
+                  className="w-full rounded-lg border p-3 text-sm"
                   style={{
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--rule)",
@@ -1377,7 +1377,7 @@ export function MeetingDetail(): React.JSX.Element {
 
           {/* Transcript Section */}
           <div
-            className="rounded-xl border p-8 space-y-6"
+            className="rounded-lg border p-8 space-y-6"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -1391,7 +1391,7 @@ export function MeetingDetail(): React.JSX.Element {
                 </h3>
               </div>
               <span
-                className="px-2.5 py-0.5 text-xs font-semibold rounded-full border"
+                className="px-2.5 py-0.5 text-xs font-semibold rounded-[3px] border"
                 style={{
                   backgroundColor: "var(--ground)",
                   borderColor: "var(--rule)",
@@ -1453,7 +1453,7 @@ export function MeetingDetail(): React.JSX.Element {
           {/* Chat Log Section */}
           <div
             data-testid="meeting-chat-section"
-            className="rounded-xl border p-8 space-y-6"
+            className="rounded-lg border p-8 space-y-6"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -1467,7 +1467,7 @@ export function MeetingDetail(): React.JSX.Element {
                 </h3>
               </div>
               <span
-                className="px-2.5 py-0.5 text-xs font-semibold rounded-full border"
+                className="px-2.5 py-0.5 text-xs font-semibold rounded-[3px] border"
                 style={{
                   backgroundColor: "var(--ground)",
                   borderColor: "var(--rule)",
@@ -1529,11 +1529,12 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-lg rounded-lg border p-6 shadow-xl"
+            className="w-full max-w-lg rounded-lg border p-6"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              boxShadow: "var(--shadow-menu)",
             }}
           >
             <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: "var(--rule)" }}>
@@ -1549,7 +1550,7 @@ export function MeetingDetail(): React.JSX.Element {
 
             <form onSubmit={handleEditSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Title *
                 </label>
                 <input
@@ -1559,7 +1560,7 @@ export function MeetingDetail(): React.JSX.Element {
                   maxLength={120}
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
                   style={{
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--rule)",
@@ -1569,7 +1570,7 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Description (Optional)
                 </label>
                 <textarea
@@ -1577,7 +1578,7 @@ export function MeetingDetail(): React.JSX.Element {
                   maxLength={1000}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
                   style={{
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--rule)",
@@ -1587,14 +1588,14 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Scheduled Time (Optional)
                 </label>
                 <input
                   type="datetime-local"
                   value={editScheduledAt}
                   onChange={(e) => setEditScheduledAt(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                  className="w-full px-3 py-2 text-sm rounded-lg border transition-colors"
                   style={{
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--rule)",
@@ -1634,11 +1635,12 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 shadow-xl space-y-4"
+            className="w-full max-w-md rounded-lg border p-6 space-y-4"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              boxShadow: "var(--shadow-menu)",
             }}
           >
             <h2 className="text-lg font-bold" style={{ color: "var(--error)" }}>
@@ -1678,11 +1680,12 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 shadow-xl space-y-4"
+            className="w-full max-w-md rounded-lg border p-6 space-y-4"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              boxShadow: "var(--shadow-menu)",
             }}
           >
             <h2 className="text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -1723,11 +1726,12 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 space-y-4 shadow-xl"
+            className="w-full max-w-md rounded-lg border p-6 space-y-4"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              boxShadow: "var(--shadow-menu)",
             }}
           >
             <div className="flex items-center justify-between">
@@ -1738,7 +1742,7 @@ export function MeetingDetail(): React.JSX.Element {
                 type="button"
                 onClick={() => setConvertItem(null)}
                 aria-label="Close"
-                className="p-1 rounded hover:opacity-80"
+                className="p-1 rounded-lg hover:opacity-80"
                 style={{ color: "var(--ink-soft)" }}
               >
                 <X className="w-4 h-4" />
@@ -1747,11 +1751,11 @@ export function MeetingDetail(): React.JSX.Element {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Title
                 </label>
                 <div
-                  className="p-2.5 rounded-md border text-xs font-medium"
+                  className="p-2.5 rounded-lg border text-xs font-medium"
                   style={{
                     backgroundColor: "var(--smoke)",
                     borderColor: "var(--rule)",
@@ -1763,14 +1767,14 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label htmlFor="convert-assignee" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label htmlFor="convert-assignee" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Assignee
                 </label>
                 <select
                   id="convert-assignee"
                   value={convertAssigneeId || ""}
                   onChange={(e) => setConvertAssigneeId(e.target.value ? e.target.value : null)}
-                  className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                   style={{
                     backgroundColor: "var(--surface)",
                     borderColor: "var(--rule)",
@@ -1787,7 +1791,7 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label htmlFor="convert-due-date" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label htmlFor="convert-due-date" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Due date
                 </label>
                 <input
@@ -1795,7 +1799,7 @@ export function MeetingDetail(): React.JSX.Element {
                   type="date"
                   value={convertDueDate}
                   onChange={(e) => setConvertDueDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                   style={{
                     backgroundColor: "var(--surface)",
                     borderColor: "var(--rule)",
@@ -1809,7 +1813,7 @@ export function MeetingDetail(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => setConvertItem(null)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-md border hover:opacity-80"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
                 style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
               >
                 Cancel
@@ -1826,7 +1830,7 @@ export function MeetingDetail(): React.JSX.Element {
                     },
                   });
                 }}
-                className="px-3 py-1.5 text-xs font-semibold rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
               >
                 {convertActionItemMutation.isPending ? "Converting..." : "Convert to task"}
@@ -1841,7 +1845,7 @@ export function MeetingDetail(): React.JSX.Element {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold flex items-center gap-2"
+          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2"
           style={{
             backgroundColor: "var(--surface)",
             borderColor: "var(--rule)",

@@ -248,7 +248,7 @@ export function Analytics(): React.JSX.Element {
         <div
           role="alert"
           style={{
-            backgroundColor: "rgba(179, 38, 30, 0.08)",
+            backgroundColor: "var(--surface)",
             border: "1px solid var(--error)",
             borderRadius: "var(--radius)",
             padding: "12px 16px",
@@ -319,8 +319,8 @@ export function Analytics(): React.JSX.Element {
                 padding: "16px",
               }}
             >
-              <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Total Meetings
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink-soft)" }}>
+                Total meetings
               </div>
               <div
                 style={{
@@ -347,8 +347,8 @@ export function Analytics(): React.JSX.Element {
                 padding: "16px",
               }}
             >
-              <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Avg Meeting Duration
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink-soft)" }}>
+                Avg meeting duration
               </div>
               <div
                 style={{
@@ -375,8 +375,8 @@ export function Analytics(): React.JSX.Element {
                 padding: "16px",
               }}
             >
-              <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Action Item Conversion
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink-soft)" }}>
+                Action item conversion
               </div>
               <div
                 style={{
@@ -407,8 +407,8 @@ export function Analytics(): React.JSX.Element {
                 padding: "16px",
               }}
             >
-              <div style={{ fontSize: "12px", fontWeight: 500, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Tasks Completed
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink-soft)" }}>
+                Tasks completed
               </div>
               <div
                 style={{

@@ -137,8 +137,8 @@ function TaskCard({
       {...listeners}
       role="group"
       aria-label={`Task: ${task.title}`}
-      className={`relative rounded-md border p-3.5 space-y-2.5 transition-colors select-none ${
-        isHighlighted ? "ring-2 ring-emerald-500/20" : ""
+      className={`relative rounded-lg border p-3.5 space-y-2.5 transition-colors select-none ${
+        isHighlighted ? "outline outline-2 outline-[var(--signal)]" : ""
       }`}
     >
       {/* Top row: Title and Status/Action Menu */}
@@ -158,7 +158,7 @@ function TaskCard({
               aria-label="Task options"
               aria-haspopup="true"
               aria-expanded={menuOpen}
-              className="p-1 rounded hover:opacity-80 transition-opacity"
+              className="p-1 rounded-lg hover:opacity-80 transition-opacity"
               style={{ color: "var(--ink-soft)" }}
             >
               <MoreVertical className="w-3.5 h-3.5" />
@@ -166,15 +166,16 @@ function TaskCard({
 
             {menuOpen && (
               <div
-                className="absolute right-0 top-full mt-1 w-44 rounded-md border py-1 shadow-md z-30 text-xs"
+                className="absolute right-0 top-full mt-1 w-44 rounded-lg border py-1 z-30 text-xs"
                 style={{
                   backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
                   color: "var(--ink)",
+                  boxShadow: "var(--shadow-menu)",
                 }}
               >
                 {/* Status change options */}
-                <div className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider" style={{ color: "var(--ink-soft)" }}>
+                <div className="px-2 py-1 text-xs font-semibold" style={{ color: "var(--ink-soft)" }}>
                   Move to
                 </div>
                 {LANES.filter((l) => l.id !== task.status).map((lane) => (
@@ -304,11 +305,11 @@ function LaneDroppable({ laneId, label, tasks, children }: LaneDroppableProps): 
     >
       {/* Column Header */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b" style={{ borderColor: "var(--rule)" }}>
-        <h2 className="text-xs font-semibold tracking-wide uppercase" style={{ color: "var(--ink)" }}>
+        <h2 className="text-xs font-semibold" style={{ color: "var(--ink)" }}>
           {label}
         </h2>
         <span
-          className="px-2 py-0.5 text-2xs font-semibold rounded-full"
+          className="px-2 py-0.5 text-2xs font-semibold rounded-[3px]"
           style={{ backgroundColor: "var(--smoke)", color: "var(--ink-soft)" }}
         >
           {tasks.length}
@@ -592,7 +593,7 @@ export function Tasks(): React.JSX.Element {
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-opacity hover:opacity-90 shrink-0 self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0 self-start sm:self-auto"
           style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
         >
           <Plus className="w-3.5 h-3.5" />
@@ -610,7 +611,7 @@ export function Tasks(): React.JSX.Element {
             placeholder="Search tasks..."
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 rounded-md border text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg border text-xs"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -621,14 +622,14 @@ export function Tasks(): React.JSX.Element {
 
         {/* Assignee filter */}
         <div className="flex items-center gap-2">
-          <label htmlFor="filter-assignee" className="text-2xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--ink-soft)" }}>
+          <label htmlFor="filter-assignee" className="text-xs font-semibold shrink-0" style={{ color: "var(--ink-soft)" }}>
             Assignee:
           </label>
           <select
             id="filter-assignee"
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
-            className="px-2.5 py-1.5 rounded-md border text-xs outline-none"
+            className="px-2.5 py-1.5 rounded-lg border text-xs"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -732,11 +733,12 @@ export function Tasks(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-sm rounded-lg border p-6 space-y-4 shadow-xl"
+            className="w-full max-w-sm rounded-lg border p-6 space-y-4"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              boxShadow: "var(--shadow-menu)",
             }}
           >
             <h2 className="text-sm font-bold" style={{ color: "var(--error)" }}>
@@ -749,7 +751,7 @@ export function Tasks(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => setDeletingTask(null)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-md border hover:opacity-80"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
                 style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
               >
                 Cancel
@@ -758,7 +760,7 @@ export function Tasks(): React.JSX.Element {
                 type="button"
                 disabled={deleteMutation.isPending}
                 onClick={() => deleteMutation.mutate(deletingTask.id)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-md hover:opacity-90 disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: "var(--error)", color: "var(--on-signal)" }}
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
@@ -773,7 +775,7 @@ export function Tasks(): React.JSX.Element {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold flex items-center gap-2"
+          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2"
           style={{
             backgroundColor: "var(--surface)",
             borderColor: "var(--rule)",
@@ -789,7 +791,7 @@ export function Tasks(): React.JSX.Element {
         <div
           role="alert"
           aria-live="assertive"
-          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border shadow-lg text-xs font-semibold flex items-center gap-2"
+          className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center gap-2"
           style={{
             backgroundColor: "var(--surface)",
             borderColor: "var(--rule)",
@@ -861,11 +863,12 @@ function CreateTaskDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
     >
       <div
-        className="w-full max-w-md rounded-lg border p-6 space-y-4 shadow-xl"
+        className="w-full max-w-md rounded-lg border p-6 space-y-4"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
           color: "var(--ink)",
+          boxShadow: "var(--shadow-menu)",
         }}
       >
         <div className="flex items-center justify-between">
@@ -876,7 +879,7 @@ function CreateTaskDialog({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1 rounded hover:opacity-80"
+            className="p-1 rounded-lg hover:opacity-80"
             style={{ color: "var(--ink-soft)" }}
           >
             <X className="w-4 h-4" />
@@ -884,14 +887,14 @@ function CreateTaskDialog({
         </div>
 
         {error && (
-          <div className="p-2.5 rounded-md text-xs font-medium" style={{ backgroundColor: "rgba(224, 90, 71, 0.1)", color: "var(--error)" }}>
+          <div className="p-2.5 rounded-lg text-xs font-medium" style={{ border: "1px solid var(--error)", backgroundColor: "var(--surface)", color: "var(--error)" }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           <div>
-            <label htmlFor="task-title" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="task-title" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Title *
             </label>
             <input
@@ -903,7 +906,7 @@ function CreateTaskDialog({
               placeholder="e.g. Update checkout flow error state"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -913,7 +916,7 @@ function CreateTaskDialog({
           </div>
 
           <div>
-            <label htmlFor="task-desc" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="task-desc" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Description
             </label>
             <textarea
@@ -923,7 +926,7 @@ function CreateTaskDialog({
               placeholder="Optional details or context..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -934,14 +937,14 @@ function CreateTaskDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="task-assignee" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+              <label htmlFor="task-assignee" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                 Assignee
               </label>
               <select
                 id="task-assignee"
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                 style={{
                   backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
@@ -958,14 +961,14 @@ function CreateTaskDialog({
             </div>
 
             <div>
-              <label htmlFor="task-status" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+              <label htmlFor="task-status" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                 Status
               </label>
               <select
                 id="task-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                 style={{
                   backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
@@ -982,7 +985,7 @@ function CreateTaskDialog({
           </div>
 
           <div>
-            <label htmlFor="task-due" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="task-due" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Due date
             </label>
             <input
@@ -990,7 +993,7 @@ function CreateTaskDialog({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -1003,7 +1006,7 @@ function CreateTaskDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md border hover:opacity-80"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
               style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
             >
               Cancel
@@ -1011,7 +1014,7 @@ function CreateTaskDialog({
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md hover:opacity-90 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
             >
               {createMutation.isPending ? "Creating..." : "Create task"}
@@ -1078,11 +1081,12 @@ function EditTaskDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
     >
       <div
-        className="w-full max-w-md rounded-lg border p-6 space-y-4 shadow-xl"
+        className="w-full max-w-md rounded-lg border p-6 space-y-4"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
           color: "var(--ink)",
+          boxShadow: "var(--shadow-menu)",
         }}
       >
         <div className="flex items-center justify-between">
@@ -1093,7 +1097,7 @@ function EditTaskDialog({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1 rounded hover:opacity-80"
+            className="p-1 rounded-lg hover:opacity-80"
             style={{ color: "var(--ink-soft)" }}
           >
             <X className="w-4 h-4" />
@@ -1101,14 +1105,14 @@ function EditTaskDialog({
         </div>
 
         {error && (
-          <div className="p-2.5 rounded-md text-xs font-medium" style={{ backgroundColor: "rgba(224, 90, 71, 0.1)", color: "var(--error)" }}>
+          <div className="p-2.5 rounded-lg text-xs font-medium" style={{ border: "1px solid var(--error)", backgroundColor: "var(--surface)", color: "var(--error)" }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           <div>
-            <label htmlFor="edit-task-title-input" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="edit-task-title-input" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Title *
             </label>
             <input
@@ -1119,7 +1123,7 @@ function EditTaskDialog({
               maxLength={200}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -1129,7 +1133,7 @@ function EditTaskDialog({
           </div>
 
           <div>
-            <label htmlFor="edit-task-desc" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="edit-task-desc" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Description
             </label>
             <textarea
@@ -1138,7 +1142,7 @@ function EditTaskDialog({
               maxLength={2000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -1149,14 +1153,14 @@ function EditTaskDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-task-assignee" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+              <label htmlFor="edit-task-assignee" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                 Assignee
               </label>
               <select
                 id="edit-task-assignee"
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                 style={{
                   backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
@@ -1173,14 +1177,14 @@ function EditTaskDialog({
             </div>
 
             <div>
-              <label htmlFor="edit-task-status" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+              <label htmlFor="edit-task-status" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                 Status
               </label>
               <select
                 id="edit-task-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+                className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                 style={{
                   backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
@@ -1197,7 +1201,7 @@ function EditTaskDialog({
           </div>
 
           <div>
-            <label htmlFor="edit-task-due" className="block text-2xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+            <label htmlFor="edit-task-due" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
               Due date
             </label>
             <input
@@ -1205,7 +1209,7 @@ function EditTaskDialog({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-md border text-xs outline-none"
+              className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
               style={{
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
@@ -1218,7 +1222,7 @@ function EditTaskDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md border hover:opacity-80"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
               style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
             >
               Cancel
@@ -1226,7 +1230,7 @@ function EditTaskDialog({
             <button
               type="submit"
               disabled={editMutation.isPending}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md hover:opacity-90 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
             >
               {editMutation.isPending ? "Saving..." : "Save changes"}

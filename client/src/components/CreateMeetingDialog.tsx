@@ -70,11 +70,12 @@ export function CreateMeetingDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-150"
     >
       <div
-        className="w-full max-w-lg rounded-lg border p-6 shadow-xl transition-all"
+        className="w-full max-w-lg rounded-lg border p-6 transition-all"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
           color: "var(--ink)",
+          boxShadow: "var(--shadow-menu)",
         }}
       >
         <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: "var(--rule)" }}>
@@ -85,7 +86,7 @@ export function CreateMeetingDialog({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="p-1 rounded-lg transition-colors hover:opacity-75 focus:outline-hidden"
+            className="p-1 rounded-lg transition-colors hover:opacity-75"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -107,8 +108,8 @@ export function CreateMeetingDialog({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label htmlFor="meeting-title" className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
-              Meeting Title *
+            <label htmlFor="meeting-title" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink)" }}>
+              Meeting title *
             </label>
             <div className="relative">
               <Type className="absolute left-3 top-3 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
@@ -121,9 +122,9 @@ export function CreateMeetingDialog({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Q4 Roadmap Sync"
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors"
                 style={{
-                  backgroundColor: "var(--ground)",
+                  backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
                   color: "var(--ink)",
                 }}
@@ -132,8 +133,8 @@ export function CreateMeetingDialog({
           </div>
 
           <div>
-            <label htmlFor="meeting-desc" className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
-              Description (Optional)
+            <label htmlFor="meeting-desc" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink)" }}>
+              Description (optional)
             </label>
             <div className="relative">
               <FileText className="absolute left-3 top-3 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
@@ -144,9 +145,9 @@ export function CreateMeetingDialog({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Brief agenda or context..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors"
                 style={{
-                  backgroundColor: "var(--ground)",
+                  backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
                   color: "var(--ink)",
                 }}
@@ -155,8 +156,8 @@ export function CreateMeetingDialog({
           </div>
 
           <div>
-            <label htmlFor="meeting-time" className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--ink-soft)" }}>
-              Schedule Time (Optional)
+            <label htmlFor="meeting-time" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink)" }}>
+              Schedule time (optional)
             </label>
             <div className="relative">
               <Calendar className="absolute left-3 top-3 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
@@ -165,9 +166,9 @@ export function CreateMeetingDialog({
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors focus:outline-hidden"
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors"
                 style={{
-                  backgroundColor: "var(--ground)",
+                  backgroundColor: "var(--surface)",
                   borderColor: "var(--rule)",
                   color: "var(--ink)",
                 }}

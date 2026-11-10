@@ -107,7 +107,7 @@ describe("Meetings UI Components", () => {
 
     expect(await screen.findByText("Sprint Retrospective")).toBeInTheDocument();
     expect(screen.getByText(/Host: Maya Chen/i)).toBeInTheDocument();
-    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.getByText("Live")).toBeInTheDocument();
   });
 });
 

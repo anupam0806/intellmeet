@@ -8,7 +8,7 @@ import {
   markAllNotificationsAsRead,
   type NotificationItem,
 } from "../lib/notifications.js";
-import { Bell, LogOut, Menu, X, CheckSquare, Sparkles } from "lucide-react";
+import { Bell, LogOut, Menu, X, CheckSquare, FileText } from "lucide-react";
 
 function formatRelativeTime(dateString: string): string {
   const diffSec = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
@@ -344,7 +344,7 @@ export function AppLayout(): React.JSX.Element {
                           display: "flex",
                           alignItems: "flex-start",
                           gap: "10px",
-                          backgroundColor: item.read ? "transparent" : "rgba(210, 74, 0, 0.05)",
+                          backgroundColor: item.read ? "transparent" : "var(--ground)",
                           border: "none",
                           borderBottom: "1px solid var(--rule)",
                           cursor: "pointer",
@@ -354,7 +354,7 @@ export function AppLayout(): React.JSX.Element {
                           {item.type === "TASK_ASSIGNED" ? (
                             <CheckSquare size={16} strokeWidth={1.75} />
                           ) : (
-                            <Sparkles size={16} strokeWidth={1.75} />
+                            <FileText size={16} strokeWidth={1.75} />
                           )}
                         </div>
 
