@@ -54,8 +54,12 @@ export function Dashboard(): React.JSX.Element {
     enabled: Boolean(user?.id),
   });
 
-  const allMeetings: MeetingSummary[] = meetingsQuery.data?.items || [];
-  const allMyTasks: Task[] = tasksQuery.data?.items || [];
+  const allMeetings: MeetingSummary[] = Array.isArray(meetingsQuery.data?.items)
+    ? meetingsQuery.data.items
+    : [];
+  const allMyTasks: Task[] = Array.isArray(tasksQuery.data?.items)
+    ? tasksQuery.data.items
+    : [];
 
   // Filter open tasks assigned to me
   const openTasks = useMemo(() => {

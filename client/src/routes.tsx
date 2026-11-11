@@ -4,6 +4,7 @@ import { useAuthStore } from "./store/authStore.js";
 import { AppLayout } from "./components/AppLayout.js";
 import { ProtectedRoute } from "./components/ProtectedRoute.js";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute.js";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary.js";
 import { Dashboard } from "./pages/Dashboard.js";
 import { Login } from "./pages/Login.js";
 import { Signup } from "./pages/Signup.js";
@@ -26,37 +27,42 @@ function RootRedirect(): React.JSX.Element | null {
 
 export const routes: RouteObject[] = [
   {
-    path: "/",
-    element: <RootRedirect />,
-  },
-  // Public auth routes (signed-in users redirected to /dashboard)
-  {
-    element: <PublicOnlyRoute />,
-    children: [
-      { path: "/login", element: <Login /> },
-      { path: "/signup", element: <Signup /> },
-    ],
-  },
-  // Protected app routes
-  {
-    element: <ProtectedRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
-        element: <AppLayout />,
+        path: "/",
+        element: <RootRedirect />,
+      },
+      // Public auth routes (signed-in users redirected to /dashboard)
+      {
+        element: <PublicOnlyRoute />,
         children: [
-          { path: "/dashboard", element: <Dashboard /> },
-          { path: "/meetings", element: <Meetings /> },
-          { path: "/meetings/:id", element: <MeetingDetail /> },
-          { path: "/tasks", element: <Tasks /> },
-          { path: "/analytics", element: <Analytics /> },
-          { path: "/settings", element: <Settings /> },
+          { path: "/login", element: <Login /> },
+          { path: "/signup", element: <Signup /> },
         ],
       },
-      // Room route also protected, with returnTo support
-      { path: "/room/:roomCode", element: <Room /> },
+      // Protected app routes
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <AppLayout />,
+            children: [
+              { path: "/dashboard", element: <Dashboard /> },
+              { path: "/meetings", element: <Meetings /> },
+              { path: "/meetings/:id", element: <MeetingDetail /> },
+              { path: "/tasks", element: <Tasks /> },
+              { path: "/analytics", element: <Analytics /> },
+              { path: "/settings", element: <Settings /> },
+            ],
+          },
+          // Room route also protected, with returnTo support
+          { path: "/room/:roomCode", element: <Room /> },
+        ],
+      },
+      // Standalone error & fallback pages
+      { path: "/forbidden", element: <Forbidden /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
-  // Standalone error & fallback pages
-  { path: "/forbidden", element: <Forbidden /> },
-  { path: "*", element: <NotFound /> },
 ];

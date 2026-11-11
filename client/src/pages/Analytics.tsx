@@ -100,21 +100,24 @@ export function Analytics(): React.JSX.Element {
     loadData({ from: fromDate, to: toDate });
   };
 
+  // Defensively normalize array fields
+  const tasksByStatus = Array.isArray(data?.tasksByStatus) ? data.tasksByStatus : [];
+  const meetingsPerWeek = Array.isArray(data?.meetingsPerWeek) ? data.meetingsPerWeek : [];
+  const participation = Array.isArray(data?.participation) ? data.participation : [];
+
   // Stacked tasks data
   const taskStackedData = data
     ? [
         {
           name: "Tasks",
-          TODO: data.tasksByStatus.find((t) => t.status === "TODO")?.count || 0,
-          IN_PROGRESS: data.tasksByStatus.find((t) => t.status === "IN_PROGRESS")?.count || 0,
-          DONE: data.tasksByStatus.find((t) => t.status === "DONE")?.count || 0,
+          TODO: tasksByStatus.find((t) => t.status === "TODO")?.count || 0,
+          IN_PROGRESS: tasksByStatus.find((t) => t.status === "IN_PROGRESS")?.count || 0,
+          DONE: tasksByStatus.find((t) => t.status === "DONE")?.count || 0,
         },
       ]
     : [];
 
-  const totalTasks = data
-    ? data.tasksByStatus.reduce((sum, item) => sum + item.count, 0)
-    : 0;
+  const totalTasks = tasksByStatus.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <div style={{ padding: "32px 0", maxWidth: "1120px", margin: "0 auto", width: "100%" }}>
@@ -503,7 +506,7 @@ export function Analytics(): React.JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {data.meetingsPerWeek.map((w) => (
+                {meetingsPerWeek.map((w) => (
                   <tr key={w.weekStart}>
                     <td>{formatWeekLabel(w.weekStart)}</td>
                     <td>{w.count}</td>
@@ -546,19 +549,19 @@ export function Analytics(): React.JSX.Element {
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span style={{ width: "10px", height: "10px", backgroundColor: "var(--ink-soft)", borderRadius: "2px" }} />
                   <span style={{ color: "var(--ink)" }}>
-                    To do: {data.tasksByStatus.find((t) => t.status === "TODO")?.count || 0}
+                    To do: {tasksByStatus.find((t) => t.status === "TODO")?.count || 0}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span style={{ width: "10px", height: "10px", backgroundColor: "var(--signal)", borderRadius: "2px" }} />
                   <span style={{ color: "var(--ink)" }}>
-                    In progress: {data.tasksByStatus.find((t) => t.status === "IN_PROGRESS")?.count || 0}
+                    In progress: {tasksByStatus.find((t) => t.status === "IN_PROGRESS")?.count || 0}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span style={{ width: "10px", height: "10px", backgroundColor: "var(--meeting-1)", borderRadius: "2px" }} />
                   <span style={{ color: "var(--ink)" }}>
-                    Done: {data.tasksByStatus.find((t) => t.status === "DONE")?.count || 0}
+                    Done: {tasksByStatus.find((t) => t.status === "DONE")?.count || 0}
                   </span>
                 </div>
               </div>
@@ -609,7 +612,7 @@ export function Analytics(): React.JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.tasksByStatus.map((t) => (
+                  {tasksByStatus.map((t) => (
                     <tr key={t.status}>
                       <td>{t.status}</td>
                       <td>{t.count}</td>
@@ -641,14 +644,14 @@ export function Analytics(): React.JSX.Element {
 
               <div
                 style={{
-                  height: Math.max(160, data.participation.length * 36) + "px",
+                  height: Math.max(160, participation.length * 36) + "px",
                   width: "100%",
                 }}
               >
                 <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
                   <BarChart
                     layout="vertical"
-                    data={data.participation}
+                    data={participation}
                     margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid stroke="var(--rule)" strokeDasharray="3 3" horizontal={false} opacity={0.5} />
@@ -690,7 +693,7 @@ export function Analytics(): React.JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.participation.map((p) => (
+                  {participation.map((p) => (
                     <tr key={p.userId}>
                       <td>{p.name}</td>
                       <td>{p.meetingsAttended}</td>

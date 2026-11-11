@@ -361,7 +361,7 @@ export function Tasks(): React.JSX.Element {
         members: Array<{ id: string; name: string; email: string; role: string }>;
       }>("/api/v1/team"),
   });
-  const teamMembers = teamQuery.data?.members || [];
+  const teamMembers = Array.isArray(teamQuery.data?.members) ? teamQuery.data.members : [];
 
   // Fetch tasks
   const tasksQuery = useQuery({
@@ -369,7 +369,7 @@ export function Tasks(): React.JSX.Element {
     queryFn: () => fetchTasks(),
   });
 
-  const allTasks = tasksQuery.data?.items || [];
+  const allTasks = Array.isArray(tasksQuery.data?.items) ? tasksQuery.data.items : [];
 
   // Real-time socket event listeners
   useEffect(() => {
@@ -378,17 +378,17 @@ export function Tasks(): React.JSX.Element {
 
     function handleTaskCreated(created: Task) {
       queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
-        if (!old) return { items: [created] };
-        if (old.items.some((t) => t.id === created.id)) return old;
-        return { items: [...old.items, created] };
+        const items = Array.isArray(old?.items) ? old.items : [];
+        if (items.some((t) => t.id === created.id)) return old;
+        return { items: [...items, created] };
       });
     }
 
     function handleTaskUpdated(updated: Task) {
       queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
-        if (!old) return { items: [updated] };
+        const items = Array.isArray(old?.items) ? old.items : [];
         return {
-          items: old.items.map((t) => (t.id === updated.id ? updated : t)),
+          items: items.map((t) => (t.id === updated.id ? updated : t)),
         };
       });
     }
@@ -396,8 +396,9 @@ export function Tasks(): React.JSX.Element {
     function handleTaskDeleted({ id }: { id: string }) {
       queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
         if (!old) return old;
+        const items = Array.isArray(old.items) ? old.items : [];
         return {
-          items: old.items.filter((t) => t.id !== id),
+          items: items.filter((t) => t.id !== id),
         };
       });
     }
@@ -471,9 +472,9 @@ export function Tasks(): React.JSX.Element {
     mutationFn: ({ id, data }: { id: string; data: UpdateTaskInput }) => updateTask(id, data),
     onSuccess: (updated) => {
       queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
-        if (!old) return { items: [updated] };
+        const items = Array.isArray(old?.items) ? old.items : [];
         return {
-          items: old.items.map((t) => (t.id === updated.id ? updated : t)),
+          items: items.map((t) => (t.id === updated.id ? updated : t)),
         };
       });
     },
@@ -490,8 +491,9 @@ export function Tasks(): React.JSX.Element {
       setToastMessage("Task deleted");
       queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
         if (!old) return old;
+        const items = Array.isArray(old.items) ? old.items : [];
         return {
-          items: old.items.filter((t) => t.id !== deletedId),
+          items: items.filter((t) => t.id !== deletedId),
         };
       });
     },
@@ -716,9 +718,9 @@ export function Tasks(): React.JSX.Element {
             setEditingTask(null);
             setToastMessage("Task updated");
             queryClient.setQueryData(["tasks"], (old: { items: Task[] } | undefined) => {
-              if (!old) return { items: [updated] };
+              const items = Array.isArray(old?.items) ? old.items : [];
               return {
-                items: old.items.map((t) => (t.id === updated.id ? updated : t)),
+                items: items.map((t) => (t.id === updated.id ? updated : t)),
               };
             });
           }}

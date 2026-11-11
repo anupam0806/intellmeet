@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { apiFetch } from "./api.js";
 
 export interface AnalyticsRange {
@@ -29,14 +30,45 @@ export interface MemberParticipation {
   meetingsAttended: number;
 }
 
-export interface AnalyticsOverview {
-  range: AnalyticsRange;
-  totals: AnalyticsTotals;
-  meetingsPerWeek: WeeklyMeetingCount[];
-  tasksByStatus: TaskStatusCount[];
-  participation: MemberParticipation[];
-  actionItemConversionRate: number;
-}
+export const weeklyMeetingCountSchema = z.object({
+  weekStart: z.string(),
+  count: z.number().default(0),
+});
+
+export const taskStatusCountSchema = z.object({
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
+  count: z.number().default(0),
+});
+
+export const memberParticipationSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  meetingsAttended: z.number().default(0),
+});
+
+export const analyticsTotalsSchema = z.object({
+  meetings: z.number().default(0),
+  endedMeetings: z.number().default(0),
+  avgDurationMinutes: z.number().default(0),
+  openTasks: z.number().default(0),
+  doneTasks: z.number().default(0),
+});
+
+export const analyticsRangeSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+});
+
+export const analyticsOverviewSchema = z.object({
+  range: analyticsRangeSchema,
+  totals: analyticsTotalsSchema,
+  meetingsPerWeek: z.array(weeklyMeetingCountSchema).default([]),
+  tasksByStatus: z.array(taskStatusCountSchema).default([]),
+  participation: z.array(memberParticipationSchema).default([]),
+  actionItemConversionRate: z.number().default(0),
+});
+
+export type AnalyticsOverview = z.infer<typeof analyticsOverviewSchema>;
 
 export interface AnalyticsQueryInput {
   from?: string;
@@ -50,5 +82,6 @@ export async function fetchAnalyticsOverview(
   if (query?.from) searchParams.set("from", query.from);
   if (query?.to) searchParams.set("to", query.to);
   const qs = searchParams.toString();
-  return apiFetch<AnalyticsOverview>(`/analytics/overview${qs ? `?${qs}` : ""}`);
+  const raw = await apiFetch<unknown>(`/api/v1/analytics/overview${qs ? `?${qs}` : ""}`);
+  return analyticsOverviewSchema.parse(raw);
 }

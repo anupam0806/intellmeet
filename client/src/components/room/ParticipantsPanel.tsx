@@ -41,7 +41,7 @@ export function ParticipantsPanel({
       video: selfVideo,
       captions: selfCaptions,
     },
-    ...peers.map((p) => ({
+    ...(peers || []).map((p) => ({
       id: p.socketId,
       name: p.name,
       isSelf: false,

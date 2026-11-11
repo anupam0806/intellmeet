@@ -127,7 +127,7 @@ export function MeetingDetail(): React.JSX.Element {
         members: Array<{ id: string; name: string; email: string; role: string }>;
       }>("/api/v1/team"),
   });
-  const teamMembers = teamQuery.data?.members || [];
+  const teamMembers = Array.isArray(teamQuery.data?.members) ? teamQuery.data.members : [];
 
   // Chat query for Chat Log section
   const chatQuery = useQuery({
@@ -170,7 +170,7 @@ export function MeetingDetail(): React.JSX.Element {
           ...old,
           ai: {
             ...old.ai,
-            actionItems: old.ai.actionItems.map((item) =>
+            actionItems: (old.ai?.actionItems || []).map((item) =>
               item.id === res.item.id ? res.item : item,
             ),
           },
@@ -248,7 +248,7 @@ export function MeetingDetail(): React.JSX.Element {
           ...old,
           ai: {
             ...old.ai,
-            actionItems: old.ai.actionItems.map((item) =>
+            actionItems: (old.ai?.actionItems || []).map((item) =>
               item.id === variables.itemId ? { ...item, taskId: res.task.id } : item,
             ),
           },
@@ -914,7 +914,7 @@ export function MeetingDetail(): React.JSX.Element {
                         fontFamily: "Newsreader, Georgia, serif",
                       }}
                     >
-                      {meeting.ai.keyPoints.map((kp, idx) => (
+                      {(meeting.ai.keyPoints || []).map((kp, idx) => (
                         <li key={idx}>{kp}</li>
                       ))}
                     </ul>
@@ -948,7 +948,7 @@ export function MeetingDetail(): React.JSX.Element {
                         fontFamily: "Newsreader, Georgia, serif",
                       }}
                     >
-                      {meeting.ai.decisions.map((decision, idx) => (
+                      {(meeting.ai.decisions || []).map((decision, idx) => (
                         <li key={idx}>{decision}</li>
                       ))}
                     </ul>
@@ -991,7 +991,7 @@ export function MeetingDetail(): React.JSX.Element {
 
                   {meeting.ai.actionItems && meeting.ai.actionItems.length > 0 ? (
                     <div data-testid="ai-action-items-list" className="space-y-3">
-                      {meeting.ai.actionItems.map((item, index) => {
+                      {(meeting.ai.actionItems || []).map((item, index) => {
                         const isEditing = editingItemId === item.id;
 
                         return (
@@ -1412,7 +1412,7 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
             ) : (
               <div className="space-y-4 max-w-3xl">
-                {transcriptQuery.data?.items.map((segment) => {
+                {(transcriptQuery.data?.items || []).map((segment) => {
                   const timeStr = new Date(segment.ts).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -1488,7 +1488,7 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
             ) : (
               <div className="space-y-3 max-w-3xl">
-                {chatQuery.data?.items.map((msg) => {
+                {(chatQuery.data?.items || []).map((msg) => {
                   const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",

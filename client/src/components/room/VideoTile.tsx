@@ -138,7 +138,7 @@ export function VideoTile({
     }
   };
 
-  const initials = name
+  const initials = (name || "")
     .split(" ")
     .map((p) => p[0])
     .join("")

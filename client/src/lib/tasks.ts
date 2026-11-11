@@ -85,6 +85,7 @@ export function reorderTasksPure(
   targetStatus: TaskStatus,
   targetIndex: number,
 ): Task[] {
+  if (!Array.isArray(tasks)) return [];
   const activeTask = tasks.find((t) => t.id === activeId);
   if (!activeTask) return tasks;
 

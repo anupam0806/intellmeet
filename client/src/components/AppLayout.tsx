@@ -40,8 +40,8 @@ export function AppLayout(): React.JSX.Element {
   const loadNotifications = useCallback(async () => {
     try {
       const data = await fetchNotifications();
-      setNotifications(data.items);
-      setUnreadCount(data.unreadCount);
+      setNotifications(Array.isArray(data?.items) ? data.items : []);
+      setUnreadCount(typeof data?.unreadCount === "number" ? data.unreadCount : 0);
     } catch {
       // Non-blocking error for notification loading
     }
@@ -127,7 +127,7 @@ export function AppLayout(): React.JSX.Element {
     setNotifDropdownOpen(false);
     if (!item.read) {
       setNotifications((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
+        (Array.isArray(prev) ? prev : []).map((n) => (n.id === item.id ? { ...n, read: true } : n)),
       );
       setUnreadCount((c) => Math.max(0, c - 1));
       markNotificationAsRead(item.id).catch(() => {});
@@ -136,7 +136,7 @@ export function AppLayout(): React.JSX.Element {
   };
 
   const handleMarkAllRead = async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => (Array.isArray(prev) ? prev : []).map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
     try {
       await markAllNotificationsAsRead();
@@ -331,7 +331,7 @@ export function AppLayout(): React.JSX.Element {
                       No notifications
                     </div>
                   ) : (
-                    notifications.map((item) => (
+                    (Array.isArray(notifications) ? notifications : []).map((item) => (
                       <button
                         key={item.id}
                         type="button"

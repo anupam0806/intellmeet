@@ -143,4 +143,77 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
       expect(screen.getByText("8")).toBeInTheDocument();
     });
   });
+
+  it("handles completely empty response with zero values without crashing", async () => {
+    const emptyOverview: analyticsApi.AnalyticsOverview = {
+      range: {
+        from: "2026-03-01",
+        to: "2026-03-31",
+      },
+      totals: {
+        meetings: 0,
+        endedMeetings: 0,
+        avgDurationMinutes: 0,
+        openTasks: 0,
+        doneTasks: 0,
+      },
+      meetingsPerWeek: [],
+      tasksByStatus: [],
+      participation: [],
+      actionItemConversionRate: 0,
+    };
+    vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockResolvedValueOnce(emptyOverview);
+
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No meeting data in this range")).toBeInTheDocument();
+      expect(screen.getByText("0 completed · 0 open")).toBeInTheDocument();
+      expect(screen.getByText("—")).toBeInTheDocument();
+    });
+  });
+
+  it("handles malformed/partial response with missing arrays defensively without crashing", async () => {
+    // Cast partial object with undefined arrays to simulate defensive component handling
+    const malformedData = {
+      range: {
+        from: "2026-03-01",
+        to: "2026-03-31",
+      },
+      totals: {
+        meetings: 5,
+        endedMeetings: 3,
+        avgDurationMinutes: 20,
+        openTasks: 1,
+        doneTasks: 2,
+      },
+      meetingsPerWeek: undefined as unknown as analyticsApi.AnalyticsOverview["meetingsPerWeek"],
+      tasksByStatus: undefined as unknown as analyticsApi.AnalyticsOverview["tasksByStatus"],
+      participation: undefined as unknown as analyticsApi.AnalyticsOverview["participation"],
+      actionItemConversionRate: 0.4,
+    } as analyticsApi.AnalyticsOverview;
+
+    vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockResolvedValueOnce(malformedData);
+
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(screen.getByText("5")).toBeInTheDocument();
+      expect(screen.getByText("3 ended of 5 total")).toBeInTheDocument();
+      expect(screen.getByText("40%")).toBeInTheDocument();
+    });
+  });
+
+  it("rejects invalid/partial API response with Zod and shows error alert with Retry button", async () => {
+    vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockRejectedValueOnce(
+      new Error("Invalid API response shape"),
+    );
+
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+    });
+  });
 });

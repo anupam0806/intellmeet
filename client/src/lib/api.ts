@@ -157,6 +157,15 @@ async function parseResponse<T>(response: Response): Promise<T> {
     return (await response.json()) as T;
   }
 
+  // Reject unexpected HTML response (e.g. SPA fallback on wrong API paths)
+  if (contentType && contentType.includes("text/html")) {
+    throw new ApiClientError(
+      response.status,
+      "INVALID_RESPONSE",
+      "Expected JSON response from API but received HTML",
+    );
+  }
+
   return (await response.text()) as unknown as T;
 }
 

@@ -65,7 +65,7 @@ export function Meetings(): React.JSX.Element {
       }),
   });
 
-  const meetings: MeetingSummary[] = data?.items || [];
+  const meetings: MeetingSummary[] = Array.isArray(data?.items) ? data.items : [];
   const total = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(total / 10));
 

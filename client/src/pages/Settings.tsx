@@ -129,7 +129,7 @@ export function Settings(): React.JSX.Element {
         },
       );
       if (team) {
-        const updatedMembers = team.members.map((m) =>
+        const updatedMembers = (team.members || []).map((m) =>
           m.id === targetUserId ? { ...m, role: res.user.role } : m,
         );
         setTeam({ ...team, members: updatedMembers });
@@ -151,7 +151,7 @@ export function Settings(): React.JSX.Element {
   };
 
   const isAdmin = user?.role === "ADMIN";
-  const adminCount = team?.members.filter((m) => m.role === "ADMIN").length || 0;
+  const adminCount = (team?.members || []).filter((m) => m.role === "ADMIN").length;
 
   return (
     <div style={{ maxWidth: "760px", margin: "0 auto", paddingBottom: "48px" }}>
@@ -399,10 +399,10 @@ export function Settings(): React.JSX.Element {
 
             {/* Member List */}
             <h3 style={{ fontSize: "15px", fontWeight: 600, margin: "0 0 12px 0", color: "var(--ink)" }}>
-              Members ({team.members.length})
+              Members ({team.members?.length || 0})
             </h3>
             <div style={{ borderTop: "1px solid var(--rule)" }}>
-              {team.members.map((member) => {
+              {(team.members || []).map((member) => {
                 const isLastAdmin = member.role === "ADMIN" && adminCount <= 1;
 
                 return (

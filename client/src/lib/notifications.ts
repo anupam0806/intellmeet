@@ -17,17 +17,17 @@ export interface NotificationsResponse {
 }
 
 export async function fetchNotifications(): Promise<NotificationsResponse> {
-  return apiFetch<NotificationsResponse>("/notifications");
+  return apiFetch<NotificationsResponse>("/api/v1/notifications");
 }
 
 export async function markNotificationAsRead(id: string): Promise<void> {
-  await apiFetch<void>(`/notifications/${id}/read`, {
+  await apiFetch<void>(`/api/v1/notifications/${id}/read`, {
     method: "PATCH",
   });
 }
 
 export async function markAllNotificationsAsRead(): Promise<void> {
-  await apiFetch<void>("/notifications/read-all", {
+  await apiFetch<void>("/api/v1/notifications/read-all", {
     method: "POST",
   });
 }
