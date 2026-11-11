@@ -5,7 +5,9 @@ export const authRateLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true",
+  skip: () =>
+    (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
+    process.env.RATE_LIMIT_DISABLED === "true",
   handler: (_req, res) => {
     res.status(429).json({
       error: {
@@ -22,7 +24,9 @@ export const demoRateLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true",
+  skip: () =>
+    (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
+    process.env.RATE_LIMIT_DISABLED === "true",
   handler: (_req, res) => {
     res.status(429).json({
       error: {
@@ -40,7 +44,9 @@ export const aiGenerateRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.user?.id || req.ip || "anonymous",
-  skip: () => process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true",
+  skip: () =>
+    (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
+    process.env.RATE_LIMIT_DISABLED === "true",
   handler: (_req, res) => {
     res.status(429).json({
       error: {
@@ -51,4 +57,24 @@ export const aiGenerateRateLimiter = rateLimit({
     });
   },
 });
+
+export const generalRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () =>
+    (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
+    process.env.RATE_LIMIT_DISABLED === "true",
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Too many requests. Please try again later.",
+        details: [],
+      },
+    });
+  },
+});
+
 

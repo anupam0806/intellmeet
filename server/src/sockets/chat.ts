@@ -31,6 +31,8 @@ export function registerChatHandlers(io: Server, socket: Socket) {
         return;
       }
 
+      messageTimestamps.push(now);
+
       const parsed = socketChatSendSchema.safeParse(payload);
       if (!parsed.success) {
         socket.emit("error", {
@@ -48,8 +50,6 @@ export function registerChatHandlers(io: Server, socket: Socket) {
         });
         return;
       }
-
-      messageTimestamps.push(now);
 
       try {
         const message = await ChatService.createMessage({

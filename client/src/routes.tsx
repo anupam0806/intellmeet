@@ -9,13 +9,45 @@ import { Dashboard } from "./pages/Dashboard.js";
 import { Login } from "./pages/Login.js";
 import { Signup } from "./pages/Signup.js";
 import { Meetings } from "./pages/Meetings.js";
-import { MeetingDetail } from "./pages/MeetingDetail.js";
-import { Room } from "./pages/Room.js";
-import { Tasks } from "./pages/Tasks.js";
-import { Analytics } from "./pages/Analytics.js";
 import { Settings } from "./pages/Settings.js";
 import { NotFound } from "./pages/NotFound.js";
 import { Forbidden } from "./pages/Forbidden.js";
+
+const MeetingDetail = React.lazy(() =>
+  import("./pages/MeetingDetail.js").then((m) => ({ default: m.MeetingDetail })),
+);
+const Room = React.lazy(() =>
+  import("./pages/Room.js").then((m) => ({ default: m.Room })),
+);
+const Tasks = React.lazy(() =>
+  import("./pages/Tasks.js").then((m) => ({ default: m.Tasks })),
+);
+const Analytics = React.lazy(() =>
+  import("./pages/Analytics.js").then((m) => ({ default: m.Analytics })),
+);
+
+function LazyPage({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return (
+    <React.Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "40vh",
+            color: "var(--ink-soft)",
+            fontSize: "14px",
+          }}
+        >
+          Loading...
+        </div>
+      }
+    >
+      {children}
+    </React.Suspense>
+  );
+}
 
 function RootRedirect(): React.JSX.Element | null {
   const { user, isInitialized } = useAuthStore();
@@ -50,14 +82,42 @@ export const routes: RouteObject[] = [
             children: [
               { path: "/dashboard", element: <Dashboard /> },
               { path: "/meetings", element: <Meetings /> },
-              { path: "/meetings/:id", element: <MeetingDetail /> },
-              { path: "/tasks", element: <Tasks /> },
-              { path: "/analytics", element: <Analytics /> },
+              {
+                path: "/meetings/:id",
+                element: (
+                  <LazyPage>
+                    <MeetingDetail />
+                  </LazyPage>
+                ),
+              },
+              {
+                path: "/tasks",
+                element: (
+                  <LazyPage>
+                    <Tasks />
+                  </LazyPage>
+                ),
+              },
+              {
+                path: "/analytics",
+                element: (
+                  <LazyPage>
+                    <Analytics />
+                  </LazyPage>
+                ),
+              },
               { path: "/settings", element: <Settings /> },
             ],
           },
           // Room route also protected, with returnTo support
-          { path: "/room/:roomCode", element: <Room /> },
+          {
+            path: "/room/:roomCode",
+            element: (
+              <LazyPage>
+                <Room />
+              </LazyPage>
+            ),
+          },
         ],
       },
       // Standalone error & fallback pages

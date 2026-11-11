@@ -5,7 +5,6 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 import { sanitizeInPlace } from "./utils/sanitize.js";
@@ -19,6 +18,7 @@ import { notificationRouter } from "./routes/notification.routes.js";
 import { analyticsRouter } from "./routes/analytics.routes.js";
 import { rtcRouter } from "./routes/rtc.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { generalRateLimiter } from "./middleware/rateLimit.js";
 
 export function resolveClientDistPath(clientDistOverride?: string): { path: string; exists: boolean } {
   const defaultClientDist = path.resolve(
@@ -88,23 +88,12 @@ export function createApp(clientDistOverride?: string): express.Application {
     next();
   });
 
+  // Health checks are mounted before rate limiting so uptime monitors are never throttled
+  app.use("/api/v1/health", healthRouter);
+  app.use("/health", healthRouter);
+
   // General rate limiter: 300 requests per 15 minutes per IP
-  const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 300,
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (_req, res) => {
-      res.status(429).json({
-        error: {
-          code: "RATE_LIMITED",
-          message: "Too many requests. Please try again later.",
-          details: [],
-        },
-      });
-    },
-  });
-  app.use("/api", generalLimiter);
+  app.use("/api", generalRateLimiter);
 
   // API v1 routes
   app.use("/api/v1/auth", authRouter);
@@ -116,8 +105,6 @@ export function createApp(clientDistOverride?: string): express.Application {
   app.use("/api/v1/analytics", analyticsRouter);
   app.use("/api/v1/rtc", rtcRouter);
   app.use("/rtc", rtcRouter);
-  app.use("/api/v1/health", healthRouter);
-  app.use("/health", healthRouter);
 
   // 404 handler for unmatched API routes
   app.use("/api", (_req, res) => {

@@ -155,6 +155,28 @@ export function AppLayout(): React.JSX.Element {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--ground)" }}>
+      {/* Skip to main content link for keyboard & screen reader accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only"
+        style={{
+          position: "absolute",
+          top: "8px",
+          left: "8px",
+          zIndex: 100,
+          backgroundColor: "var(--surface)",
+          color: "var(--ink)",
+          padding: "8px 16px",
+          borderRadius: "var(--radius)",
+          border: "1px solid var(--rule)",
+          fontWeight: 600,
+          fontSize: "13px",
+          textDecoration: "none",
+        }}
+      >
+        Skip to content
+      </a>
+
       {/* Polite live region for screen readers */}
       <div aria-live="polite" className="sr-only" role="status">
         {liveAnnouncement}
@@ -502,7 +524,7 @@ export function AppLayout(): React.JSX.Element {
       )}
 
       {/* Main content body */}
-      <main style={{ flex: 1, padding: "24px", maxWidth: "1120px", width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <main id="main-content" style={{ flex: 1, padding: "24px", maxWidth: "1120px", width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <Outlet />
       </main>
     </div>

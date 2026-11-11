@@ -4,6 +4,20 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("recharts") || id.includes("d3-") || id.includes("victory-vendor")) {
+            return "recharts";
+          }
+          if (id.includes("react-dom") || id.includes("node_modules/react/") || id.includes("react-router")) {
+            return "react-vendor";
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

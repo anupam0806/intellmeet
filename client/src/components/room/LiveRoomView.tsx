@@ -17,6 +17,7 @@ import { ChatPanel } from "./ChatPanel.js";
 import { ParticipantsPanel } from "./ParticipantsPanel.js";
 import { CaptionsPanel, type LiveCaptionSegment } from "./CaptionsPanel.js";
 import { DebugPanel } from "./DebugPanel.js";
+import "./LiveRoomView.css";
 import type { PeerStreamInfo, PeerDebugStats } from "../../lib/rtc.js";
 import type { ChatMessageItem } from "../../lib/meetings.js";
 
@@ -103,16 +104,7 @@ export function LiveRoomView({
   const totalTiles = 1 + peers.length;
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "var(--ink)",
-        display: "flex",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
+    <div className="live-room-container">
       {/* Status Notice Toast / Banner */}
       {statusMessage && (
         <div
@@ -136,23 +128,10 @@ export function LiveRoomView({
         </div>
       )}
 
-      {/* Left Control Rail on Desktop */}
-      <aside
-        style={{
-          width: "64px",
-          backgroundColor: "var(--surface)",
-          borderRight: "1px solid var(--rule)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 0",
-          zIndex: 20,
-        }}
-        aria-label="Room controls"
-      >
+      {/* Left Control Rail on Desktop / Bottom Bar on Mobile */}
+      <aside className="live-room-controls" aria-label="Room controls">
         {/* Media & Utility Toggles */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
+        <div className="live-room-controls-group">
           {/* Audio */}
           <button
             type="button"
@@ -343,7 +322,7 @@ export function LiveRoomView({
         </div>
 
         {/* Leave & End Call Buttons */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+        <div className="live-room-controls-group">
           <button
             type="button"
             onClick={onLeaveMeeting}
@@ -403,11 +382,8 @@ export function LiveRoomView({
         }}
       >
         <div
+          className="live-room-tiles-grid"
           style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            gap: "12px",
             gridTemplateColumns:
               totalTiles === 1
                 ? "1fr"
@@ -455,15 +431,7 @@ export function LiveRoomView({
 
       {/* Right Side Panel: Chat / Participants / Captions */}
       {activeSideTab && (
-        <div
-          style={{
-            width: "320px",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            zIndex: 30,
-          }}
-        >
+        <div className="live-room-side-panel">
           {/* Header with Close */}
           <div
             style={{

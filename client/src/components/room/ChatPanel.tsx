@@ -80,6 +80,9 @@ export function ChatPanel({
 
       {/* Messages list */}
       <div
+        role="log"
+        aria-live="polite"
+        aria-label="Meeting chat messages"
         style={{
           flex: 1,
           overflowY: "auto",

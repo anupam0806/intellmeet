@@ -85,6 +85,21 @@ async function bootstrap(): Promise<void> {
       process.exit(1);
     });
   });
+
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.error(
+      { reason: reason instanceof Error ? reason.message : String(reason) },
+      "Unhandled promise rejection detected",
+    );
+  });
+
+  process.on("uncaughtException", (err: Error) => {
+    logger.fatal(
+      { err: err.message },
+      "Uncaught exception detected. Exiting process to allow host restart.",
+    );
+    process.exit(1);
+  });
 }
 
 bootstrap().catch((err: unknown) => {
