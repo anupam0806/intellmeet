@@ -6,10 +6,12 @@ import { createApp } from "./app.js";
 import { createSocketServer } from "./sockets/index.js";
 import { recoverPendingAiGenerations } from "./services/ai/generate.js";
 import { logger } from "./utils/logger.js";
+import { logStartupSummary } from "./utils/startupSummary.js";
 
 async function bootstrap(): Promise<void> {
   // Database connection
   await connectDB();
+  logStartupSummary();
 
   const app = createApp();
   const server = http.createServer(app);

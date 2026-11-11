@@ -20,6 +20,19 @@ import { analyticsRouter } from "./routes/analytics.routes.js";
 import { rtcRouter } from "./routes/rtc.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
+export function resolveClientDistPath(clientDistOverride?: string): { path: string; exists: boolean } {
+  const defaultClientDist = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../client/dist",
+  );
+  const clientDistPath =
+    clientDistOverride ||
+    (env.CLIENT_DIST_DIR && env.CLIENT_DIST_DIR.trim() !== ""
+      ? path.resolve(env.CLIENT_DIST_DIR)
+      : defaultClientDist);
+  return { path: clientDistPath, exists: fs.existsSync(clientDistPath) };
+}
+
 export function createApp(clientDistOverride?: string): express.Application {
   const app = express();
 
@@ -118,17 +131,9 @@ export function createApp(clientDistOverride?: string): express.Application {
   });
 
   // Static serving for built client in production or when dist exists
-  const defaultClientDist = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../../client/dist",
-  );
-  const clientDistPath =
-    clientDistOverride ||
-    (env.CLIENT_DIST_DIR && env.CLIENT_DIST_DIR.trim() !== ""
-      ? path.resolve(env.CLIENT_DIST_DIR)
-      : defaultClientDist);
+  const { path: clientDistPath, exists: clientDistExists } = resolveClientDistPath(clientDistOverride);
 
-  if (fs.existsSync(clientDistPath)) {
+  if (clientDistExists) {
     // Serve static files with caching
     app.use(
       express.static(clientDistPath, {

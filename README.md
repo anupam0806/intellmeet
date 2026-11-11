@@ -49,6 +49,11 @@ Configure the following environment variable names in Render (supply values dire
 - `LOG_LEVEL` — Logging verbosity level (`info`, `warn`, `error`, `debug`).
 - `CLIENT_DIST_DIR` — Optional custom path to client build output folder (defaults to `client/dist`).
 
+### Deployment Scripts
+
+- `npm run env:check` — Audits the environment variables against the example configuration and reports status without exposing secret values.
+- `npm run seed` — Populates the MongoDB database with initial demo data (Brightwell team, meetings, tasks, and notifications).
+
 ### Seeding Demo Data
 
 To populate the database with the Brightwell Design Co. demo team (5 accounts, 8 meetings across 6 weeks with realistic transcripts and summaries, 12 tasks, and notifications):

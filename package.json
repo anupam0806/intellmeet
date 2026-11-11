@@ -15,7 +15,8 @@
     "start": "npm --workspace=server run start",
     "lint": "npm --workspace=client run lint && npm --workspace=server run lint",
     "test": "npm --workspace=client run test && npm --workspace=server run test",
-    "seed": "npm --workspace=server run seed"
+    "seed": "npm --workspace=server run seed",
+    "env:check": "npm --workspace=server run env:check"
   },
   "allowScripts": {
     "bcrypt@5.1.1": true,

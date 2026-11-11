@@ -12,7 +12,8 @@
     "start": "node dist/index.js",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "vitest run",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "env:check": "tsx scripts/envCheck.ts"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
