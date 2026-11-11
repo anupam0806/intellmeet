@@ -1,0 +1,37 @@
+# IntellMeet — Local Docker Compose
+# Configuration is loaded from server/.env (not committed; create by copying server/.env.example).
+#
+# Usage:
+#   1. Using MongoDB Atlas (default):
+#      Ensure MONGODB_URI in server/.env points to your MongoDB Atlas cluster.
+#      docker compose up --build
+#
+#   2. Using local MongoDB service:
+#      In server/.env set: MONGODB_URI=mongodb://mongo:27017/intellmeet
+#      docker compose --profile localdb up --build
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10000:10000"
+    environment:
+      - PORT=10000
+    env_file:
+      - server/.env
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7.0
+    profiles:
+      - localdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

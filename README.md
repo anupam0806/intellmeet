@@ -1,5 +1,7 @@
 # IntellMeet
 
+[![CI](https://github.com/anupam0806/intellmeet/actions/workflows/ci.yml/badge.svg)](https://github.com/anupam0806/intellmeet/actions/workflows/ci.yml)
+
 A web app for video meetings with AI-written summaries and task tracking.
 
 Stack: React 19, Vite, Tailwind CSS v4, Node.js, Express 5, Socket.io, Mongoose, and WebRTC.
@@ -65,4 +67,42 @@ npm run seed
 # Or reset and re-seed the Brightwell team data
 npm run seed -- --reset
 ```
+
+## Docker and CI
+
+### Docker Commands
+
+Build image:
+```bash
+docker build -t intellmeet .
+```
+
+Run standalone container:
+```bash
+docker run -p 10000:10000 --env-file server/.env intellmeet
+```
+
+Run with Docker Compose:
+```bash
+# Using MongoDB Atlas
+docker compose up --build
+
+# Or using local MongoDB container
+docker compose --profile localdb up --build
+```
+
+### Compose Configuration
+
+`docker-compose.yml` loads configuration from `server/.env` (created from `server/.env.example`) and maps port `10000`. The container health check queries `/api/v1/health`. An optional `localdb` profile runs MongoDB 7.0 at `mongodb://mongo:27017/intellmeet` with a persistent volume.
+
+### CI Workflow
+
+GitHub Actions runs `.github/workflows/ci.yml` on push and pull requests targeting `main` on `ubuntu-latest` with Node 22:
+- Checks out code with read-only permissions (`contents: read`).
+- Sets up Node.js 22 with npm dependency cache.
+- Caches MongoDB Memory Server binaries.
+- Installs dependencies (`npm install --no-audit --no-fund`).
+- Runs `npm run lint`.
+- Runs `npm run build`.
+- Runs `npm test` across client and server.
 
