@@ -24,6 +24,8 @@ jobs:
       DEMO_LOGIN_ENABLED: "true"
       STUN_URLS: "stun:stun.l.google.com:19302"
       LOG_LEVEL: "warn"
+      # Store mongodb-memory-server download inside npm cache directory so setup-node cache covers it
+      MONGOMS_DOWNLOAD_DIR: "/home/runner/.npm/mongodb-binaries"
 
     steps:
       - name: Checkout repository
@@ -34,12 +36,6 @@ jobs:
         with:
           node-version: 22
           cache: "npm"
-
-      - name: Cache MongoDB Memory Server binaries
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/mongodb-binaries
-          key: ${{ runner.os }}-mongodb-binaries-7.0
 
       # Lockfile was produced on Windows; npm install avoids platform-specific npm ci failures on optional native packages
       - name: Install dependencies
@@ -53,3 +49,14 @@ jobs:
 
       - name: Test
         run: npm test
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t intellmeet:ci .

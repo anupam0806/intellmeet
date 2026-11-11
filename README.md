@@ -97,12 +97,11 @@ docker compose --profile localdb up --build
 
 ### CI Workflow
 
-GitHub Actions runs `.github/workflows/ci.yml` on push and pull requests targeting `main` on `ubuntu-latest` with Node 22:
-- Checks out code with read-only permissions (`contents: read`).
-- Sets up Node.js 22 with npm dependency cache.
-- Caches MongoDB Memory Server binaries.
-- Installs dependencies (`npm install --no-audit --no-fund`).
-- Runs `npm run lint`.
-- Runs `npm run build`.
-- Runs `npm test` across client and server.
+GitHub Actions runs `.github/workflows/ci.yml` on push and pull requests targeting `main`:
+1. **test**: Runs on `ubuntu-latest` with Node 22 and npm cache, installs dependencies (`npm install --no-audit --no-fund`), runs `npm run lint`, `npm run build`, and `npm test` across client and server.
+2. **docker-build**: Runs on `ubuntu-latest` after `test` succeeds, checks out the code, and verifies image compilation via `docker build -t intellmeet:ci .`.
+
+### Verification Status
+
+The image build is checked by the CI "docker-build" job; running the container and the compose setup have not been tested by the author. Docker is not installed on the author's local machine, so the Dockerfile and compose file were not built or run locally.
 

@@ -22,5 +22,9 @@
     "bcrypt@5.1.1": true,
     "mongodb-memory-server@10.4.3": true,
     "esbuild": true
+  },
+  "optionalDependencies": {
+    "@esbuild/linux-x64": "^0.28.2",
+    "@rollup/rollup-linux-x64-gnu": "^4.67.5"
   }
 }
