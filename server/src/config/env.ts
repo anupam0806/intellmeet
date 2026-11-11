@@ -72,6 +72,7 @@ const envSchema = z
       .string()
       .transform((val) => (val ? val : "info"))
       .default("info"),
+    CLIENT_DIST_DIR: z.string().optional().default(""),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV !== "test") {

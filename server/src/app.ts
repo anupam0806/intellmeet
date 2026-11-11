@@ -1,11 +1,13 @@
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
+import { logger } from "./utils/logger.js";
 import { sanitizeInPlace } from "./utils/sanitize.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./routes/auth.routes.js";
@@ -18,16 +20,28 @@ import { analyticsRouter } from "./routes/analytics.routes.js";
 import { rtcRouter } from "./routes/rtc.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
-export function createApp(): express.Application {
+export function createApp(clientDistOverride?: string): express.Application {
   const app = express();
 
   // Trust proxy for rate limit and secure cookies behind reverse proxy (Render)
   app.set("trust proxy", 1);
 
-  // Security headers
+  // Security headers with CSP tailored for IntellMeet SPA
   app.use(
     helmet({
-      contentSecurityPolicy: false, // Let React SPA handle inline assets/scripts cleanly
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "blob:"],
+          mediaSrc: ["'self'", "blob:"],
+          connectSrc: ["'self'", "ws:", "wss:"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+        },
+      },
     }),
   );
 
@@ -92,20 +106,6 @@ export function createApp(): express.Application {
   app.use("/api/v1/health", healthRouter);
   app.use("/health", healthRouter);
 
-  // Static serving for built client in production or when dist exists
-  const clientDistPath = path.resolve(process.cwd(), "client/dist");
-  if (fs.existsSync(clientDistPath)) {
-    app.use(express.static(clientDistPath));
-
-    app.use((req, res, next) => {
-      if (req.method === "GET" && !req.path.startsWith("/api") && !req.path.startsWith("/socket.io")) {
-        res.sendFile(path.join(clientDistPath, "index.html"));
-        return;
-      }
-      next();
-    });
-  }
-
   // 404 handler for unmatched API routes
   app.use("/api", (_req, res) => {
     res.status(404).json({
@@ -116,6 +116,55 @@ export function createApp(): express.Application {
       },
     });
   });
+
+  // Static serving for built client in production or when dist exists
+  const defaultClientDist = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../client/dist",
+  );
+  const clientDistPath =
+    clientDistOverride ||
+    (env.CLIENT_DIST_DIR && env.CLIENT_DIST_DIR.trim() !== ""
+      ? path.resolve(env.CLIENT_DIST_DIR)
+      : defaultClientDist);
+
+  if (fs.existsSync(clientDistPath)) {
+    // Serve static files with caching
+    app.use(
+      express.static(clientDistPath, {
+        setHeaders: (res, filePath) => {
+          const normalized = filePath.replace(/\\/g, "/");
+          if (normalized.includes("/assets/")) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          } else if (normalized.endsWith("/index.html") || normalized.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-cache");
+          }
+        },
+      }),
+    );
+
+    // Fallback middleware: sends index.html for GET/HEAD non-API, non-socket.io routes without extension
+    app.use((req, res, next) => {
+      if (
+        (req.method === "GET" || req.method === "HEAD") &&
+        !req.path.startsWith("/api") &&
+        !req.path.startsWith("/socket.io") &&
+        !path.extname(req.path)
+      ) {
+        const indexPath = path.join(clientDistPath, "index.html");
+        if (fs.existsSync(indexPath)) {
+          res.setHeader("Cache-Control", "no-cache");
+          res.sendFile(indexPath, (err) => {
+            if (err) next(err);
+          });
+          return;
+        }
+      }
+      next();
+    });
+  } else {
+    logger.warn(`Client dist folder not found at ${clientDistPath}; continuing without client static serving.`);
+  }
 
   // Central error handler
   app.use(errorHandler);
