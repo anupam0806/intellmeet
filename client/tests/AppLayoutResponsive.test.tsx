@@ -100,6 +100,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
       </MemoryRouter>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
+
     // Desktop nav links are visible
     expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Meetings" })).toBeInTheDocument();
@@ -126,6 +130,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
         <AppLayout />
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
 
     // Desktop nav links and top bar account info are NOT rendered
     expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
@@ -175,6 +183,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
       </MemoryRouter>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
+
     const menuBtn = screen.getByRole("button", { name: /open menu/i });
     fireEvent.click(menuBtn);
     expect(screen.getByRole("dialog", { name: "Navigation menu" })).toBeInTheDocument();
@@ -195,6 +207,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
         <AppLayout />
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
 
     const menuBtn = screen.getByRole("button", { name: /open menu/i });
     fireEvent.click(menuBtn);
@@ -221,6 +237,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
       </MemoryRouter>,
     );
 
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
+
     const menuBtn = screen.getByRole("button", { name: /open menu/i });
     fireEvent.click(menuBtn);
 
@@ -241,6 +261,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
         <AppLayout />
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
 
     const menuBtn = screen.getByRole("button", { name: /open menu/i });
     fireEvent.click(menuBtn);
@@ -264,6 +288,10 @@ describe("Responsive App Frame & Viewport (< 1024px vs >= 1024px)", () => {
         <AppLayout />
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("notification-badge")).toBeInTheDocument();
+    });
 
     const bellBtn = screen.getByRole("button", { name: /notifications/i });
     const menuBtn = screen.getByRole("button", { name: /open menu/i });
