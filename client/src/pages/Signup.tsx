@@ -132,7 +132,7 @@ export function Signup(): React.JSX.Element {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px",
+        padding: "16px",
         backgroundColor: "var(--ground)",
       }}
     >
@@ -143,7 +143,7 @@ export function Signup(): React.JSX.Element {
           backgroundColor: "var(--surface)",
           borderRadius: "var(--radius)",
           border: "1px solid var(--rule)",
-          padding: "40px",
+          padding: "32px 20px",
         }}
       >
         <h1
@@ -153,6 +153,7 @@ export function Signup(): React.JSX.Element {
             margin: "0 0 8px 0",
             color: "var(--ink)",
             letterSpacing: "-0.01em",
+            overflowWrap: "anywhere",
           }}
         >
           Sign up
@@ -193,7 +194,8 @@ export function Signup(): React.JSX.Element {
               background: "none",
               border: "none",
               cursor: "pointer",
-              padding: "8px 0",
+              padding: "10px 0",
+              minHeight: "44px",
               fontSize: "15px",
               fontWeight: mode === "create" ? 600 : 400,
               color: mode === "create" ? "var(--ink)" : "var(--ink-soft)",
@@ -209,7 +211,8 @@ export function Signup(): React.JSX.Element {
               background: "none",
               border: "none",
               cursor: "pointer",
-              padding: "8px 0",
+              padding: "10px 0",
+              minHeight: "44px",
               fontSize: "15px",
               fontWeight: mode === "join" ? 600 : 400,
               color: mode === "join" ? "var(--ink)" : "var(--ink-soft)",
@@ -419,7 +422,7 @@ export function Signup(): React.JSX.Element {
             disabled={isSubmitting}
             style={{
               width: "100%",
-              height: "40px",
+              height: "44px",
               borderRadius: "var(--radius)",
               border: "none",
               backgroundColor: "var(--signal)",

@@ -28,6 +28,28 @@ export function AppLayout(): React.JSX.Element {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Desktop media query check (>= 1024px)
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      return window.matchMedia("(min-width: 1024px)").matches;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
+      if (e.matches) {
+        setMobileMenuOpen(false);
+      }
+    };
+    setIsDesktop(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   // Notifications state
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -36,6 +58,75 @@ export function AppLayout(): React.JSX.Element {
 
   const bellButtonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobilePanelRef = useRef<HTMLDivElement | null>(null);
+  const prevMenuOpenRef = useRef(mobileMenuOpen);
+
+  // Return focus to menu button on close
+  useEffect(() => {
+    if (prevMenuOpenRef.current && !mobileMenuOpen) {
+      menuButtonRef.current?.focus();
+    }
+    prevMenuOpenRef.current = mobileMenuOpen;
+  }, [mobileMenuOpen]);
+
+  // Focus trap, escape key, and scroll lock for mobile menu
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // Move focus to first focusable element inside mobile menu panel
+    const panel = mobilePanelRef.current;
+    if (panel) {
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length > 0) {
+        focusable[0]?.focus();
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+        return;
+      }
+
+      if (e.key === "Tab" && panel) {
+        const focusable = Array.from(
+          panel.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last?.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -120,7 +211,23 @@ export function AppLayout(): React.JSX.Element {
   };
 
   const handleToggleNotifications = () => {
-    setNotifDropdownOpen((prev) => !prev);
+    setNotifDropdownOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setMobileMenuOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleMobileMenu = () => {
+    setMobileMenuOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setNotifDropdownOpen(false);
+      }
+      return next;
+    });
   };
 
   const handleItemClick = (item: NotificationItem) => {
@@ -212,29 +319,31 @@ export function AppLayout(): React.JSX.Element {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="desktop-nav" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                style={({ isActive }) => ({
-                  color: isActive ? "var(--ink)" : "var(--ink-soft)",
-                  fontWeight: isActive ? 600 : 400,
-                  fontSize: "15px",
-                  textDecoration: "none",
-                  borderBottom: isActive ? "2px solid var(--ink)" : "2px solid transparent",
-                  padding: "12px 0 10px 0",
-                  transition: "color 120ms ease",
-                })}
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+          {isDesktop && (
+            <nav className="desktop-nav" aria-label="Main navigation" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  style={({ isActive }) => ({
+                    color: isActive ? "var(--ink)" : "var(--ink-soft)",
+                    fontWeight: isActive ? 600 : 400,
+                    fontSize: "15px",
+                    textDecoration: "none",
+                    borderBottom: isActive ? "2px solid var(--ink)" : "2px solid transparent",
+                    padding: "12px 0 10px 0",
+                    transition: "color 120ms ease",
+                  })}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
         </div>
 
         {/* Right side controls: Notification bell & Account menu */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", position: "relative" }}>
           {/* Notification bell */}
           <div style={{ position: "relative" }}>
             <button
@@ -252,7 +361,11 @@ export function AppLayout(): React.JSX.Element {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: "6px",
+                width: "44px",
+                height: "44px",
+                minWidth: "44px",
+                minHeight: "44px",
+                padding: 0,
                 borderRadius: "var(--radius)",
                 position: "relative",
               }}
@@ -264,8 +377,8 @@ export function AppLayout(): React.JSX.Element {
                   data-testid="notification-badge"
                   style={{
                     position: "absolute",
-                    top: "0px",
-                    right: "-2px",
+                    top: "6px",
+                    right: "6px",
                     minWidth: "16px",
                     height: "16px",
                     borderRadius: "var(--radius-full)",
@@ -296,7 +409,7 @@ export function AppLayout(): React.JSX.Element {
                   position: "absolute",
                   top: "calc(100% + 8px)",
                   right: 0,
-                  width: "360px",
+                  width: "min(360px, calc(100vw - 32px))",
                   maxHeight: "440px",
                   backgroundColor: "var(--surface)",
                   border: "1px solid var(--rule)",
@@ -426,9 +539,9 @@ export function AppLayout(): React.JSX.Element {
             )}
           </div>
 
-          {/* Account & Sign out */}
-          {user && (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Account & Sign out on desktop only */}
+          {isDesktop && user && (
+            <div className="desktop-account" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "15px", fontWeight: 500, color: "var(--ink)" }}>
                   {user.name}
@@ -474,53 +587,200 @@ export function AppLayout(): React.JSX.Element {
           )}
 
           {/* Mobile hamburger button */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="mobile-menu-btn"
-            style={{
-              display: "none",
-              background: "transparent",
-              border: "none",
-              color: "var(--ink)",
-              cursor: "pointer",
-              padding: "6px",
-            }}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {!isDesktop && (
+            <button
+              ref={menuButtonRef}
+              type="button"
+              onClick={handleToggleMobileMenu}
+              className="mobile-menu-btn"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--ink)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "44px",
+                height: "44px",
+                minWidth: "44px",
+                minHeight: "44px",
+                padding: 0,
+                borderRadius: "var(--radius)",
+              }}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu-panel"
+            >
+              {mobileMenuOpen ? <X size={22} strokeWidth={1.75} /> : <Menu size={22} strokeWidth={1.75} />}
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Mobile nav drawer */}
-      {mobileMenuOpen && (
-        <div
-          style={{
-            backgroundColor: "var(--surface)",
-            borderBottom: "1px solid var(--rule)",
-            padding: "16px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMobileMenuOpen(false)}
+      {/* Mobile nav panel and flat scrim */}
+      {!isDesktop && mobileMenuOpen && (
+        <>
+          {/* Flat scrim behind drawer (no blur, no gradient) */}
+          <div
+            data-testid="mobile-menu-scrim"
+            className="mobile-nav-scrim"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              zIndex: 45,
+            }}
+          />
+
+          {/* Right drawer panel */}
+          <div
+            id="mobile-menu-panel"
+            ref={mobilePanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className="mobile-menu-panel"
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              height: "100%",
+              width: "85%",
+              maxWidth: "360px",
+              backgroundColor: "var(--surface)",
+              borderLeft: "1px solid var(--rule)",
+              boxShadow: "var(--shadow-menu)",
+              display: "flex",
+              flexDirection: "column",
+              zIndex: 50,
+              overflowY: "auto",
+            }}
+          >
+            {/* Row 1: Account name and role (at least 44px tall, keyboard operable) */}
+            {user && (
+              <div
+                tabIndex={0}
+                role="region"
+                aria-label="Account details"
+                style={{
+                  minHeight: "44px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid var(--rule)",
+                  backgroundColor: "var(--ground)",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+                  <span
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {user.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      color: "var(--ink-soft)",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {user.email}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    padding: "2px 6px",
+                    borderRadius: "var(--radius-chip)",
+                    backgroundColor: "var(--surface)",
+                    color: "var(--ink-soft)",
+                    border: "1px solid var(--rule)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {user.role}
+                </span>
+              </div>
+            )}
+
+            {/* Rows 2..6: Navigation Links (each at least 44px tall) */}
+            <nav
+              aria-label="Mobile navigation links"
               style={{
-                fontSize: "15px",
-                color: "var(--ink)",
-                textDecoration: "none",
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
                 padding: "8px 0",
               }}
             >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={({ isActive }) => ({
+                    minHeight: "44px",
+                    padding: "0 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: "15px",
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "var(--ink)" : "var(--ink-soft)",
+                    backgroundColor: isActive ? "var(--ground)" : "transparent",
+                    borderLeft: isActive ? "3px solid var(--signal)" : "3px solid transparent",
+                    textDecoration: "none",
+                  })}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* Last row: Sign out (at least 44px tall) */}
+            {user && (
+              <div style={{ borderTop: "1px solid var(--rule)", padding: "12px 16px 20px 16px" }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setMobileMenuOpen(false);
+                    await handleSignOut();
+                  }}
+                  style={{
+                    minHeight: "44px",
+                    width: "100%",
+                    padding: "0 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "15px",
+                    fontWeight: 500,
+                    color: "var(--error)",
+                    backgroundColor: "transparent",
+                    border: "1px solid var(--rule)",
+                    borderRadius: "var(--radius)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <LogOut size={16} strokeWidth={1.75} />
+                  <span>Sign out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Main content body */}

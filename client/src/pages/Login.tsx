@@ -138,7 +138,7 @@ export function Login(): React.JSX.Element {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px",
+        padding: "16px",
         backgroundColor: "var(--ground)",
       }}
     >
@@ -147,7 +147,7 @@ export function Login(): React.JSX.Element {
           width: "100%",
           maxWidth: "880px",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "1fr",
           backgroundColor: "var(--surface)",
           borderRadius: "var(--radius)",
           border: "1px solid var(--rule)",
@@ -156,7 +156,7 @@ export function Login(): React.JSX.Element {
         }}
       >
         {/* Left Column: Log in Form */}
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: "32px 20px" }}>
           <h1
             style={{
               fontSize: "30px",
@@ -164,6 +164,7 @@ export function Login(): React.JSX.Element {
               margin: "0 0 8px 0",
               color: "var(--ink)",
               letterSpacing: "-0.01em",
+              overflowWrap: "anywhere",
             }}
           >
             Log in
@@ -210,13 +211,13 @@ export function Login(): React.JSX.Element {
                 style={{
                   width: "100%",
                   boxSizing: "border-box",
-                  height: "40px",
+                  height: "44px",
                   padding: "0 12px",
                   borderRadius: "var(--radius)",
                   border: errors.email ? "1px solid var(--error)" : "1px solid var(--rule)",
                   backgroundColor: "var(--surface)",
                   color: "var(--ink)",
-                  fontSize: "15px",
+                  fontSize: "16px",
                 }}
               />
               {errors.email && (
@@ -242,13 +243,13 @@ export function Login(): React.JSX.Element {
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
-                    height: "40px",
+                    height: "44px",
                     padding: "0 40px 0 12px",
                     borderRadius: "var(--radius)",
                     border: errors.password ? "1px solid var(--error)" : "1px solid var(--rule)",
                     backgroundColor: "var(--surface)",
                     color: "var(--ink)",
-                    fontSize: "15px",
+                    fontSize: "16px",
                   }}
                 />
                 <button
@@ -289,7 +290,7 @@ export function Login(): React.JSX.Element {
               disabled={isSubmitting || demoLoading !== null}
               style={{
                 width: "100%",
-                height: "40px",
+                height: "44px",
                 borderRadius: "var(--radius)",
                 border: "none",
                 backgroundColor: "var(--signal)",
@@ -317,7 +318,7 @@ export function Login(): React.JSX.Element {
               disabled={isSubmitting || demoLoading !== null}
               style={{
                 width: "100%",
-                height: "40px",
+                height: "44px",
                 borderRadius: "var(--radius)",
                 border: "1px solid var(--rule)",
                 backgroundColor: "transparent",
@@ -384,7 +385,7 @@ export function Login(): React.JSX.Element {
                         onClick={() => handleDemoLogin(p.persona)}
                         disabled={isSubmitting || demoLoading !== null}
                         style={{
-                          height: "32px",
+                          minHeight: "44px",
                           padding: "0 12px",
                           borderRadius: "var(--radius)",
                           border: "1px solid var(--rule)",
@@ -395,6 +396,9 @@ export function Login(): React.JSX.Element {
                           cursor: demoLoading !== null ? "not-allowed" : "pointer",
                           opacity: demoLoading === p.persona ? 0.7 : 1,
                           flexShrink: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
                         {demoLoading === p.persona ? "Connecting..." : `Continue as ${p.firstName}`}

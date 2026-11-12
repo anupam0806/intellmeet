@@ -70,7 +70,7 @@ export function CreateMeetingDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 animate-in fade-in duration-150"
     >
       <div
-        className="w-full max-w-lg rounded-lg border p-6 transition-all"
+        className="w-full max-w-lg max-h-[calc(100dvh-32px)] overflow-y-auto rounded-lg border p-6 transition-all"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
@@ -86,7 +86,7 @@ export function CreateMeetingDialog({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="p-1 rounded-lg transition-colors hover:opacity-75"
+            className="w-11 h-11 flex items-center justify-center rounded-lg transition-colors hover:opacity-75"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -184,7 +184,7 @@ export function CreateMeetingDialog({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:opacity-80"
+              className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border transition-colors hover:opacity-80"
               style={{
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -195,7 +195,7 @@ export function CreateMeetingDialog({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="px-4 py-2 min-h-[44px] text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: "var(--signal)",
                 color: "var(--on-signal)",

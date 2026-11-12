@@ -116,15 +116,16 @@ export function Meetings(): React.JSX.Element {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-lg border transition-colors hover:opacity-80"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold rounded-lg border transition-colors hover:opacity-80"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
+              minHeight: "44px",
             }}
           >
             <Hash className="w-4 h-4" />
@@ -134,10 +135,11 @@ export function Meetings(): React.JSX.Element {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
             style={{
               backgroundColor: "var(--signal)",
               color: "var(--on-signal)",
+              minHeight: "44px",
             }}
           >
             <Plus className="w-4 h-4" />
@@ -157,8 +159,9 @@ export function Meetings(): React.JSX.Element {
                 key={tab}
                 type="button"
                 onClick={() => updateFilter(tab)}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors hover:opacity-75"
+                className="px-3 py-2 text-xs font-semibold rounded-lg transition-colors hover:opacity-75"
                 style={{
+                  minHeight: "44px",
                   backgroundColor: isActive ? "var(--surface)" : "transparent",
                   color: isActive ? "var(--signal)" : "var(--ink-soft)",
                   borderBottom: isActive ? "2px solid var(--signal)" : "2px solid transparent",
@@ -176,14 +179,15 @@ export function Meetings(): React.JSX.Element {
         {/* Search and Date filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <form onSubmit={handleSearchSubmit} className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
+            <Search className="absolute left-3 top-3 w-4 h-4" style={{ color: "var(--ink-soft)" }} />
             <input
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search meetings by title, description, or summary..."
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-base sm:text-sm rounded-lg border transition-colors"
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -191,7 +195,7 @@ export function Meetings(): React.JSX.Element {
             />
           </form>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="date"
               value={from}
@@ -200,8 +204,9 @@ export function Meetings(): React.JSX.Element {
                 setPage(1);
               }}
               aria-label="From date"
-              className="px-2.5 py-1.5 text-xs rounded-lg border transition-colors"
+              className="px-2.5 py-2 text-base sm:text-xs rounded-lg border transition-colors"
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -218,8 +223,9 @@ export function Meetings(): React.JSX.Element {
                 setPage(1);
               }}
               aria-label="To date"
-              className="px-2.5 py-1.5 text-xs rounded-lg border transition-colors"
+              className="px-2.5 py-2 text-base sm:text-xs rounded-lg border transition-colors"
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -319,12 +325,12 @@ export function Meetings(): React.JSX.Element {
                   />
                   <div className="min-w-0">
                     <p
-                      className="font-bold text-sm tracking-tight truncate group-hover:underline"
-                      style={{ color: "var(--ink)" }}
+                      className="font-bold text-sm tracking-tight group-hover:underline"
+                      style={{ color: "var(--ink)", overflowWrap: "anywhere" }}
                     >
                       {m.title}
                     </p>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: "var(--ink-soft)" }}>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--ink-soft)", overflowWrap: "anywhere" }}>
                       Host: {m.hostName} ·{" "}
                       {m.scheduledAt
                         ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
@@ -344,7 +350,7 @@ export function Meetings(): React.JSX.Element {
                 </div>
 
                 {/* Right side: metadata chips, status badge, AI status */}
-                <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                <div className="flex flex-wrap items-center gap-3 shrink-0 self-start sm:self-center">
                   {/* Duration */}
                   <div
                     className="flex items-center gap-1 text-xs font-medium"

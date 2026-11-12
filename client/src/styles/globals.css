@@ -102,5 +102,66 @@
   }
 }
 
+/* App frame responsive rules */
+@media (max-width: 1023px) {
+  .desktop-nav,
+  .desktop-account {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-nav,
+  .desktop-account {
+    display: flex !important;
+  }
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  .mobile-menu-panel,
+  .mobile-nav-scrim {
+    display: none !important;
+  }
+}
+
+/* Mobile menu slide-in animation: 150ms (<= 160ms per docs/06) */
+@keyframes mobilePanelSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-menu-panel {
+  animation: mobilePanelSlideIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Prevent horizontal overflow on narrow screens: overflow-wrap anywhere on titles */
+h1, h2, h3, h4, h5, h6, .page-title, .meeting-title, .task-title {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Ensure mobile form inputs use >= 16px text to prevent automatic mobile browser zoom */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 
 

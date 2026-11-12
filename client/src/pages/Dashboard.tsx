@@ -132,15 +132,16 @@ export function Dashboard(): React.JSX.Element {
         }}
       >
         <div style={{ maxWidth: "780px" }}>
-          {/* Headline sentence with 44px style per docs/06 */}
+          {/* Headline sentence with 44px style per docs/06, scaling down to ~28px on small screens */}
           <h1
             style={{
-              fontSize: "clamp(26px, 4vw, 44px)",
+              fontSize: "clamp(28px, 5vw, 44px)",
               fontWeight: 700,
               lineHeight: 1.15,
               color: "var(--ink)",
               margin: 0,
               letterSpacing: "-0.02em",
+              overflowWrap: "anywhere",
             }}
           >
             You have{" "}
@@ -181,7 +182,7 @@ export function Dashboard(): React.JSX.Element {
         </div>
 
         {/* Action buttons */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
@@ -189,7 +190,8 @@ export function Dashboard(): React.JSX.Element {
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              padding: "8px 14px",
+              padding: "10px 16px",
+              minHeight: "44px",
               fontSize: "14px",
               fontWeight: 500,
               borderRadius: "var(--radius)",
@@ -210,7 +212,8 @@ export function Dashboard(): React.JSX.Element {
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              padding: "8px 16px",
+              padding: "10px 18px",
+              minHeight: "44px",
               fontSize: "14px",
               fontWeight: 600,
               borderRadius: "var(--radius)",
@@ -226,11 +229,11 @@ export function Dashboard(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Main 3 Sections Grid */}
+      {/* Main 3 Sections Grid: Stack on mobile, columns on wider screens */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
           gap: "24px",
         }}
       >

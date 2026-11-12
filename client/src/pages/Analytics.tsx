@@ -140,6 +140,7 @@ export function Analytics(): React.JSX.Element {
               margin: "0 0 6px 0",
               color: "var(--ink)",
               letterSpacing: "-0.01em",
+              overflowWrap: "anywhere",
             }}
           >
             Analytics
@@ -164,6 +165,7 @@ export function Analytics(): React.JSX.Element {
             aria-label="Date range presets"
             style={{
               display: "flex",
+              flexWrap: "wrap",
               backgroundColor: "var(--surface)",
               border: "1px solid var(--rule)",
               borderRadius: "var(--radius)",
@@ -176,8 +178,9 @@ export function Analytics(): React.JSX.Element {
                 type="button"
                 onClick={() => handleSelectPreset(days)}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "12px",
+                  minHeight: "44px",
+                  padding: "8px 12px",
+                  fontSize: "13px",
                   fontWeight: selectedPreset === days ? 600 : 400,
                   backgroundColor: selectedPreset === days ? "var(--ground)" : "transparent",
                   color: selectedPreset === days ? "var(--ink)" : "var(--ink-soft)",
@@ -185,6 +188,9 @@ export function Analytics(): React.JSX.Element {
                   borderRadius: "var(--radius-chip)",
                   cursor: "pointer",
                   transition: "all 120ms ease",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 Last {days} days
@@ -196,6 +202,7 @@ export function Analytics(): React.JSX.Element {
           <div
             style={{
               display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
               gap: "6px",
               fontSize: "12px",
@@ -213,11 +220,12 @@ export function Analytics(): React.JSX.Element {
               aria-label="From date"
               onChange={(e) => handleCustomDateChange(e.target.value, toDate)}
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 border: "1px solid var(--rule)",
                 borderRadius: "var(--radius-chip)",
-                padding: "3px 8px",
-                fontSize: "12px",
+                padding: "6px 10px",
+                fontSize: "14px",
                 color: "var(--ink)",
                 fontFamily: "var(--font-sans)",
               }}
@@ -233,11 +241,12 @@ export function Analytics(): React.JSX.Element {
               aria-label="To date"
               onChange={(e) => handleCustomDateChange(fromDate, e.target.value)}
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 border: "1px solid var(--rule)",
                 borderRadius: "var(--radius-chip)",
-                padding: "3px 8px",
-                fontSize: "12px",
+                padding: "6px 10px",
+                fontSize: "14px",
                 color: "var(--ink)",
                 fontFamily: "var(--font-sans)",
               }}
@@ -305,13 +314,9 @@ export function Analytics(): React.JSX.Element {
 
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {/* Row of 4 Stat Cards */}
+          {/* Row of 4 Stat Cards: 2 per row on narrow screens, 4 on desktop */}
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "16px",
-            }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
           >
             {/* Total Meetings */}
             <div

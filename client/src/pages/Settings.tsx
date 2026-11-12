@@ -162,6 +162,7 @@ export function Settings(): React.JSX.Element {
           margin: "0 0 24px 0",
           color: "var(--ink)",
           letterSpacing: "-0.01em",
+          overflowWrap: "anywhere",
         }}
       >
         Settings
@@ -173,7 +174,7 @@ export function Settings(): React.JSX.Element {
           backgroundColor: "var(--surface)",
           borderRadius: "var(--radius)",
           border: "1px solid var(--rule)",
-          padding: "24px",
+          padding: "24px 20px",
           marginBottom: "32px",
         }}
       >
@@ -217,13 +218,13 @@ export function Settings(): React.JSX.Element {
                 width: "100%",
                 maxWidth: "360px",
                 boxSizing: "border-box",
-                height: "38px",
+                height: "44px",
                 padding: "0 12px",
                 borderRadius: "var(--radius)",
                 border: "1px solid var(--rule)",
                 backgroundColor: "var(--surface)",
                 color: "var(--ink)",
-                fontSize: "15px",
+                fontSize: "16px",
               }}
             />
           </div>
@@ -244,13 +245,13 @@ export function Settings(): React.JSX.Element {
                 width: "100%",
                 maxWidth: "360px",
                 boxSizing: "border-box",
-                height: "38px",
+                height: "44px",
                 padding: "0 12px",
                 borderRadius: "var(--radius)",
                 border: "1px solid var(--rule)",
                 backgroundColor: "var(--ground)",
                 color: "var(--ink-soft)",
-                fontSize: "15px",
+                fontSize: "16px",
                 cursor: "not-allowed",
               }}
             />
@@ -260,7 +261,7 @@ export function Settings(): React.JSX.Element {
             type="submit"
             disabled={profileSaving}
             style={{
-              height: "38px",
+              height: "44px",
               padding: "0 18px",
               borderRadius: "var(--radius)",
               border: "none",
@@ -270,6 +271,9 @@ export function Settings(): React.JSX.Element {
               fontWeight: 600,
               cursor: profileSaving ? "not-allowed" : "pointer",
               opacity: profileSaving ? 0.7 : 1,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             {profileSaving ? "Saving..." : "Save changes"}
@@ -342,7 +346,8 @@ export function Settings(): React.JSX.Element {
                       background: "transparent",
                       border: "1px solid var(--rule)",
                       borderRadius: "var(--radius)",
-                      padding: "6px 12px",
+                      padding: "8px 14px",
+                      minHeight: "44px",
                       fontSize: "13px",
                       cursor: "pointer",
                       display: "flex",
@@ -362,7 +367,8 @@ export function Settings(): React.JSX.Element {
                       background: "transparent",
                       border: "1px solid var(--rule)",
                       borderRadius: "var(--radius)",
-                      padding: "6px 12px",
+                      padding: "8px 14px",
+                      minHeight: "44px",
                       fontSize: "13px",
                       cursor: regenerating ? "not-allowed" : "pointer",
                       display: "flex",
@@ -412,13 +418,14 @@ export function Settings(): React.JSX.Element {
                       padding: "12px 0",
                       borderBottom: "1px solid var(--rule)",
                       display: "flex",
+                      flexWrap: "wrap",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: "16px",
+                      gap: "12px",
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--ink)" }}>
+                    <div style={{ minWidth: 0, flex: "1 1 200px" }}>
+                      <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--ink)", overflowWrap: "anywhere" }}>
                         {member.name}
                         {member.id === user?.id && (
                           <span style={{ fontSize: "12px", color: "var(--ink-soft)", marginLeft: "8px" }}>
@@ -426,12 +433,12 @@ export function Settings(): React.JSX.Element {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
+                      <div style={{ fontSize: "13px", color: "var(--ink-soft)", overflowWrap: "anywhere" }}>
                         {member.email}
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
                       <span
                         style={{
                           fontSize: "12px",
@@ -459,11 +466,15 @@ export function Settings(): React.JSX.Element {
                                 background: "none",
                                 border: "1px solid var(--rule)",
                                 borderRadius: "var(--radius)",
-                                padding: "4px 8px",
+                                padding: "6px 12px",
+                                minHeight: "44px",
                                 fontSize: "12px",
                                 cursor: isLastAdmin ? "not-allowed" : "pointer",
                                 opacity: isLastAdmin ? 0.5 : 1,
                                 color: "var(--ink)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                               }}
                             >
                               Make Member
@@ -477,10 +488,14 @@ export function Settings(): React.JSX.Element {
                                 background: "none",
                                 border: "1px solid var(--rule)",
                                 borderRadius: "var(--radius)",
-                                padding: "4px 8px",
+                                padding: "6px 12px",
+                                minHeight: "44px",
                                 fontSize: "12px",
                                 cursor: "pointer",
                                 color: "var(--ink)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                               }}
                             >
                               Make Admin

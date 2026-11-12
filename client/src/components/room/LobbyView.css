@@ -1,12 +1,32 @@
 /* LobbyView specific styling */
 
+.lobby-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  background-color: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .lobby-card {
+    grid-template-columns: 1.3fr 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+}
+
 .join-button {
-  padding: 10px 20px;
+  min-height: 44px;
+  width: 100%;
+  padding: 12px 20px;
   background-color: var(--signal);
   color: var(--on-signal);
   border: none;
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -35,12 +55,19 @@
 }
 
 .device-select {
+  min-height: 44px;
   background-color: var(--ground);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   padding: 8px 10px;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
   color-scheme: light dark; /* ensures options inherit colors */
+}
+
+@media (max-width: 768px) {
+  .device-select {
+    font-size: 16px;
+  }
 }
 

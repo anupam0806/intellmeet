@@ -510,7 +510,7 @@ export function MeetingDetail(): React.JSX.Element {
               )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: "var(--ink)", overflowWrap: "anywhere" }}>
               {meeting.title}
             </h1>
 
@@ -561,8 +561,10 @@ export function MeetingDetail(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={openEditModal}
-                  className="p-2 rounded-lg border transition-opacity hover:opacity-80"
+                  className="p-2.5 rounded-lg border transition-opacity hover:opacity-80 inline-flex items-center justify-center"
                   style={{
+                    minWidth: "44px",
+                    minHeight: "44px",
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--rule)",
                     color: "var(--ink)",
@@ -578,8 +580,10 @@ export function MeetingDetail(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
-                  className="p-2 rounded-lg border transition-opacity hover:opacity-80"
+                  className="p-2.5 rounded-lg border transition-opacity hover:opacity-80 inline-flex items-center justify-center"
                   style={{
+                    minWidth: "44px",
+                    minHeight: "44px",
                     backgroundColor: "var(--ground)",
                     borderColor: "var(--error)",
                     color: "var(--error)",
@@ -611,12 +615,13 @@ export function MeetingDetail(): React.JSX.Element {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleCopyCode}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors hover:opacity-80"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors hover:opacity-80"
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -629,8 +634,9 @@ export function MeetingDetail(): React.JSX.Element {
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors hover:opacity-80"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors hover:opacity-80"
               style={{
+                minHeight: "44px",
                 backgroundColor: "var(--surface)",
                 borderColor: "var(--rule)",
                 color: "var(--ink)",
@@ -1205,8 +1211,9 @@ export function MeetingDetail(): React.JSX.Element {
                       type="button"
                       onClick={() => handleExport("md")}
                       disabled={isExporting !== null}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
                       style={{
+                        minHeight: "44px",
                         backgroundColor: "var(--ground)",
                         borderColor: "var(--rule)",
                         color: "var(--ink)",
@@ -1220,8 +1227,9 @@ export function MeetingDetail(): React.JSX.Element {
                       type="button"
                       onClick={() => handleExport("json")}
                       disabled={isExporting !== null}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90 disabled:opacity-50"
                       style={{
+                        minHeight: "44px",
                         backgroundColor: "var(--ground)",
                         borderColor: "var(--rule)",
                         color: "var(--ink)",
@@ -1237,8 +1245,9 @@ export function MeetingDetail(): React.JSX.Element {
                           type="button"
                           onClick={() => setRegenerateConfirmOpen(true)}
                           disabled={generateAiMutation.isPending}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold rounded-lg border transition-opacity hover:opacity-90"
                           style={{
+                            minHeight: "44px",
                             backgroundColor: "var(--surface)",
                             borderColor: "var(--rule)",
                             color: "var(--ink)",
@@ -1529,7 +1538,7 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-lg rounded-lg border p-6"
+            className="w-full max-w-lg rounded-lg border p-5 sm:p-6 max-h-[calc(100dvh-32px)] overflow-y-auto"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -1635,7 +1644,7 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 space-y-4"
+            className="w-full max-w-md rounded-lg border p-5 sm:p-6 space-y-4 max-h-[calc(100dvh-32px)] overflow-y-auto"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -1653,8 +1662,8 @@ export function MeetingDetail(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border"
-                style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+                className="px-4 py-2 text-sm font-medium rounded-lg border inline-flex items-center justify-center"
+                style={{ borderColor: "var(--rule)", color: "var(--ink)", minHeight: "44px" }}
               >
                 Cancel
               </button>
@@ -1662,8 +1671,8 @@ export function MeetingDetail(): React.JSX.Element {
                 type="button"
                 onClick={() => deleteMutation.mutate()}
                 disabled={deleteMutation.isPending}
-                className="px-4 py-2 text-sm font-semibold rounded-lg"
-                style={{ backgroundColor: "var(--error)", color: "var(--on-signal)" }}
+                className="px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center justify-center"
+                style={{ backgroundColor: "var(--error)", color: "var(--on-signal)", minHeight: "44px" }}
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
@@ -1680,7 +1689,7 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 space-y-4"
+            className="w-full max-w-md rounded-lg border p-5 sm:p-6 space-y-4 max-h-[calc(100dvh-32px)] overflow-y-auto"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
@@ -1698,8 +1707,8 @@ export function MeetingDetail(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => setRegenerateConfirmOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border"
-                style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+                className="px-4 py-2 text-sm font-medium rounded-lg border inline-flex items-center justify-center"
+                style={{ borderColor: "var(--rule)", color: "var(--ink)", minHeight: "44px" }}
               >
                 Cancel
               </button>
@@ -1707,8 +1716,8 @@ export function MeetingDetail(): React.JSX.Element {
                 type="button"
                 onClick={() => generateAiMutation.mutate()}
                 disabled={generateAiMutation.isPending}
-                className="px-4 py-2 text-sm font-semibold rounded-lg"
-                style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+                className="px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center justify-center"
+                style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)", minHeight: "44px" }}
               >
                 {generateAiMutation.isPending ? "Generating..." : "Regenerate"}
               </button>
@@ -1726,7 +1735,7 @@ export function MeetingDetail(): React.JSX.Element {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
         >
           <div
-            className="w-full max-w-md rounded-lg border p-6 space-y-4"
+            className="w-full max-w-md rounded-lg border p-5 sm:p-6 space-y-4 max-h-[calc(100dvh-32px)] overflow-y-auto"
             style={{
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",

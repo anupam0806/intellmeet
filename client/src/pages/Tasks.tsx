@@ -299,9 +299,10 @@ function LaneDroppable({ laneId, label, tasks, children }: LaneDroppableProps): 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-h-[480px] p-4 transition-colors ${
+      className={`flex flex-col min-h-[480px] p-4 transition-colors w-[85vw] max-w-[340px] shrink-0 snap-start md:w-auto md:max-w-none md:shrink ${
         isOver ? "bg-black/[0.02] dark:bg-white/[0.02]" : ""
       }`}
+      style={{ scrollSnapAlign: "start" }}
     >
       {/* Column Header */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b" style={{ borderColor: "var(--rule)" }}>
@@ -595,8 +596,8 @@ export function Tasks(): React.JSX.Element {
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0 self-start sm:self-auto"
-          style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0 self-start sm:self-auto"
+          style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)", minHeight: "44px" }}
         >
           <Plus className="w-3.5 h-3.5" />
           <span>New task</span>
@@ -604,9 +605,9 @@ export function Tasks(): React.JSX.Element {
       </div>
 
       {/* Filters row: Assignee picker and Search input */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      <div className="flex flex-wrap items-stretch sm:items-center gap-3">
         {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 min-w-[180px] max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "var(--ink-soft)" }} />
           <input
             type="text"
@@ -615,6 +616,7 @@ export function Tasks(): React.JSX.Element {
             onChange={(e) => setFilterQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 rounded-lg border text-xs"
             style={{
+              minHeight: "44px",
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
@@ -623,7 +625,7 @@ export function Tasks(): React.JSX.Element {
         </div>
 
         {/* Assignee filter */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="filter-assignee" className="text-xs font-semibold shrink-0" style={{ color: "var(--ink-soft)" }}>
             Assignee:
           </label>
@@ -633,6 +635,7 @@ export function Tasks(): React.JSX.Element {
             onChange={(e) => setFilterAssignee(e.target.value)}
             className="px-2.5 py-1.5 rounded-lg border text-xs"
             style={{
+              minHeight: "44px",
               backgroundColor: "var(--surface)",
               borderColor: "var(--rule)",
               color: "var(--ink)",
@@ -650,11 +653,11 @@ export function Tasks(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Board Layout: Three lanes separated by 1 px vertical rules, no card wrapper */}
+      {/* Board Layout: Three lanes scroll horizontally on mobile with scroll snap */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div
-          className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x rounded-lg border overflow-hidden"
-          style={{ borderColor: "var(--rule)", backgroundColor: "var(--bg)" }}
+          className="flex flex-row overflow-x-auto snap-x snap-mandatory divide-x md:grid md:grid-cols-3 md:overflow-x-visible rounded-lg border"
+          style={{ borderColor: "var(--rule)", backgroundColor: "var(--bg)", scrollSnapType: "x mandatory" }}
         >
           {LANES.map((lane) => {
             const laneTasks = tasksByLane[lane.id];
@@ -865,7 +868,7 @@ function CreateTaskDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
     >
       <div
-        className="w-full max-w-md rounded-lg border p-6 space-y-4"
+        className="w-full max-w-md rounded-lg border p-5 sm:p-6 space-y-4 max-h-[calc(100dvh-32px)] overflow-y-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
@@ -1008,16 +1011,16 @@ function CreateTaskDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
-              style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+              className="px-3.5 py-2 text-xs font-semibold rounded-lg border hover:opacity-80 inline-flex items-center justify-center"
+              style={{ borderColor: "var(--rule)", color: "var(--ink)", minHeight: "44px" }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+              className="px-4 py-2 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center"
+              style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)", minHeight: "44px" }}
             >
               {createMutation.isPending ? "Creating..." : "Create task"}
             </button>
@@ -1083,7 +1086,7 @@ function EditTaskDialog({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
     >
       <div
-        className="w-full max-w-md rounded-lg border p-6 space-y-4"
+        className="w-full max-w-md rounded-lg border p-5 sm:p-6 space-y-4 max-h-[calc(100dvh-32px)] overflow-y-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderColor: "var(--rule)",
@@ -1224,16 +1227,16 @@ function EditTaskDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg border hover:opacity-80"
-              style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+              className="px-3.5 py-2 text-xs font-semibold rounded-lg border hover:opacity-80 inline-flex items-center justify-center"
+              style={{ borderColor: "var(--rule)", color: "var(--ink)", minHeight: "44px" }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={editMutation.isPending}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)" }}
+              className="px-4 py-2 text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center"
+              style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)", minHeight: "44px" }}
             >
               {editMutation.isPending ? "Saving..." : "Save changes"}
             </button>

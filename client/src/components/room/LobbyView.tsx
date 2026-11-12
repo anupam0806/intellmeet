@@ -201,17 +201,7 @@ export function LobbyView({
         )}
 
         {/* Main Preview & Controls Card */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.3fr 1fr",
-            gap: "24px",
-            backgroundColor: "var(--surface)",
-            border: "1px solid var(--rule)",
-            borderRadius: "var(--radius)",
-            padding: "24px",
-          }}
-        >
+        <div className="lobby-card">
           {/* Left Column: Video Preview */}
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div
@@ -262,7 +252,11 @@ export function LobbyView({
                   onClick={onToggleAudio}
                   aria-label={audioEnabled ? "Mute microphone" : "Unmute microphone"}
                   style={{
-                    padding: "8px",
+                    width: "44px",
+                    height: "44px",
+                    minWidth: "44px",
+                    minHeight: "44px",
+                    padding: 0,
                     borderRadius: "50%",
                     backgroundColor: audioEnabled ? "var(--ground)" : "var(--error)",
                     color: audioEnabled ? "var(--ink)" : "var(--on-signal)",
@@ -273,14 +267,18 @@ export function LobbyView({
                     justifyContent: "center",
                   }}
                 >
-                  {audioEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+                  {audioEnabled ? <Mic size={20} /> : <MicOff size={20} />}
                 </button>
                 <button
                   type="button"
                   onClick={onToggleVideo}
                   aria-label={videoEnabled ? "Turn off camera" : "Turn on camera"}
                   style={{
-                    padding: "8px",
+                    width: "44px",
+                    height: "44px",
+                    minWidth: "44px",
+                    minHeight: "44px",
+                    padding: 0,
                     borderRadius: "50%",
                     backgroundColor: videoEnabled ? "var(--ground)" : "var(--error)",
                     color: videoEnabled ? "var(--ink)" : "var(--on-signal)",
@@ -291,7 +289,7 @@ export function LobbyView({
                     justifyContent: "center",
                   }}
                 >
-                  {videoEnabled ? <Video size={18} /> : <VideoOff size={18} />}
+                  {videoEnabled ? <Video size={20} /> : <VideoOff size={20} />}
                 </button>
               </div>
             </div>
