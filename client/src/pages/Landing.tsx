@@ -9,13 +9,9 @@ import {
   FileText,
   Search,
   ArrowRight,
-  Shield,
-  Zap,
   Users,
   BarChart3,
   MessageSquare,
-  Laptop,
-  CheckCircle2,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore.js";
 
@@ -664,7 +660,7 @@ export function Landing(): React.JSX.Element {
             </div>
 
             {/* Scoped Two-line H1 with Warm-Gradient Accent Word */}
-            <h1 className="hero-headline">
+            <h1 className="hero-headline" aria-label="Meetings that end with notes and owners.">
               Meetings that end with<br />
               notes and <span className="hero-gradient-word">owners</span>.
             </h1>
