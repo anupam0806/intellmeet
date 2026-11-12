@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   skip: () =>
@@ -22,6 +23,7 @@ export const authRateLimiter = rateLimit({
 export const demoRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   skip: () =>
@@ -60,12 +62,17 @@ export const aiGenerateRateLimiter = rateLimit({
 
 export const generalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () =>
+  skip: (req) =>
     (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
-    process.env.RATE_LIMIT_DISABLED === "true",
+    process.env.RATE_LIMIT_DISABLED === "true" ||
+    req.path === "/v1/health" ||
+    req.path === "/health" ||
+    req.path.startsWith("/v1/health") ||
+    req.path.startsWith("/health") ||
+    req.originalUrl.includes("/health"),
   handler: (_req, res) => {
     res.status(429).json({
       error: {

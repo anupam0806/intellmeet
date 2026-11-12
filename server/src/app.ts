@@ -92,7 +92,7 @@ export function createApp(clientDistOverride?: string): express.Application {
   app.use("/api/v1/health", healthRouter);
   app.use("/health", healthRouter);
 
-  // General rate limiter: 300 requests per 15 minutes per IP
+  // General rate limiter: 1000 requests per 15 minutes per IP (excludes /health and static client files)
   app.use("/api", generalRateLimiter);
 
   // API v1 routes

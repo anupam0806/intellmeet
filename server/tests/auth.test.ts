@@ -387,7 +387,7 @@ describe("Auth Endpoints", () => {
     try {
       let lastRes;
       for (let i = 0; i < 31; i++) {
-        lastRes = await request(app).post("/api/v1/auth/demo");
+        lastRes = await request(app).post("/api/v1/auth/demo").send({ persona: "invalid_persona" });
       }
       expect(lastRes?.status).toBe(429);
       expect(lastRes?.body.error.code).toBe("RATE_LIMITED");
