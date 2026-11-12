@@ -737,7 +737,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       totalChatCount += chatDocs.length;
     }
 
-    // 5. Twelve Tasks Across TODO, IN_PROGRESS, and DONE
+    // 5. Twelve Tasks Across To-do, IN_PROGRESS, and DONE
     // Exactly 7 come from action items above; 5 standalone.
     // Done tasks have completedAt values spread across the last 4 weeks.
     // Orders are contiguous per column.
@@ -762,7 +762,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     }
 
     const tasksToSeed: SeedTaskInput[] = [
-      // --- TODO (4 tasks, orders 0..3) ---
+      // --- To-do status (4 tasks, orders 0..3) ---
       {
         // Converted from Meeting 4 Item 4.2
         title: "Add Cypress tests for signup invite flow",

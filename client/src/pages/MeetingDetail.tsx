@@ -208,7 +208,7 @@ export function MeetingDetail(): React.JSX.Element {
       data: {
         title: editItemTitle.trim(),
         assigneeId: editItemAssigneeId,
-        dueDate: editItemDueDate ? editItemDueDate : null,
+        dueDate: editItemDueDate || null,
       },
     });
   }
@@ -921,7 +921,7 @@ export function MeetingDetail(): React.JSX.Element {
                       }}
                     >
                       {(meeting.ai.keyPoints || []).map((kp, idx) => (
-                        <li key={idx}>{kp}</li>
+                        <li key={`${kp}-${idx}`}>{kp}</li>
                       ))}
                     </ul>
                   ) : (
@@ -955,7 +955,7 @@ export function MeetingDetail(): React.JSX.Element {
                       }}
                     >
                       {(meeting.ai.decisions || []).map((decision, idx) => (
-                        <li key={idx}>{decision}</li>
+                        <li key={`${decision}-${idx}`}>{decision}</li>
                       ))}
                     </ul>
                   ) : (
@@ -1015,10 +1015,11 @@ export function MeetingDetail(): React.JSX.Element {
                             {isEditing ? (
                               <div className="space-y-2.5 pt-1">
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label htmlFor={`edit-item-title-${item.id}`} className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Title
                                   </label>
                                   <input
+                                    id={`edit-item-title-${item.id}`}
                                     type="text"
                                     value={editItemTitle}
                                     onChange={(e) => setEditItemTitle(e.target.value)}
@@ -1032,10 +1033,11 @@ export function MeetingDetail(): React.JSX.Element {
                                 </div>
 
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label htmlFor={`edit-item-assignee-${item.id}`} className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Assignee
                                   </label>
                                   <select
+                                    id={`edit-item-assignee-${item.id}`}
                                     value={editItemAssigneeId || ""}
                                     onChange={(e) => setEditItemAssigneeId(e.target.value || null)}
                                     className="w-full px-2.5 py-1.5 text-xs rounded-lg border"
@@ -1055,10 +1057,11 @@ export function MeetingDetail(): React.JSX.Element {
                                 </div>
 
                                 <div>
-                                  <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                                  <label htmlFor={`edit-item-due-${item.id}`} className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                                     Due Date
                                   </label>
                                   <input
+                                    id={`edit-item-due-${item.id}`}
                                     type="date"
                                     value={editItemDueDate}
                                     onChange={(e) => setEditItemDueDate(e.target.value)}
@@ -1559,10 +1562,11 @@ export function MeetingDetail(): React.JSX.Element {
 
             <form onSubmit={handleEditSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label htmlFor="edit-meeting-title" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Title *
                 </label>
                 <input
+                  id="edit-meeting-title"
                   type="text"
                   required
                   minLength={2}
@@ -1579,10 +1583,11 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label htmlFor="edit-meeting-description" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Description (Optional)
                 </label>
                 <textarea
+                  id="edit-meeting-description"
                   rows={3}
                   maxLength={1000}
                   value={editDescription}
@@ -1597,10 +1602,11 @@ export function MeetingDetail(): React.JSX.Element {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <label htmlFor="edit-meeting-scheduled" className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Scheduled Time (Optional)
                 </label>
                 <input
+                  id="edit-meeting-scheduled"
                   type="datetime-local"
                   value={editScheduledAt}
                   onChange={(e) => setEditScheduledAt(e.target.value)}
@@ -1760,9 +1766,9 @@ export function MeetingDetail(): React.JSX.Element {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
+                <span className="block text-xs font-semibold mb-1" style={{ color: "var(--ink-soft)" }}>
                   Title
-                </label>
+                </span>
                 <div
                   className="p-2.5 rounded-lg border text-xs font-medium"
                   style={{
@@ -1782,7 +1788,7 @@ export function MeetingDetail(): React.JSX.Element {
                 <select
                   id="convert-assignee"
                   value={convertAssigneeId || ""}
-                  onChange={(e) => setConvertAssigneeId(e.target.value ? e.target.value : null)}
+                  onChange={(e) => setConvertAssigneeId(e.target.value || null)}
                   className="w-full px-2.5 py-1.5 rounded-lg border text-xs"
                   style={{
                     backgroundColor: "var(--surface)",

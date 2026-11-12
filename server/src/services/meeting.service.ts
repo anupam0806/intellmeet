@@ -653,8 +653,8 @@ export class MeetingService {
         actionItems: (meeting.ai.actionItems || []).map((ai) => ({
           title: ai.title,
           assigneeName: ai.assigneeName || null,
-          dueDate: ai.dueDate ? ai.dueDate.toISOString() : null,
-          taskId: ai.taskId ? ai.taskId.toString() : null,
+          dueDate: ai.dueDate?.toISOString() ?? null,
+          taskId: ai.taskId?.toString() ?? null,
         })),
         transcript: segments.map((s) => ({
           timestamp: new Date(s.ts).toISOString(),

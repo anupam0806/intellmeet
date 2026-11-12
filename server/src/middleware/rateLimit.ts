@@ -68,8 +68,6 @@ export const generalRateLimiter = rateLimit({
   skip: (req) =>
     (process.env.NODE_ENV === "test" && process.env.TEST_RATE_LIMIT !== "true") ||
     process.env.RATE_LIMIT_DISABLED === "true" ||
-    req.path === "/v1/health" ||
-    req.path === "/health" ||
     req.path.startsWith("/v1/health") ||
     req.path.startsWith("/health") ||
     req.originalUrl.includes("/health"),

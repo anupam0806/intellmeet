@@ -103,6 +103,16 @@ export function LiveRoomView({
   const canEndMeeting = isHost || isAdmin;
   const totalTiles = 1 + peers.length;
 
+  let screenShareLabel = "Share screen";
+  let screenShareColor = "var(--ink)";
+  if (isSomeoneElseSharing) {
+    screenShareLabel = "Someone else is currently sharing their screen";
+    screenShareColor = "var(--ink-soft)";
+  } else if (isScreenSharing) {
+    screenShareLabel = "Stop sharing screen";
+    screenShareColor = "var(--on-signal)";
+  }
+
   return (
     <div className="live-room-container">
       {/* Status Notice Toast / Banner */}
@@ -179,30 +189,14 @@ export function LiveRoomView({
             type="button"
             onClick={isSomeoneElseSharing ? undefined : onToggleScreenShare}
             disabled={isSomeoneElseSharing}
-            aria-label={
-              isScreenSharing
-                ? "Stop sharing screen"
-                : isSomeoneElseSharing
-                ? "Someone else is currently sharing their screen"
-                : "Share screen"
-            }
-            title={
-              isScreenSharing
-                ? "Stop sharing screen"
-                : isSomeoneElseSharing
-                ? "Someone else is currently sharing their screen"
-                : "Share screen"
-            }
+            aria-label={screenShareLabel}
+            title={screenShareLabel}
             style={{
               width: "40px",
               height: "40px",
               borderRadius: "var(--radius)",
-              backgroundColor: isScreenSharing
-                ? "var(--signal)"
-                : isSomeoneElseSharing
-                ? "var(--ground)"
-                : "var(--ground)",
-              color: isSomeoneElseSharing ? "var(--ink-soft)" : isScreenSharing ? "var(--on-signal)" : "var(--ink)",
+              backgroundColor: isScreenSharing ? "var(--signal)" : "var(--ground)",
+              color: screenShareColor,
               border: "1px solid var(--rule)",
               display: "flex",
               alignItems: "center",

@@ -37,7 +37,7 @@ export function Meetings(): React.JSX.Element {
   const initialStatus = (searchParams.get("status") as MeetingQueryParams["status"]) || "ALL";
   const initialFrom = searchParams.get("from") || "";
   const initialTo = searchParams.get("to") || "";
-  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const initialPage = Number.parseInt(searchParams.get("page") || "1", 10);
 
   const [q, setQ] = useState(initialQ);
   const [status, setStatus] = useState<MeetingQueryParams["status"]>(initialStatus);

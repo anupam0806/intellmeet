@@ -125,10 +125,10 @@ export function createApp(clientDistOverride?: string): express.Application {
     app.use(
       express.static(clientDistPath, {
         setHeaders: (res, filePath) => {
-          const normalized = filePath.replace(/\\/g, "/");
+          const normalized = filePath.replaceAll("\\", "/");
           if (normalized.includes("/assets/")) {
             res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-          } else if (normalized.endsWith("/index.html") || normalized.endsWith("index.html")) {
+          } else if (normalized.endsWith("index.html")) {
             res.setHeader("Cache-Control", "no-cache");
           }
         },

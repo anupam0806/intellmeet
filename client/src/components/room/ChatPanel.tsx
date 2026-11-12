@@ -74,7 +74,7 @@ export function ChatPanel({
         }}
       >
         {messages.length > 0
-          ? `${messages[messages.length - 1]?.senderName}: ${messages[messages.length - 1]?.text}`
+          ? `${messages.at(-1)?.senderName}: ${messages.at(-1)?.text}`
           : ""}
       </div>
 

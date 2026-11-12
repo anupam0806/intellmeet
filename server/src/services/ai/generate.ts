@@ -38,13 +38,13 @@ const actionItemOutputSchema = z
       .string()
       .nullable()
       .optional()
-      .transform((val) => (val && val.trim() ? val.trim() : null)),
+      .transform((val) => (val?.trim() ? val.trim() : null)),
     dueDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional()
-      .transform((val) => (val && val.trim() ? val.trim() : null)),
+      .transform((val) => (val?.trim() ? val.trim() : null)),
   })
   .strict();
 

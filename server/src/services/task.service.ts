@@ -64,7 +64,7 @@ export class TaskService {
 
     const tasks = await Task.find(filter).lean();
 
-    // Map status priority: TODO (0), IN_PROGRESS (1), DONE (2)
+    // Map status priority: To-do (0), IN_PROGRESS (1), DONE (2)
     const statusPriority: Record<string, number> = {
       TODO: 0,
       IN_PROGRESS: 1,

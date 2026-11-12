@@ -104,18 +104,16 @@ export function AppLayout(): React.JSX.Element {
         );
         if (focusable.length === 0) return;
         const first = focusable[0];
-        const last = focusable[focusable.length - 1];
+        const last = focusable.at(-1);
 
         if (e.shiftKey) {
           if (document.activeElement === first) {
             e.preventDefault();
             last?.focus();
           }
-        } else {
-          if (document.activeElement === last) {
-            e.preventDefault();
-            first?.focus();
-          }
+        } else if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
         }
       }
     };
@@ -233,9 +231,10 @@ export function AppLayout(): React.JSX.Element {
   const handleItemClick = (item: NotificationItem) => {
     setNotifDropdownOpen(false);
     if (!item.read) {
-      setNotifications((prev) =>
-        (Array.isArray(prev) ? prev : []).map((n) => (n.id === item.id ? { ...n, read: true } : n)),
-      );
+      setNotifications((prev) => {
+        const list = Array.isArray(prev) ? prev : [];
+        return list.map((n) => (n.id === item.id ? { ...n, read: true } : n));
+      });
       setUnreadCount((c) => Math.max(0, c - 1));
       markNotificationAsRead(item.id).catch(() => {});
     }

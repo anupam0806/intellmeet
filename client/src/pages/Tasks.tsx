@@ -55,7 +55,7 @@ function getInitials(name?: string): string {
   const first = parts[0];
   if (!first) return "?";
   if (parts.length === 1) return first.slice(0, 2).toUpperCase();
-  const last = parts[parts.length - 1];
+  const last = parts.at(-1);
   return ((first[0] || "") + (last?.[0] || "")).toUpperCase();
 }
 

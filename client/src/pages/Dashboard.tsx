@@ -66,7 +66,7 @@ export function Dashboard(): React.JSX.Element {
     return allMyTasks.filter((t) => t.status !== "DONE");
   }, [allMyTasks]);
 
-  // Group open tasks by status: IN_PROGRESS first, then TODO
+  // Group open tasks by status: IN_PROGRESS first, then To-do
   const inProgressTasks = useMemo(() => {
     return openTasks.filter((t) => t.status === "IN_PROGRESS");
   }, [openTasks]);
