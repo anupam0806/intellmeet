@@ -1,10 +1,10 @@
 import React from "react";
-import { RouteObject, Navigate } from "react-router-dom";
-import { useAuthStore } from "./store/authStore.js";
+import { RouteObject } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout.js";
 import { ProtectedRoute } from "./components/ProtectedRoute.js";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute.js";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary.js";
+import { Landing } from "./pages/Landing.js";
 import { Dashboard } from "./pages/Dashboard.js";
 import { Login } from "./pages/Login.js";
 import { Signup } from "./pages/Signup.js";
@@ -49,21 +49,13 @@ function LazyPage({ children }: { children: React.ReactNode }): React.JSX.Elemen
   );
 }
 
-function RootRedirect(): React.JSX.Element | null {
-  const { user, isInitialized } = useAuthStore();
-  if (!isInitialized) {
-    return null;
-  }
-  return <Navigate to={user ? "/dashboard" : "/login"} replace />;
-}
-
 export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: "/",
-        element: <RootRedirect />,
+        element: <Landing />,
       },
       // Public auth routes (signed-in users redirected to /dashboard)
       {

@@ -32,7 +32,7 @@ export function Login(): React.JSX.Element {
   const [serverError, setServerError] = useState<string | null>(null);
   const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isDemoOpen, setIsDemoOpen] = useState(false);
+  const [isDemoOpen, setIsDemoOpen] = useState(() => searchParams.get("demo") === "1");
 
   const tryDemoBtnRef = useRef<HTMLButtonElement | null>(null);
   const firstPersonaBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -49,6 +49,12 @@ export function Login(): React.JSX.Element {
       setIsDemoOpen(true);
     }
   };
+
+  useEffect(() => {
+    if (searchParams.get("demo") === "1") {
+      setIsDemoOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isDemoOpen) {
@@ -138,28 +144,45 @@ export function Login(): React.JSX.Element {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "32px 16px",
         backgroundColor: "var(--ground)",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "880px",
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          backgroundColor: "var(--surface)",
-          borderRadius: "var(--radius)",
-          border: "1px solid var(--rule)",
-          overflow: "hidden",
-          position: "relative",
+          maxWidth: "420px",
+          display: "flex",
+          flexDirection: "column",
+          textAlign: "left",
         }}
       >
-        {/* Left Column: Log in Form */}
-        <div style={{ padding: "32px 20px" }}>
+        <div style={{ marginBottom: "20px" }}>
+          <Link
+            to="/"
+            style={{
+              fontSize: "18px",
+              fontWeight: 700,
+              color: "var(--ink)",
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            IntellMeet
+          </Link>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "var(--surface)",
+            borderRadius: "var(--radius)",
+            border: "1px solid var(--rule)",
+            padding: "32px 24px",
+          }}
+        >
           <h1
             style={{
-              fontSize: "30px",
+              fontSize: "26px",
               fontWeight: 700,
               margin: "0 0 8px 0",
               color: "var(--ink)",
@@ -169,7 +192,7 @@ export function Login(): React.JSX.Element {
           >
             Log in
           </h1>
-          <p style={{ color: "var(--ink-soft)", margin: "0 0 24px 0", fontSize: "15px" }}>
+          <p style={{ color: "var(--ink-soft)", margin: "0 0 24px 0", fontSize: "14px" }}>
             Enter your team credentials to access your meetings and tasks.
           </p>
 
@@ -422,80 +445,18 @@ export function Login(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Right Column: Sample Action List (Seeded Meeting Preview) */}
-        <div
-          aria-hidden={isDemoOpen}
-          style={{
-            backgroundColor: "var(--ground)",
-            padding: "40px",
-            borderLeft: "1px solid var(--rule)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: "16px" }}>
-            Automated Meeting Insights
-          </div>
-          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--ink)", margin: "0 0 8px 0" }}>
-            Sprint 14 Planning
-          </h2>
-          <p style={{ fontSize: "14px", color: "var(--ink-soft)", margin: "0 0 24px 0" }}>
-            Generated from meeting transcript and live discussion.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div
-              style={{
-                backgroundColor: "var(--surface)",
-                padding: "12px 16px",
-                borderRadius: "var(--radius)",
-                borderLeft: "4px solid var(--meeting-0)",
-                fontSize: "14px",
-              }}
-            >
-              <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
-                Finalize checkout error handling
-              </div>
-              <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to Product Lead · Due Friday
-              </div>
-            </div>
-
-            <div
-              style={{
-                backgroundColor: "var(--surface)",
-                padding: "12px 16px",
-                borderRadius: "var(--radius)",
-                borderLeft: "4px solid var(--meeting-1)",
-                fontSize: "14px",
-              }}
-            >
-              <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
-                Review mobile layout responsiveness
-              </div>
-              <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to UI Designer · Due Monday
-              </div>
-            </div>
-
-            <div
-              style={{
-                backgroundColor: "var(--surface)",
-                padding: "12px 16px",
-                borderRadius: "var(--radius)",
-                borderLeft: "4px solid var(--meeting-2)",
-                fontSize: "14px",
-              }}
-            >
-              <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
-                Update customer onboarding notes
-              </div>
-              <div style={{ fontSize: "13px", color: "var(--ink-soft)" }}>
-                Assigned to Operations Lead · Due Wednesday
-              </div>
-            </div>
-          </div>
+        {/* Back to home */}
+        <div style={{ marginTop: "16px" }}>
+          <Link
+            to="/"
+            style={{
+              fontSize: "14px",
+              color: "var(--ink-soft)",
+              textDecoration: "none",
+            }}
+          >
+            Back to home
+          </Link>
         </div>
       </div>
     </div>

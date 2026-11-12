@@ -132,35 +132,57 @@ export function Signup(): React.JSX.Element {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "32px 16px",
         backgroundColor: "var(--ground)",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "480px",
-          backgroundColor: "var(--surface)",
-          borderRadius: "var(--radius)",
-          border: "1px solid var(--rule)",
-          padding: "32px 20px",
+          maxWidth: "420px",
+          display: "flex",
+          flexDirection: "column",
+          textAlign: "left",
         }}
       >
-        <h1
+        <div style={{ marginBottom: "20px" }}>
+          <Link
+            to="/"
+            style={{
+              fontSize: "18px",
+              fontWeight: 700,
+              color: "var(--ink)",
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            IntellMeet
+          </Link>
+        </div>
+
+        <div
           style={{
-            fontSize: "30px",
-            fontWeight: 700,
-            margin: "0 0 8px 0",
-            color: "var(--ink)",
-            letterSpacing: "-0.01em",
-            overflowWrap: "anywhere",
+            backgroundColor: "var(--surface)",
+            borderRadius: "var(--radius)",
+            border: "1px solid var(--rule)",
+            padding: "32px 24px",
           }}
         >
-          Sign up
-        </h1>
-        <p style={{ color: "var(--ink-soft)", margin: "0 0 24px 0", fontSize: "15px" }}>
-          Create an account to start hosting team meetings and tracking tasks.
-        </p>
+          <h1
+            style={{
+              fontSize: "26px",
+              fontWeight: 700,
+              margin: "0 0 8px 0",
+              color: "var(--ink)",
+              letterSpacing: "-0.01em",
+              overflowWrap: "anywhere",
+            }}
+          >
+            Sign up
+          </h1>
+          <p style={{ color: "var(--ink-soft)", margin: "0 0 24px 0", fontSize: "14px" }}>
+            Create an account to start hosting team meetings and tracking tasks.
+          </p>
 
         {serverError && (
           <div
@@ -449,6 +471,21 @@ export function Signup(): React.JSX.Element {
           </Link>
         </div>
       </div>
+
+      {/* Back to home */}
+      <div style={{ marginTop: "16px" }}>
+        <Link
+          to="/"
+          style={{
+            fontSize: "14px",
+            color: "var(--ink-soft)",
+            textDecoration: "none",
+          }}
+        >
+          Back to home
+        </Link>
+      </div>
     </div>
-  );
+  </div>
+);
 }
