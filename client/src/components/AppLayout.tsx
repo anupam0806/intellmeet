@@ -140,7 +140,7 @@ export function AppLayout(): React.JSX.Element {
   useEffect(() => {
     if (!user) return;
 
-    loadNotifications();
+    void loadNotifications();
 
     const socket = getSocket();
     if (!socket.connected) {
@@ -159,7 +159,7 @@ export function AppLayout(): React.JSX.Element {
     };
 
     const handleReconnect = () => {
-      loadNotifications();
+      void loadNotifications();
     };
 
     socket.on("notification:new", handleNewNotification);
