@@ -141,9 +141,12 @@ describe("Defensive Route Rendering: Empty API responses across all pages", () =
         </QueryClientProvider>,
       );
 
-      await waitFor(() => {
-        expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+        },
+        { timeout: 4000 },
+      );
 
       // Ensure error boundary was not triggered
       expect(screen.queryByText("Something went wrong on this page.")).not.toBeInTheDocument();

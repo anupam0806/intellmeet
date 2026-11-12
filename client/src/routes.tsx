@@ -3,9 +3,16 @@ import { RouteObject } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute.js";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute.js";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary.js";
-import { Landing } from "./pages/Landing.js";
-import { NotFound } from "./pages/NotFound.js";
-import { Forbidden } from "./pages/Forbidden.js";
+
+const Landing = React.lazy(() =>
+  import("./pages/Landing.js").then((m) => ({ default: m.Landing })),
+);
+const NotFound = React.lazy(() =>
+  import("./pages/NotFound.js").then((m) => ({ default: m.NotFound })),
+);
+const Forbidden = React.lazy(() =>
+  import("./pages/Forbidden.js").then((m) => ({ default: m.Forbidden })),
+);
 
 const AppLayout = React.lazy(() =>
   import("./components/AppLayout.js").then((m) => ({ default: m.AppLayout })),
@@ -67,7 +74,11 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: "/",
-        element: <Landing />,
+        element: (
+          <LazyPage>
+            <Landing />
+          </LazyPage>
+        ),
       },
       // Public auth routes (signed-in users redirected to /dashboard)
       {
@@ -164,8 +175,22 @@ export const routes: RouteObject[] = [
         ],
       },
       // Standalone error & fallback pages
-      { path: "/forbidden", element: <Forbidden /> },
-      { path: "*", element: <NotFound /> },
+      {
+        path: "/forbidden",
+        element: (
+          <LazyPage>
+            <Forbidden />
+          </LazyPage>
+        ),
+      },
+      {
+        path: "*",
+        element: (
+          <LazyPage>
+            <NotFound />
+          </LazyPage>
+        ),
+      },
     ],
   },
 ];
