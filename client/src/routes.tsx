@@ -38,7 +38,7 @@ const Analytics = React.lazy(() =>
   import("./pages/Analytics.js").then((m) => ({ default: m.Analytics })),
 );
 
-function LazyPage({ children }: { children: React.ReactNode }): React.JSX.Element {
+function LazyPage({ children }: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
   return (
     <React.Suspense
       fallback={
