@@ -5,6 +5,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import compression from "compression";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 import { sanitizeInPlace } from "./utils/sanitize.js";
@@ -67,6 +68,18 @@ export function createApp(clientDistOverride?: string): express.Application {
       }),
     );
   }
+
+  // Response compression (skips /socket.io and already-compressed types)
+  app.use(
+    compression({
+      filter: (req, res) => {
+        if (req.path.startsWith("/socket.io") || req.baseUrl?.startsWith("/socket.io")) {
+          return false;
+        }
+        return compression.filter(req, res);
+      },
+    }),
+  );
 
   // Cookie parsing
   app.use(cookieParser());

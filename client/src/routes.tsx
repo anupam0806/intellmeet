@@ -1,18 +1,30 @@
 import React from "react";
 import { RouteObject } from "react-router-dom";
-import { AppLayout } from "./components/AppLayout.js";
 import { ProtectedRoute } from "./components/ProtectedRoute.js";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute.js";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary.js";
 import { Landing } from "./pages/Landing.js";
-import { Dashboard } from "./pages/Dashboard.js";
-import { Login } from "./pages/Login.js";
-import { Signup } from "./pages/Signup.js";
-import { Meetings } from "./pages/Meetings.js";
-import { Settings } from "./pages/Settings.js";
 import { NotFound } from "./pages/NotFound.js";
 import { Forbidden } from "./pages/Forbidden.js";
 
+const AppLayout = React.lazy(() =>
+  import("./components/AppLayout.js").then((m) => ({ default: m.AppLayout })),
+);
+const Dashboard = React.lazy(() =>
+  import("./pages/Dashboard.js").then((m) => ({ default: m.Dashboard })),
+);
+const Login = React.lazy(() =>
+  import("./pages/Login.js").then((m) => ({ default: m.Login })),
+);
+const Signup = React.lazy(() =>
+  import("./pages/Signup.js").then((m) => ({ default: m.Signup })),
+);
+const Meetings = React.lazy(() =>
+  import("./pages/Meetings.js").then((m) => ({ default: m.Meetings })),
+);
+const Settings = React.lazy(() =>
+  import("./pages/Settings.js").then((m) => ({ default: m.Settings })),
+);
 const MeetingDetail = React.lazy(() =>
   import("./pages/MeetingDetail.js").then((m) => ({ default: m.MeetingDetail })),
 );
@@ -61,8 +73,22 @@ export const routes: RouteObject[] = [
       {
         element: <PublicOnlyRoute />,
         children: [
-          { path: "/login", element: <Login /> },
-          { path: "/signup", element: <Signup /> },
+          {
+            path: "/login",
+            element: (
+              <LazyPage>
+                <Login />
+              </LazyPage>
+            ),
+          },
+          {
+            path: "/signup",
+            element: (
+              <LazyPage>
+                <Signup />
+              </LazyPage>
+            ),
+          },
         ],
       },
       // Protected app routes
@@ -70,10 +96,28 @@ export const routes: RouteObject[] = [
         element: <ProtectedRoute />,
         children: [
           {
-            element: <AppLayout />,
+            element: (
+              <LazyPage>
+                <AppLayout />
+              </LazyPage>
+            ),
             children: [
-              { path: "/dashboard", element: <Dashboard /> },
-              { path: "/meetings", element: <Meetings /> },
+              {
+                path: "/dashboard",
+                element: (
+                  <LazyPage>
+                    <Dashboard />
+                  </LazyPage>
+                ),
+              },
+              {
+                path: "/meetings",
+                element: (
+                  <LazyPage>
+                    <Meetings />
+                  </LazyPage>
+                ),
+              },
               {
                 path: "/meetings/:id",
                 element: (
@@ -98,7 +142,14 @@ export const routes: RouteObject[] = [
                   </LazyPage>
                 ),
               },
-              { path: "/settings", element: <Settings /> },
+              {
+                path: "/settings",
+                element: (
+                  <LazyPage>
+                    <Settings />
+                  </LazyPage>
+                ),
+              },
             ],
           },
           // Room route also protected, with returnTo support

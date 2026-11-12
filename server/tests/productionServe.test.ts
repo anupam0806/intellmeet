@@ -15,10 +15,12 @@ describe("Production Static Serving, Fallback & Security Headers", () => {
     assetsDir = path.join(tempDir, "assets");
     fs.mkdirSync(assetsDir, { recursive: true });
 
-    // Create index.html and a hashed asset
+    // Create index.html and a hashed asset (>1KB for compression threshold)
     fs.writeFileSync(
       path.join(tempDir, "index.html"),
-      "<!DOCTYPE html><html><head><title>IntellMeet</title></head><body><div id=\"root\">SPA Root</div></body></html>",
+      "<!DOCTYPE html><html><head><title>IntellMeet</title></head><body><div id=\"root\">SPA Root " +
+        "IntellMeet is an AI-powered meeting and task management system designed for high performance. ".repeat(20) +
+        "</div></body></html>",
     );
     fs.writeFileSync(
       path.join(assetsDir, "index-B8c9F1a2.js"),
@@ -128,5 +130,29 @@ describe("Production Static Serving, Fallback & Security Headers", () => {
     const unknownApiRes = await request(app).get("/api/v1/does-not-exist");
     expect(unknownApiRes.status).toBe(404);
     expect(unknownApiRes.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("compresses large HTML and JSON responses when Accept-Encoding: gzip is sent, and leaves /socket.io untouched", async () => {
+    const app = createApp(tempDir);
+
+    // Large HTML response (> 1KB threshold)
+    const htmlRes = await request(app).get("/").set("Accept-Encoding", "gzip");
+    expect(htmlRes.status).toBe(200);
+    expect(htmlRes.headers["content-encoding"]).toBe("gzip");
+
+    // Dynamic large JSON endpoint
+    app.get("/test-large-json", (_req, res) => {
+      res.json({ message: "Payload for compression testing. ".repeat(60) });
+    });
+    const jsonRes = await request(app).get("/test-large-json").set("Accept-Encoding", "gzip");
+    expect(jsonRes.status).toBe(200);
+    expect(jsonRes.headers["content-encoding"]).toBe("gzip");
+
+    // /socket.io requests should never be compressed
+    app.get("/socket.io/test", (_req, res) => {
+      res.send("B".repeat(2048));
+    });
+    const socketRes = await request(app).get("/socket.io/test").set("Accept-Encoding", "gzip");
+    expect(socketRes.headers["content-encoding"]).toBeUndefined();
   });
 });

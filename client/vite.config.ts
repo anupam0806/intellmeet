@@ -11,6 +11,12 @@ export default defineConfig({
           if (id.includes("recharts") || id.includes("d3-") || id.includes("victory-vendor")) {
             return "recharts";
           }
+          if (id.includes("@dnd-kit")) {
+            return "dnd-kit";
+          }
+          if (id.includes("socket.io-client") || id.includes("engine.io-client")) {
+            return "socket";
+          }
           if (id.includes("react-dom") || id.includes("node_modules/react/") || id.includes("react-router")) {
             return "react-vendor";
           }
