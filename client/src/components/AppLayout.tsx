@@ -59,7 +59,7 @@ export function AppLayout(): React.JSX.Element {
   const bellButtonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mobilePanelRef = useRef<HTMLDivElement | null>(null);
+  const mobilePanelRef = useRef<HTMLDialogElement | null>(null);
   const prevMenuOpenRef = useRef(mobileMenuOpen);
 
   // Return focus to menu button on close
@@ -205,7 +205,7 @@ export function AppLayout(): React.JSX.Element {
 
   const handleSignOut = async () => {
     await logout();
-    navigate("/login");
+    void navigate("/login");
   };
 
   const handleToggleNotifications = () => {
@@ -238,7 +238,7 @@ export function AppLayout(): React.JSX.Element {
       setUnreadCount((c) => Math.max(0, c - 1));
       markNotificationAsRead(item.id).catch(() => {});
     }
-    navigate(item.link);
+    void navigate(item.link);
   };
 
   const handleMarkAllRead = async () => {
@@ -258,6 +258,8 @@ export function AppLayout(): React.JSX.Element {
     { to: "/analytics", label: "Analytics" },
     { to: "/settings", label: "Settings" },
   ];
+
+  const notificationList = Array.isArray(notifications) ? notifications : [];
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--ground)" }}>
@@ -453,7 +455,7 @@ export function AppLayout(): React.JSX.Element {
                 </div>
 
                 <div style={{ overflowY: "auto", flex: 1, maxHeight: "380px" }}>
-                  {notifications.length === 0 ? (
+                  {notificationList.length === 0 ? (
                     <div
                       style={{
                         padding: "36px 16px",
@@ -465,7 +467,7 @@ export function AppLayout(): React.JSX.Element {
                       No notifications
                     </div>
                   ) : (
-                    (Array.isArray(notifications) ? notifications : []).map((item) => (
+                    notificationList.map((item) => (
                       <button
                         key={item.id}
                         type="button"
@@ -635,10 +637,10 @@ export function AppLayout(): React.JSX.Element {
           />
 
           {/* Right drawer panel */}
-          <div
+          <dialog
+            open
             id="mobile-menu-panel"
             ref={mobilePanelRef}
-            role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
             className="mobile-menu-panel"
@@ -651,19 +653,20 @@ export function AppLayout(): React.JSX.Element {
               width: "85%",
               maxWidth: "360px",
               backgroundColor: "var(--surface)",
+              border: "none",
               borderLeft: "1px solid var(--rule)",
               boxShadow: "var(--shadow-menu)",
               display: "flex",
               flexDirection: "column",
               zIndex: 50,
               overflowY: "auto",
+              margin: 0,
+              padding: 0,
             }}
           >
             {/* Row 1: Account name and role (at least 44px tall, keyboard operable) */}
             {user && (
-              <div
-                tabIndex={0}
-                role="region"
+              <section
                 aria-label="Account details"
                 style={{
                   minHeight: "44px",
@@ -711,7 +714,7 @@ export function AppLayout(): React.JSX.Element {
                 >
                   {user.role}
                 </span>
-              </div>
+              </section>
             )}
 
             {/* Rows 2..6: Navigation Links (each at least 44px tall) */}
@@ -778,7 +781,7 @@ export function AppLayout(): React.JSX.Element {
                 </button>
               </div>
             )}
-          </div>
+          </dialog>
         </>
       )}
 
