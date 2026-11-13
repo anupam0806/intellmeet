@@ -139,12 +139,18 @@
   z-index: 2;
 }
 
-/* Reduced Motion: freeze at full bloom */
+/* Reduced Motion: freeze at full bloom and disable motion transitions */
 @media (prefers-reduced-motion: reduce) {
   .aurora-blade-1,
   .aurora-blade-2,
   .aurora-blade-3 {
     animation: none;
+  }
+
+  .keycap-btn,
+  .obsidian-card {
+    transition: none;
+    transform: none;
   }
 }
 
@@ -193,6 +199,7 @@
 .hero-gradient-word {
   background: linear-gradient(135deg, #ffb347 0%, #ff6b4a 50%, #ff2f3a 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
