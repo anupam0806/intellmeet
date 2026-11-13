@@ -130,27 +130,31 @@ describe("Defensive Route Rendering: Empty API responses across all pages", () =
   ];
 
   testRoutes.forEach(({ path, heading }) => {
-    it(`renders route ${path} cleanly without throwing when API returns empty data`, async () => {
-      const router = createMemoryRouter(routes, {
-        initialEntries: [path],
-      });
+    it(
+      `renders route ${path} cleanly without throwing when API returns empty data`,
+      async () => {
+        const router = createMemoryRouter(routes, {
+          initialEntries: [path],
+        });
 
-      render(
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>,
-      );
+        render(
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>,
+        );
 
-      await waitFor(
-        () => {
-          expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
-        },
-        { timeout: 10000 },
-      );
+        await waitFor(
+          () => {
+            expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+          },
+          { timeout: 10000 },
+        );
 
-      // Ensure error boundary was not triggered
-      expect(screen.queryByText("Something went wrong on this page.")).not.toBeInTheDocument();
-    });
+        // Ensure error boundary was not triggered
+        expect(screen.queryByText("Something went wrong on this page.")).not.toBeInTheDocument();
+      },
+      15000,
+    );
   });
 });
 

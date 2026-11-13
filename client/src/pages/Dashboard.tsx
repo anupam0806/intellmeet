@@ -148,7 +148,7 @@ export function Dashboard(): React.JSX.Element {
             <Link
               to="/meetings"
               style={{
-                color: "var(--signal)",
+                color: "var(--ink)",
                 textDecoration: "underline",
                 textUnderlineOffset: "4px",
               }}
@@ -159,7 +159,7 @@ export function Dashboard(): React.JSX.Element {
             <Link
               to="/tasks?assigneeId=me"
               style={{
-                color: "var(--signal)",
+                color: "var(--ink)",
                 textDecoration: "underline",
                 textUnderlineOffset: "4px",
               }}
@@ -170,7 +170,7 @@ export function Dashboard(): React.JSX.Element {
             <Link
               to="/meetings?status=ENDED"
               style={{
-                color: "var(--signal)",
+                color: "var(--ink)",
                 textDecoration: "underline",
                 textUnderlineOffset: "4px",
               }}
@@ -229,26 +229,16 @@ export function Dashboard(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Main 3 Sections Grid: Stack on mobile, columns on wider screens */}
+      {/* Main 3 Sections: Three plain lists with hairline dividers per docs/06 */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-          gap: "24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "48px",
         }}
       >
         {/* Section 1: Live now */}
-        <section
-          style={{
-            backgroundColor: "var(--surface)",
-            border: "1px solid var(--rule)",
-            borderRadius: "var(--radius)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "280px",
-          }}
-        >
+        <section>
           <div
             style={{
               display: "flex",
@@ -256,12 +246,12 @@ export function Dashboard(): React.JSX.Element {
               justifyContent: "space-between",
               borderBottom: "1px solid var(--rule)",
               paddingBottom: "12px",
-              marginBottom: "16px",
+              marginBottom: "8px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Radio size={16} strokeWidth={2} style={{ color: "var(--signal)" }} />
-              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+              <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                 Live now
               </h2>
             </div>
@@ -281,23 +271,22 @@ export function Dashboard(): React.JSX.Element {
             )}
           </div>
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div>
             {meetingsQuery.isLoading ? (
-              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+              <div style={{ padding: "24px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
                 Loading live rooms...
               </div>
             ) : meetingsQuery.isError ? (
               <div
                 style={{
-                  padding: "16px",
-                  borderRadius: "var(--radius)",
-                  border: "1px solid var(--error)",
+                  padding: "14px 0",
                   color: "var(--error)",
                   fontSize: "13px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: "8px",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -324,68 +313,75 @@ export function Dashboard(): React.JSX.Element {
             ) : liveMeetings.length === 0 ? (
               <div
                 style={{
-                  margin: "auto",
-                  padding: "32px 16px",
+                  padding: "24px 0",
                   textAlign: "center",
                   color: "var(--ink-soft)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
-                <Video size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <Video size={24} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
                 <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No meetings live right now</p>
                 <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
                   Start one from Upcoming or create a new room.
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 {liveMeetings.map((m) => (
                   <div
                     key={m.id}
                     style={{
-                      padding: "12px 14px",
-                      backgroundColor: "var(--ground)",
-                      border: "1px solid var(--rule)",
-                      borderLeftWidth: "6px",
-                      borderLeftColor: getMeetingColor(m.colorIndex),
-                      borderRadius: "var(--radius)",
+                      padding: "12px 0",
+                      borderBottom: "1px solid var(--rule)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: "12px",
                     }}
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <Link
-                        to={`/meetings/${m.id}`}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                      <div
                         style={{
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          color: "var(--ink)",
-                          textDecoration: "none",
-                          display: "block",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          width: "6px",
+                          height: "28px",
+                          borderRadius: "3px",
+                          backgroundColor: getMeetingColor(m.colorIndex),
+                          flexShrink: 0,
                         }}
-                      >
-                        {m.title}
-                      </Link>
-                      <span style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "2px", display: "block" }}>
-                        Host: {m.hostName} · {m.participantCount} in room
-                      </span>
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <Link
+                          to={`/meetings/${m.id}`}
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "var(--ink)",
+                            textDecoration: "none",
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {m.title}
+                        </Link>
+                        <span style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "2px", display: "block" }}>
+                          Host: {m.hostName} · {m.participantCount} in room
+                        </span>
+                      </div>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => navigate(`/meetings/${m.id}`)}
                       style={{
-                        padding: "6px 12px",
+                        padding: "6px 14px",
                         fontSize: "12px",
                         fontWeight: 600,
                         backgroundColor: "var(--signal)",
                         color: "var(--on-signal)",
                         border: "none",
-                        borderRadius: "var(--radius-chip)",
+                        borderRadius: "var(--radius)",
                         cursor: "pointer",
                         flexShrink: 0,
                       }}
@@ -398,14 +394,14 @@ export function Dashboard(): React.JSX.Element {
             )}
           </div>
 
-          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+          <div style={{ paddingTop: "12px" }}>
             <Link
               to="/meetings?status=LIVE"
               style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "var(--signal)",
-                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--ink)",
+                textDecoration: "underline",
               }}
             >
               View all live rooms
@@ -414,17 +410,7 @@ export function Dashboard(): React.JSX.Element {
         </section>
 
         {/* Section 2: Upcoming */}
-        <section
-          style={{
-            backgroundColor: "var(--surface)",
-            border: "1px solid var(--rule)",
-            borderRadius: "var(--radius)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "280px",
-          }}
-        >
+        <section>
           <div
             style={{
               display: "flex",
@@ -432,12 +418,12 @@ export function Dashboard(): React.JSX.Element {
               justifyContent: "space-between",
               borderBottom: "1px solid var(--rule)",
               paddingBottom: "12px",
-              marginBottom: "16px",
+              marginBottom: "8px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Calendar size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
-              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+              <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                 Upcoming
               </h2>
             </div>
@@ -457,23 +443,22 @@ export function Dashboard(): React.JSX.Element {
             )}
           </div>
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div>
             {meetingsQuery.isLoading ? (
-              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+              <div style={{ padding: "24px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
                 Loading scheduled meetings...
               </div>
             ) : meetingsQuery.isError ? (
               <div
                 style={{
-                  padding: "16px",
-                  borderRadius: "var(--radius)",
-                  border: "1px solid var(--error)",
+                  padding: "14px 0",
                   color: "var(--error)",
                   fontSize: "13px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: "8px",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -500,84 +485,88 @@ export function Dashboard(): React.JSX.Element {
             ) : upcomingMeetings.length === 0 ? (
               <div
                 style={{
-                  margin: "auto",
-                  padding: "32px 16px",
+                  padding: "24px 0",
                   textAlign: "center",
                   color: "var(--ink-soft)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
-                <Clock size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <Clock size={24} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
                 <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No scheduled meetings</p>
                 <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
                   Schedule a session for your team.
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 {upcomingMeetings.slice(0, 4).map((m) => (
                   <Link
                     key={m.id}
                     to={`/meetings/${m.id}`}
                     style={{
-                      padding: "10px 14px",
-                      backgroundColor: "var(--ground)",
-                      border: "1px solid var(--rule)",
-                      borderLeftWidth: "6px",
-                      borderLeftColor: getMeetingColor(m.colorIndex),
-                      borderRadius: "var(--radius)",
+                      padding: "12px 0",
+                      borderBottom: "1px solid var(--rule)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
                       textDecoration: "none",
-                      display: "block",
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "var(--ink)",
-                        margin: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {m.title}
-                    </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        fontSize: "12px",
-                        color: "var(--ink-soft)",
-                        marginTop: "4px",
-                      }}
-                    >
-                      <span>Host: {m.hostName}</span>
-                      <span>
-                        {m.scheduledAt
-                          ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "Scheduled"}
-                      </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: "6px",
+                          height: "28px",
+                          borderRadius: "3px",
+                          backgroundColor: getMeetingColor(m.colorIndex),
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "var(--ink)",
+                            margin: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {m.title}
+                        </p>
+                        <span style={{ fontSize: "12px", color: "var(--ink-soft)", marginTop: "2px", display: "block" }}>
+                          Host: {m.hostName}
+                        </span>
+                      </div>
                     </div>
+
+                    <span style={{ fontSize: "12px", color: "var(--ink-soft)", flexShrink: 0 }}>
+                      {m.scheduledAt
+                        ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Scheduled"}
+                    </span>
                   </Link>
                 ))}
               </div>
             )}
           </div>
 
-          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+          <div style={{ paddingTop: "12px" }}>
             <Link
               to="/meetings?status=SCHEDULED"
               style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "var(--signal)",
-                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--ink)",
+                textDecoration: "underline",
               }}
             >
               View all upcoming
@@ -586,17 +575,7 @@ export function Dashboard(): React.JSX.Element {
         </section>
 
         {/* Section 3: My Tasks */}
-        <section
-          style={{
-            backgroundColor: "var(--surface)",
-            border: "1px solid var(--rule)",
-            borderRadius: "var(--radius)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "280px",
-          }}
-        >
+        <section>
           <div
             style={{
               display: "flex",
@@ -604,12 +583,12 @@ export function Dashboard(): React.JSX.Element {
               justifyContent: "space-between",
               borderBottom: "1px solid var(--rule)",
               paddingBottom: "12px",
-              marginBottom: "16px",
+              marginBottom: "8px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <CheckCircle2 size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
-              <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+              <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                 My tasks
               </h2>
             </div>
@@ -629,23 +608,22 @@ export function Dashboard(): React.JSX.Element {
             )}
           </div>
 
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div>
             {tasksQuery.isLoading ? (
-              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
+              <div style={{ padding: "24px 0", textAlign: "center", color: "var(--ink-soft)", fontSize: "13px" }}>
                 Loading your tasks...
               </div>
             ) : tasksQuery.isError ? (
               <div
                 style={{
-                  padding: "16px",
-                  borderRadius: "var(--radius)",
-                  border: "1px solid var(--error)",
+                  padding: "14px 0",
                   color: "var(--error)",
                   fontSize: "13px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: "8px",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -672,13 +650,13 @@ export function Dashboard(): React.JSX.Element {
             ) : openTasks.length === 0 ? (
               <div
                 style={{
-                  margin: "auto",
-                  padding: "32px 16px",
+                  padding: "24px 0",
                   textAlign: "center",
                   color: "var(--ink-soft)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
-                <CheckCircle2 size={28} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
+                <CheckCircle2 size={24} strokeWidth={1.5} style={{ margin: "0 auto 8px auto", opacity: 0.5 }} />
                 <p style={{ margin: 0, fontSize: "13px", fontWeight: 500 }}>No tasks assigned yet</p>
                 <p style={{ margin: "4px 0 0 0", fontSize: "12px" }}>
                   Action items converted from meeting write-ups will appear here.
@@ -691,18 +669,16 @@ export function Dashboard(): React.JSX.Element {
                   <div>
                     <span
                       style={{
-                        fontSize: "11px",
+                        fontSize: "12px",
                         fontWeight: 600,
-                        color: "var(--signal)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
+                        color: "var(--ink-soft)",
                         display: "block",
-                        marginBottom: "6px",
+                        padding: "8px 0 4px 0",
                       }}
                     >
                       In progress ({inProgressTasks.length})
                     </span>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                       {inProgressTasks.map((t) => {
                         const overdue = isOverdue(t.dueDate, t.status);
                         return (
@@ -710,34 +686,44 @@ export function Dashboard(): React.JSX.Element {
                             key={t.id}
                             to={`/tasks?highlight=${t.id}`}
                             style={{
-                              padding: "8px 12px",
-                              backgroundColor: "var(--ground)",
-                              border: "1px solid var(--rule)",
-                              borderLeftWidth: "4px",
-                              borderLeftColor:
-                                t.sourceMeetingColorIndex !== undefined
-                                  ? getMeetingColor(t.sourceMeetingColorIndex)
-                                  : "var(--rule)",
-                              borderRadius: "var(--radius-chip)",
+                              padding: "10px 0",
+                              borderBottom: "1px solid var(--rule)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "12px",
                               textDecoration: "none",
-                              display: "block",
                             }}
                           >
-                            <p
-                              style={{
-                                fontSize: "13px",
-                                fontWeight: 500,
-                                color: "var(--ink)",
-                                margin: 0,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {t.title}
-                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                              <div
+                                style={{
+                                  width: "6px",
+                                  height: "24px",
+                                  borderRadius: "3px",
+                                  backgroundColor:
+                                    t.sourceMeetingColorIndex !== undefined
+                                      ? getMeetingColor(t.sourceMeetingColorIndex)
+                                      : "var(--rule)",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <p
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: 500,
+                                  color: "var(--ink)",
+                                  margin: 0,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {t.title}
+                              </p>
+                            </div>
                             {t.dueDate && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", flexShrink: 0 }}>
                                 <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
                                 {overdue && (
                                   <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
@@ -756,18 +742,16 @@ export function Dashboard(): React.JSX.Element {
                   <div>
                     <span
                       style={{
-                        fontSize: "11px",
+                        fontSize: "12px",
                         fontWeight: 600,
                         color: "var(--ink-soft)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
                         display: "block",
-                        marginBottom: "6px",
+                        padding: "8px 0 4px 0",
                       }}
                     >
                       To do ({todoTasks.length})
                     </span>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                       {todoTasks.map((t) => {
                         const overdue = isOverdue(t.dueDate, t.status);
                         return (
@@ -775,34 +759,44 @@ export function Dashboard(): React.JSX.Element {
                             key={t.id}
                             to={`/tasks?highlight=${t.id}`}
                             style={{
-                              padding: "8px 12px",
-                              backgroundColor: "var(--ground)",
-                              border: "1px solid var(--rule)",
-                              borderLeftWidth: "4px",
-                              borderLeftColor:
-                                t.sourceMeetingColorIndex !== undefined
-                                  ? getMeetingColor(t.sourceMeetingColorIndex)
-                                  : "var(--rule)",
-                              borderRadius: "var(--radius-chip)",
+                              padding: "10px 0",
+                              borderBottom: "1px solid var(--rule)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "12px",
                               textDecoration: "none",
-                              display: "block",
                             }}
                           >
-                            <p
-                              style={{
-                                fontSize: "13px",
-                                fontWeight: 500,
-                                color: "var(--ink)",
-                                margin: 0,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {t.title}
-                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                              <div
+                                style={{
+                                  width: "6px",
+                                  height: "24px",
+                                  borderRadius: "3px",
+                                  backgroundColor:
+                                    t.sourceMeetingColorIndex !== undefined
+                                      ? getMeetingColor(t.sourceMeetingColorIndex)
+                                      : "var(--rule)",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <p
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: 500,
+                                  color: "var(--ink)",
+                                  margin: 0,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {t.title}
+                              </p>
+                            </div>
                             {t.dueDate && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", flexShrink: 0 }}>
                                 <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
                                 {overdue && (
                                   <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
@@ -819,14 +813,14 @@ export function Dashboard(): React.JSX.Element {
             )}
           </div>
 
-          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
+          <div style={{ paddingTop: "12px" }}>
             <Link
               to="/tasks"
               style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "var(--signal)",
-                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--ink)",
+                textDecoration: "underline",
               }}
             >
               Open task board
