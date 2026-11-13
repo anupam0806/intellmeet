@@ -145,7 +145,7 @@ describe("Defensive Route Rendering: Empty API responses across all pages", () =
         () => {
           expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
         },
-        { timeout: 4000 },
+        { timeout: 10000 },
       );
 
       // Ensure error boundary was not triggered

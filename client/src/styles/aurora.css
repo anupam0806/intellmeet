@@ -144,7 +144,7 @@
   .aurora-blade-1,
   .aurora-blade-2,
   .aurora-blade-3 {
-    animation: none !important;
+    animation: none;
   }
 }
 
@@ -169,23 +169,23 @@
   justify-content: space-between;
 }
 
-/* Headline H1 with explicit !important and responsive query */
+/* Headline H1 and responsive query */
 .hero-headline {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 64px !important;
-  font-weight: 600 !important;
-  line-height: 1.1 !important;
-  color: #ffffff !important;
-  letter-spacing: -0.03em !important;
-  text-align: center !important;
-  margin: 0 auto 20px auto !important;
-  max-width: 860px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  text-align: center;
+  margin: 0 auto 20px auto;
+  max-width: 860px;
 }
 
 @media (max-width: 768px) {
   .hero-headline {
-    font-size: 38px !important;
-    line-height: 1.15 !important;
+    font-size: 38px;
+    line-height: 1.15;
   }
 }
 
