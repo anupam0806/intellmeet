@@ -596,8 +596,8 @@ export function Tasks(): React.JSX.Element {
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 shrink-0 self-start sm:self-auto"
-          style={{ backgroundColor: "var(--signal)", color: "var(--on-signal)", minHeight: "44px" }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg btn-warm-gradient shrink-0 self-start sm:self-auto"
+          style={{ minHeight: "44px" }}
         >
           <Plus className="w-3.5 h-3.5" />
           <span>New task</span>
@@ -657,7 +657,15 @@ export function Tasks(): React.JSX.Element {
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div
           className="flex flex-row overflow-x-auto snap-x snap-mandatory divide-x md:grid md:grid-cols-3 md:overflow-x-visible rounded-lg border"
-          style={{ borderColor: "var(--rule)", backgroundColor: "var(--bg)", scrollSnapType: "x mandatory" }}
+          style={{
+            borderColor: "var(--rule)",
+            backgroundColor: "rgba(14, 15, 19, 0.75)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: "var(--radius-card)",
+            boxShadow: "var(--shadow-card)",
+            scrollSnapType: "x mandatory",
+          }}
         >
           {LANES.map((lane) => {
             const laneTasks = tasksByLane[lane.id];

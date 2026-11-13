@@ -186,6 +186,7 @@ export function Dashboard(): React.JSX.Element {
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
+            className="btn-obsidian-glass"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -195,9 +196,6 @@ export function Dashboard(): React.JSX.Element {
               fontSize: "14px",
               fontWeight: 500,
               borderRadius: "var(--radius)",
-              border: "1px solid var(--rule)",
-              backgroundColor: "var(--surface)",
-              color: "var(--ink)",
               cursor: "pointer",
             }}
           >
@@ -208,6 +206,7 @@ export function Dashboard(): React.JSX.Element {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
+            className="btn-warm-gradient"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -217,9 +216,6 @@ export function Dashboard(): React.JSX.Element {
               fontSize: "14px",
               fontWeight: 600,
               borderRadius: "var(--radius)",
-              border: "none",
-              backgroundColor: "var(--signal)",
-              color: "var(--on-signal)",
               cursor: "pointer",
             }}
           >
@@ -229,26 +225,41 @@ export function Dashboard(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Main 3 Sections: Three plain lists with hairline dividers per docs/06 */}
+      {/* 3-Column horizontal dashboard grid layout on desktop (stacks on mobile) */}
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "48px",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+          gap: "24px",
         }}
       >
         {/* Section 1: Live now */}
-        <section>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid var(--rule)",
-              paddingBottom: "12px",
-              marginBottom: "8px",
-            }}
-          >
+        <section
+          style={{
+            backgroundColor: "rgba(14, 15, 19, 0.75)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius-card)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: "340px",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottom: "1px solid var(--rule)",
+                paddingBottom: "12px",
+                marginBottom: "8px",
+              }}
+            >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Radio size={16} strokeWidth={2} style={{ color: "var(--signal)" }} />
               <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
@@ -326,25 +337,27 @@ export function Dashboard(): React.JSX.Element {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {liveMeetings.map((m) => (
                   <div
                     key={m.id}
                     style={{
-                      padding: "12px 0",
-                      borderBottom: "1px solid var(--rule)",
+                      padding: "10px 12px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: "var(--radius)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: "12px",
+                      gap: "10px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
                       <div
                         style={{
-                          width: "6px",
-                          height: "28px",
-                          borderRadius: "3px",
+                          width: "4px",
+                          height: "32px",
+                          borderRadius: "2px",
                           backgroundColor: getMeetingColor(m.colorIndex),
                           flexShrink: 0,
                         }}
@@ -374,14 +387,12 @@ export function Dashboard(): React.JSX.Element {
                     <button
                       type="button"
                       onClick={() => navigate(`/meetings/${m.id}`)}
+                      className="btn-warm-gradient"
                       style={{
                         padding: "6px 14px",
                         fontSize: "12px",
                         fontWeight: 600,
-                        backgroundColor: "var(--signal)",
-                        color: "var(--on-signal)",
-                        border: "none",
-                        borderRadius: "var(--radius)",
+                        borderRadius: "var(--radius-chip)",
                         cursor: "pointer",
                         flexShrink: 0,
                       }}
@@ -393,15 +404,16 @@ export function Dashboard(): React.JSX.Element {
               </div>
             )}
           </div>
+        </div>
 
-          <div style={{ paddingTop: "12px" }}>
+        <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
             <Link
               to="/meetings?status=LIVE"
               style={{
                 fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--ink)",
-                textDecoration: "underline",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
               }}
             >
               View all live rooms
@@ -410,17 +422,32 @@ export function Dashboard(): React.JSX.Element {
         </section>
 
         {/* Section 2: Upcoming */}
-        <section>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid var(--rule)",
-              paddingBottom: "12px",
-              marginBottom: "8px",
-            }}
-          >
+        <section
+          style={{
+            backgroundColor: "rgba(14, 15, 19, 0.75)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius-card)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: "340px",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottom: "1px solid var(--rule)",
+                paddingBottom: "12px",
+                marginBottom: "8px",
+              }}
+            >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Calendar size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
               <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
@@ -498,27 +525,29 @@ export function Dashboard(): React.JSX.Element {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {upcomingMeetings.slice(0, 4).map((m) => (
                   <Link
                     key={m.id}
                     to={`/meetings/${m.id}`}
                     style={{
-                      padding: "12px 0",
-                      borderBottom: "1px solid var(--rule)",
+                      padding: "10px 12px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: "var(--radius)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: "12px",
+                      gap: "10px",
                       textDecoration: "none",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
                       <div
                         style={{
-                          width: "6px",
-                          height: "28px",
-                          borderRadius: "3px",
+                          width: "4px",
+                          height: "32px",
+                          borderRadius: "2px",
                           backgroundColor: getMeetingColor(m.colorIndex),
                           flexShrink: 0,
                         }}
@@ -543,7 +572,7 @@ export function Dashboard(): React.JSX.Element {
                       </div>
                     </div>
 
-                    <span style={{ fontSize: "12px", color: "var(--ink-soft)", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--ink-soft)", flexShrink: 0 }}>
                       {m.scheduledAt
                         ? new Date(m.scheduledAt).toLocaleDateString(undefined, {
                             month: "short",
@@ -558,15 +587,16 @@ export function Dashboard(): React.JSX.Element {
               </div>
             )}
           </div>
+        </div>
 
-          <div style={{ paddingTop: "12px" }}>
+        <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
             <Link
               to="/meetings?status=SCHEDULED"
               style={{
                 fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--ink)",
-                textDecoration: "underline",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
               }}
             >
               View all upcoming
@@ -575,38 +605,54 @@ export function Dashboard(): React.JSX.Element {
         </section>
 
         {/* Section 3: My Tasks */}
-        <section>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid var(--rule)",
-              paddingBottom: "12px",
-              marginBottom: "8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <CheckCircle2 size={16} strokeWidth={1.75} style={{ color: "var(--ink-soft)" }} />
-              <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
-                My tasks
-              </h2>
+        <section
+          style={{
+            backgroundColor: "rgba(14, 15, 19, 0.75)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid var(--rule)",
+            borderRadius: "var(--radius-card)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: "340px",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottom: "1px solid var(--rule)",
+                paddingBottom: "12px",
+                marginBottom: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <CheckCircle2 size={16} strokeWidth={1.75} style={{ color: "var(--signal)" }} />
+                <h2 style={{ fontSize: "17px", fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                  My tasks
+                </h2>
+              </div>
+              {openTasks.length > 0 && (
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    backgroundColor: "rgba(255, 107, 74, 0.15)",
+                    color: "var(--signal)",
+                    border: "1px solid rgba(255, 107, 74, 0.3)",
+                    borderRadius: "var(--radius-chip)",
+                    padding: "1px 6px",
+                  }}
+                >
+                  {openTasks.length} open
+                </span>
+              )}
             </div>
-            {openTasks.length > 0 && (
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 500,
-                  border: "1px solid var(--rule)",
-                  color: "var(--ink-soft)",
-                  borderRadius: "var(--radius-chip)",
-                  padding: "1px 6px",
-                }}
-              >
-                {openTasks.length} open
-              </span>
-            )}
-          </div>
 
           <div>
             {tasksQuery.isLoading ? (
@@ -663,22 +709,24 @@ export function Dashboard(): React.JSX.Element {
                 </p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {/* In progress group */}
                 {inProgressTasks.length > 0 && (
                   <div>
                     <span
                       style={{
-                        fontSize: "12px",
+                        fontSize: "11px",
                         fontWeight: 600,
                         color: "var(--ink-soft)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
                         display: "block",
-                        padding: "8px 0 4px 0",
+                        marginBottom: "6px",
                       }}
                     >
                       In progress ({inProgressTasks.length})
                     </span>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {inProgressTasks.map((t) => {
                         const overdue = isOverdue(t.dueDate, t.status);
                         return (
@@ -686,44 +734,34 @@ export function Dashboard(): React.JSX.Element {
                             key={t.id}
                             to={`/tasks?highlight=${t.id}`}
                             style={{
-                              padding: "10px 0",
-                              borderBottom: "1px solid var(--rule)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: "12px",
+                              padding: "8px 12px",
+                              backgroundColor: "rgba(255, 255, 255, 0.03)",
+                              border: "1px solid var(--rule)",
+                              borderLeftWidth: "4px",
+                              borderLeftColor:
+                                t.sourceMeetingColorIndex !== undefined
+                                  ? getMeetingColor(t.sourceMeetingColorIndex)
+                                  : "var(--rule)",
+                              borderRadius: "var(--radius-chip)",
                               textDecoration: "none",
+                              display: "block",
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-                              <div
-                                style={{
-                                  width: "6px",
-                                  height: "24px",
-                                  borderRadius: "3px",
-                                  backgroundColor:
-                                    t.sourceMeetingColorIndex !== undefined
-                                      ? getMeetingColor(t.sourceMeetingColorIndex)
-                                      : "var(--rule)",
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <p
-                                style={{
-                                  fontSize: "14px",
-                                  fontWeight: 500,
-                                  color: "var(--ink)",
-                                  margin: 0,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {t.title}
-                              </p>
-                            </div>
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                color: "var(--ink)",
+                                margin: 0,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t.title}
+                            </p>
                             {t.dueDate && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", flexShrink: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
                                 <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
                                 {overdue && (
                                   <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
@@ -742,16 +780,18 @@ export function Dashboard(): React.JSX.Element {
                   <div>
                     <span
                       style={{
-                        fontSize: "12px",
+                        fontSize: "11px",
                         fontWeight: 600,
                         color: "var(--ink-soft)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
                         display: "block",
-                        padding: "8px 0 4px 0",
+                        marginBottom: "6px",
                       }}
                     >
                       To do ({todoTasks.length})
                     </span>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                       {todoTasks.map((t) => {
                         const overdue = isOverdue(t.dueDate, t.status);
                         return (
@@ -759,44 +799,34 @@ export function Dashboard(): React.JSX.Element {
                             key={t.id}
                             to={`/tasks?highlight=${t.id}`}
                             style={{
-                              padding: "10px 0",
-                              borderBottom: "1px solid var(--rule)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: "12px",
+                              padding: "8px 12px",
+                              backgroundColor: "rgba(255, 255, 255, 0.03)",
+                              border: "1px solid var(--rule)",
+                              borderLeftWidth: "4px",
+                              borderLeftColor:
+                                t.sourceMeetingColorIndex !== undefined
+                                  ? getMeetingColor(t.sourceMeetingColorIndex)
+                                  : "var(--rule)",
+                              borderRadius: "var(--radius-chip)",
                               textDecoration: "none",
+                              display: "block",
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-                              <div
-                                style={{
-                                  width: "6px",
-                                  height: "24px",
-                                  borderRadius: "3px",
-                                  backgroundColor:
-                                    t.sourceMeetingColorIndex !== undefined
-                                      ? getMeetingColor(t.sourceMeetingColorIndex)
-                                      : "var(--rule)",
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <p
-                                style={{
-                                  fontSize: "14px",
-                                  fontWeight: 500,
-                                  color: "var(--ink)",
-                                  margin: 0,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {t.title}
-                              </p>
-                            </div>
+                            <p
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                color: "var(--ink)",
+                                margin: 0,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t.title}
+                            </p>
                             {t.dueDate && (
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", flexShrink: 0 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "11px" }}>
                                 <span style={{ color: "var(--ink-soft)" }}>Due {formatDueDate(t.dueDate)}</span>
                                 {overdue && (
                                   <span style={{ color: "var(--error)", fontWeight: 600 }}>Overdue</span>
@@ -812,15 +842,16 @@ export function Dashboard(): React.JSX.Element {
               </div>
             )}
           </div>
+        </div>
 
-          <div style={{ paddingTop: "12px" }}>
+        <div style={{ borderTop: "1px solid var(--rule)", paddingTop: "12px", marginTop: "16px" }}>
             <Link
               to="/tasks"
               style={{
                 fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--ink)",
-                textDecoration: "underline",
+                fontWeight: 600,
+                color: "var(--signal)",
+                textDecoration: "none",
               }}
             >
               Open task board

@@ -72,10 +72,13 @@ export function CreateMeetingDialog({
       <div
         className="w-full max-w-lg max-h-[calc(100dvh-32px)] overflow-y-auto rounded-lg border p-6 transition-all"
         style={{
-          backgroundColor: "var(--surface)",
+          backgroundColor: "rgba(14, 15, 19, 0.96)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
           borderColor: "var(--rule)",
           color: "var(--ink)",
           boxShadow: "var(--shadow-menu)",
+          borderRadius: "var(--radius-card)",
         }}
       >
         <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: "var(--rule)" }}>
@@ -184,22 +187,14 @@ export function CreateMeetingDialog({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border transition-colors hover:opacity-80"
-              style={{
-                borderColor: "var(--rule)",
-                color: "var(--ink)",
-              }}
+              className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg btn-obsidian-glass"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 min-h-[44px] text-sm font-semibold rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
-              style={{
-                backgroundColor: "var(--signal)",
-                color: "var(--on-signal)",
-              }}
+              className="px-4 py-2 min-h-[44px] text-sm font-semibold rounded-lg btn-warm-gradient disabled:opacity-50"
             >
               {loading ? "Creating..." : "Create Meeting"}
             </button>

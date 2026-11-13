@@ -9,6 +9,7 @@ import {
   type NotificationItem,
 } from "../lib/notifications.js";
 import { Bell, LogOut, Menu, X, CheckSquare, FileText } from "lucide-react";
+import { IntellMeetGlyph } from "./IntellMeetGlyph.js";
 
 function formatRelativeTime(dateString: string): string {
   const diffSec = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
@@ -262,7 +263,8 @@ export function AppLayout(): React.JSX.Element {
   const notificationList = Array.isArray(notifications) ? notifications : [];
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--ground)" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "var(--ground)", position: "relative" }}>
+      <div className="ambient-top-glow" aria-hidden="true" />
       {/* Skip to main content link for keyboard & screen reader accessibility */}
       <a
         href="#main-content"
@@ -293,9 +295,11 @@ export function AppLayout(): React.JSX.Element {
       {/* Top frame bar */}
       <header
         style={{
-          height: "48px",
+          height: "56px",
           borderBottom: "1px solid var(--rule)",
-          backgroundColor: "var(--surface)",
+          backgroundColor: "rgba(14, 15, 19, 0.85)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -309,6 +313,9 @@ export function AppLayout(): React.JSX.Element {
           <Link
             to="/dashboard"
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
               fontWeight: 700,
               fontSize: "17px",
               color: "var(--ink)",
@@ -316,7 +323,8 @@ export function AppLayout(): React.JSX.Element {
               letterSpacing: "-0.01em",
             }}
           >
-            IntellMeet
+            <IntellMeetGlyph size={26} />
+            <span>IntellMeet</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -329,11 +337,11 @@ export function AppLayout(): React.JSX.Element {
                   style={({ isActive }) => ({
                     color: isActive ? "var(--ink)" : "var(--ink-soft)",
                     fontWeight: isActive ? 600 : 400,
-                    fontSize: "15px",
+                    fontSize: "14px",
                     textDecoration: "none",
-                    borderBottom: isActive ? "2px solid var(--ink)" : "2px solid transparent",
-                    padding: "12px 0 10px 0",
-                    transition: "color 120ms ease",
+                    borderBottom: isActive ? "2px solid var(--signal)" : "2px solid transparent",
+                    padding: "16px 0 14px 0",
+                    transition: "color 120ms ease, border-color 120ms ease",
                   })}
                 >
                   {link.label}
@@ -412,9 +420,11 @@ export function AppLayout(): React.JSX.Element {
                   right: 0,
                   width: "min(360px, calc(100vw - 32px))",
                   maxHeight: "440px",
-                  backgroundColor: "var(--surface)",
+                  backgroundColor: "rgba(14, 15, 19, 0.96)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
                   border: "1px solid var(--rule)",
-                  borderRadius: "var(--radius)",
+                  borderRadius: "var(--radius-card)",
                   boxShadow: "var(--shadow-menu)",
                   display: "flex",
                   flexDirection: "column",

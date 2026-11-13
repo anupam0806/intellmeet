@@ -120,11 +120,8 @@ export function Meetings(): React.JSX.Element {
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold rounded-lg border transition-colors hover:opacity-80"
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold rounded-lg btn-obsidian-glass"
             style={{
-              backgroundColor: "var(--surface)",
-              borderColor: "var(--rule)",
-              color: "var(--ink)",
               minHeight: "44px",
             }}
           >
@@ -135,10 +132,8 @@ export function Meetings(): React.JSX.Element {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg btn-warm-gradient"
             style={{
-              backgroundColor: "var(--signal)",
-              color: "var(--on-signal)",
               minHeight: "44px",
             }}
           >
@@ -239,8 +234,12 @@ export function Meetings(): React.JSX.Element {
       <div
         className="rounded-lg border overflow-hidden"
         style={{
-          backgroundColor: "var(--surface)",
+          backgroundColor: "rgba(14, 15, 19, 0.75)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
           borderColor: "var(--rule)",
+          borderRadius: "var(--radius-card)",
+          boxShadow: "var(--shadow-card)",
         }}
       >
         {/* Loading Skeleton */}
@@ -295,11 +294,7 @@ export function Meetings(): React.JSX.Element {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-opacity hover:opacity-90 mt-2"
-              style={{
-                backgroundColor: "var(--signal)",
-                color: "var(--on-signal)",
-              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold rounded-lg btn-warm-gradient mt-2"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create meeting</span>

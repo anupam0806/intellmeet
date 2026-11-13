@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { apiFetch, ApiClientError } from "../lib/api.js";
 import { useAuthStore, User } from "../store/authStore.js";
+import { IntellMeetGlyph } from "../components/IntellMeetGlyph.js";
 
 const loginFormSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
@@ -146,8 +147,10 @@ export function Login(): React.JSX.Element {
         justifyContent: "center",
         padding: "32px 16px",
         backgroundColor: "var(--ground)",
+        position: "relative",
       }}
     >
+      <div className="ambient-top-glow" aria-hidden="true" />
       <div
         style={{
           width: "100%",
@@ -155,12 +158,17 @@ export function Login(): React.JSX.Element {
           display: "flex",
           flexDirection: "column",
           textAlign: "left",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div style={{ marginBottom: "20px" }}>
           <Link
             to="/"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
               fontSize: "18px",
               fontWeight: 700,
               color: "var(--ink)",
@@ -168,15 +176,19 @@ export function Login(): React.JSX.Element {
               letterSpacing: "-0.01em",
             }}
           >
-            IntellMeet
+            <IntellMeetGlyph size={26} />
+            <span>IntellMeet</span>
           </Link>
         </div>
 
         <div
           style={{
-            backgroundColor: "var(--surface)",
-            borderRadius: "var(--radius)",
+            backgroundColor: "rgba(14, 15, 19, 0.78)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderRadius: "var(--radius-card)",
             border: "1px solid var(--rule)",
+            boxShadow: "var(--shadow-menu)",
             padding: "32px 24px",
           }}
         >
@@ -311,13 +323,11 @@ export function Login(): React.JSX.Element {
             <button
               type="submit"
               disabled={isSubmitting || demoLoading !== null}
+              className="btn-warm-gradient"
               style={{
                 width: "100%",
                 height: "44px",
                 borderRadius: "var(--radius)",
-                border: "none",
-                backgroundColor: "var(--signal)",
-                color: "var(--on-signal)",
                 fontSize: "15px",
                 fontWeight: 600,
                 cursor: isSubmitting ? "not-allowed" : "pointer",
@@ -339,13 +349,11 @@ export function Login(): React.JSX.Element {
               aria-expanded={isDemoOpen}
               aria-controls="demo-accounts-panel"
               disabled={isSubmitting || demoLoading !== null}
+              className="btn-obsidian-glass"
               style={{
                 width: "100%",
                 height: "44px",
                 borderRadius: "var(--radius)",
-                border: "1px solid var(--rule)",
-                backgroundColor: "transparent",
-                color: "var(--ink)",
                 fontSize: "15px",
                 fontWeight: 600,
                 cursor: isSubmitting || demoLoading !== null ? "not-allowed" : "pointer",

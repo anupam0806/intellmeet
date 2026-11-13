@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { apiFetch, ApiClientError } from "../lib/api.js";
 import { useAuthStore, User } from "../store/authStore.js";
+import { IntellMeetGlyph } from "../components/IntellMeetGlyph.js";
 
 const signupFormSchema = z
   .object({
@@ -134,8 +135,10 @@ export function Signup(): React.JSX.Element {
         justifyContent: "center",
         padding: "32px 16px",
         backgroundColor: "var(--ground)",
+        position: "relative",
       }}
     >
+      <div className="ambient-top-glow" aria-hidden="true" />
       <div
         style={{
           width: "100%",
@@ -143,12 +146,17 @@ export function Signup(): React.JSX.Element {
           display: "flex",
           flexDirection: "column",
           textAlign: "left",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div style={{ marginBottom: "20px" }}>
           <Link
             to="/"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
               fontSize: "18px",
               fontWeight: 700,
               color: "var(--ink)",
@@ -156,15 +164,19 @@ export function Signup(): React.JSX.Element {
               letterSpacing: "-0.01em",
             }}
           >
-            IntellMeet
+            <IntellMeetGlyph size={26} />
+            <span>IntellMeet</span>
           </Link>
         </div>
 
         <div
           style={{
-            backgroundColor: "var(--surface)",
-            borderRadius: "var(--radius)",
+            backgroundColor: "rgba(14, 15, 19, 0.78)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderRadius: "var(--radius-card)",
             border: "1px solid var(--rule)",
+            boxShadow: "var(--shadow-menu)",
             padding: "32px 24px",
           }}
         >
@@ -221,7 +233,7 @@ export function Signup(): React.JSX.Element {
               fontSize: "15px",
               fontWeight: mode === "create" ? 600 : 400,
               color: mode === "create" ? "var(--ink)" : "var(--ink-soft)",
-              borderBottom: mode === "create" ? "2px solid var(--ink)" : "2px solid transparent",
+              borderBottom: mode === "create" ? "2px solid var(--signal)" : "2px solid transparent",
             }}
           >
             Create a team
@@ -238,7 +250,7 @@ export function Signup(): React.JSX.Element {
               fontSize: "15px",
               fontWeight: mode === "join" ? 600 : 400,
               color: mode === "join" ? "var(--ink)" : "var(--ink-soft)",
-              borderBottom: mode === "join" ? "2px solid var(--ink)" : "2px solid transparent",
+              borderBottom: mode === "join" ? "2px solid var(--signal)" : "2px solid transparent",
             }}
           >
             Join a team
@@ -442,13 +454,11 @@ export function Signup(): React.JSX.Element {
           <button
             type="submit"
             disabled={isSubmitting}
+            className="btn-warm-gradient"
             style={{
               width: "100%",
               height: "44px",
               borderRadius: "var(--radius)",
-              border: "none",
-              backgroundColor: "var(--signal)",
-              color: "var(--on-signal)",
               fontSize: "15px",
               fontWeight: 600,
               cursor: isSubmitting ? "not-allowed" : "pointer",

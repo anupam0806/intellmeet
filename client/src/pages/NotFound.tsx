@@ -27,11 +27,10 @@ export function NotFound(): React.JSX.Element {
       </p>
       <Link
         to="/dashboard"
+        className="btn-warm-gradient"
         style={{
           display: "inline-block",
-          padding: "8px 16px",
-          backgroundColor: "var(--ink)",
-          color: "var(--ground)",
+          padding: "10px 20px",
           borderRadius: "var(--radius)",
           textDecoration: "none",
           fontWeight: 600,

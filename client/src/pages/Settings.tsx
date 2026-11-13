@@ -171,9 +171,12 @@ export function Settings(): React.JSX.Element {
       {/* Profile Section */}
       <section
         style={{
-          backgroundColor: "var(--surface)",
-          borderRadius: "var(--radius)",
+          backgroundColor: "rgba(14, 15, 19, 0.75)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderRadius: "var(--radius-card)",
           border: "1px solid var(--rule)",
+          boxShadow: "var(--shadow-card)",
           padding: "24px 20px",
           marginBottom: "32px",
         }}
@@ -260,13 +263,11 @@ export function Settings(): React.JSX.Element {
           <button
             type="submit"
             disabled={profileSaving}
+            className="btn-warm-gradient"
             style={{
               height: "44px",
               padding: "0 18px",
               borderRadius: "var(--radius)",
-              border: "none",
-              backgroundColor: "var(--ink)",
-              color: "var(--ground)",
               fontSize: "14px",
               fontWeight: 600,
               cursor: profileSaving ? "not-allowed" : "pointer",
@@ -284,9 +285,12 @@ export function Settings(): React.JSX.Element {
       {/* Team Section */}
       <section
         style={{
-          backgroundColor: "var(--surface)",
-          borderRadius: "var(--radius)",
+          backgroundColor: "rgba(14, 15, 19, 0.75)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderRadius: "var(--radius-card)",
           border: "1px solid var(--rule)",
+          boxShadow: "var(--shadow-card)",
           padding: "24px",
         }}
       >
@@ -319,7 +323,7 @@ export function Settings(): React.JSX.Element {
                 style={{
                   padding: "16px",
                   borderRadius: "var(--radius)",
-                  backgroundColor: "var(--ground)",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
                   border: "1px solid var(--rule)",
                   marginBottom: "24px",
                 }}
@@ -342,10 +346,8 @@ export function Settings(): React.JSX.Element {
                   <button
                     type="button"
                     onClick={handleCopyInviteCode}
+                    className="btn-obsidian-glass"
                     style={{
-                      background: "transparent",
-                      border: "1px solid var(--rule)",
-                      borderRadius: "var(--radius)",
                       padding: "8px 14px",
                       minHeight: "44px",
                       fontSize: "13px",
@@ -353,7 +355,7 @@ export function Settings(): React.JSX.Element {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      color: "var(--ink)",
+                      borderRadius: "var(--radius)",
                     }}
                   >
                     {copiedCode ? <Check size={14} color="var(--success)" /> : <Copy size={14} />}
@@ -363,10 +365,8 @@ export function Settings(): React.JSX.Element {
                     type="button"
                     onClick={handleRegenerateInviteCode}
                     disabled={regenerating}
+                    className="btn-obsidian-glass"
                     style={{
-                      background: "transparent",
-                      border: "1px solid var(--rule)",
-                      borderRadius: "var(--radius)",
                       padding: "8px 14px",
                       minHeight: "44px",
                       fontSize: "13px",
@@ -374,7 +374,7 @@ export function Settings(): React.JSX.Element {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      color: "var(--ink)",
+                      borderRadius: "var(--radius)",
                     }}
                   >
                     <RefreshCw size={14} />

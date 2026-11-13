@@ -1,82 +1,98 @@
-/* IntellMeet Design Tokens — Palette: Graphite and Signal */
+/* IntellMeet Design Tokens — Master Theme: Aurora Obsidian & Warm Signal */
 
 :root {
-  /* Light — "Stone" */
-  --ground: #DAD7D0;
-  --surface: #ECEAE4;
-  --ink: #26221F;
-  --ink-soft: #5C554E;
-  --rule: #B9B5AC;
-  --signal: #D24A00;
-  --on-signal: #FFFFFF;
-  --error: #B3261E;
-  --success: #2E6B4A;
+  /* Dark Obsidian Ground — matches Landing Page reference */
+  --ground: #07080a;
+  --surface: #0e0f13;
+  --surface-card: rgba(14, 15, 19, 0.78);
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --ink: #ffffff;
+  --ink-soft: #9c9c9d;
+  --rule: rgba(255, 255, 255, 0.08);
+  --rule-strong: rgba(255, 255, 255, 0.16);
+  --signal: #ff6b4a;
+  --signal-hover: #ff5230;
+  --on-signal: #ffffff;
+  --signal-gradient: linear-gradient(135deg, #ff6b4a 0%, #ff2f3a 100%);
+  --accent-gradient: linear-gradient(135deg, #ffb347 0%, #ff6b4a 50%, #ff2f3a 100%);
+  --error: #ff4d4f;
+  --success: #22c55e;
 
   /* Meeting colours (six, same in both modes) */
-  --meeting-0: #7D8B3A; /* Olive */
-  --meeting-1: #2A7F78; /* Teal */
-  --meeting-2: #C46A7C; /* Rose */
-  --meeting-3: #A67C3D; /* Bronze */
-  --meeting-4: #6B4F45; /* Cocoa */
-  --meeting-5: #77797A; /* Smoke */
+  --meeting-0: #ff6b4a; /* Coral */
+  --meeting-1: #38bdf8; /* Sky */
+  --meeting-2: #f43f5e; /* Rose */
+  --meeting-3: #fbbf24; /* Amber */
+  --meeting-4: #a855f7; /* Purple */
+  --meeting-5: #94a3b8; /* Slate */
 
   /* Radii */
-  --radius-chip: 3px;
-  --radius-spine: 3px;
-  --radius-status: 3px;
-  --radius: 8px;
+  --radius-chip: 6px;
+  --radius-spine: 4px;
+  --radius-status: 4px;
+  --radius: 10px;
+  --radius-card: 14px;
   --radius-full: 9999px;
 
   /* Typography */
-  --font-sans: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: "Newsreader", Georgia, serif;
 
   /* Shadows */
-  --shadow-menu: 0 4px 12px rgba(38, 34, 31, 0.08);
+  --shadow-menu: 0 16px 36px -10px rgba(0, 0, 0, 0.65);
+  --shadow-card: 0 8px 30px -10px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(255, 107, 74, 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark — "Graphite" */
-    --ground: #1B1917;
-    --surface: #25221F;
-    --ink: #ECE8E1;
-    --ink-soft: #A59E94;
-    --rule: #3A3631;
-    --signal: #FF7A33;
-    --on-signal: #1B1917;
-    --error: #F08A80;
-    --success: #7BC49A;
-
-    --shadow-menu: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --ground: #07080a;
+    --surface: #0e0f13;
+    --surface-card: rgba(14, 15, 19, 0.78);
+    --surface-hover: rgba(255, 255, 255, 0.05);
+    --ink: #ffffff;
+    --ink-soft: #9c9c9d;
+    --rule: rgba(255, 255, 255, 0.08);
+    --rule-strong: rgba(255, 255, 255, 0.16);
+    --signal: #ff6b4a;
+    --signal-hover: #ff5230;
+    --on-signal: #ffffff;
+    --error: #ff4d4f;
+    --success: #22c55e;
+    --shadow-menu: 0 16px 36px -10px rgba(0, 0, 0, 0.65);
   }
 }
 
 [data-theme="dark"] {
-  --ground: #1B1917;
-  --surface: #25221F;
-  --ink: #ECE8E1;
-  --ink-soft: #A59E94;
-  --rule: #3A3631;
-  --signal: #FF7A33;
-  --on-signal: #1B1917;
-  --error: #F08A80;
-  --success: #7BC49A;
-
-  --shadow-menu: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --ground: #07080a;
+  --surface: #0e0f13;
+  --surface-card: rgba(14, 15, 19, 0.78);
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --ink: #ffffff;
+  --ink-soft: #9c9c9d;
+  --rule: rgba(255, 255, 255, 0.08);
+  --rule-strong: rgba(255, 255, 255, 0.16);
+  --signal: #ff6b4a;
+  --signal-hover: #ff5230;
+  --on-signal: #ffffff;
+  --error: #ff4d4f;
+  --success: #22c55e;
+  --shadow-menu: 0 16px 36px -10px rgba(0, 0, 0, 0.65);
 }
 
 [data-theme="light"] {
-  --ground: #DAD7D0;
-  --surface: #ECEAE4;
-  --ink: #26221F;
-  --ink-soft: #5C554E;
-  --rule: #B9B5AC;
-  --signal: #D24A00;
-  --on-signal: #FFFFFF;
-  --error: #B3261E;
-  --success: #2E6B4A;
-
-  --shadow-menu: 0 4px 12px rgba(38, 34, 31, 0.08);
+  --ground: #07080a;
+  --surface: #0e0f13;
+  --surface-card: rgba(14, 15, 19, 0.78);
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --ink: #ffffff;
+  --ink-soft: #9c9c9d;
+  --rule: rgba(255, 255, 255, 0.08);
+  --rule-strong: rgba(255, 255, 255, 0.16);
+  --signal: #ff6b4a;
+  --signal-hover: #ff5230;
+  --on-signal: #ffffff;
+  --error: #ff4d4f;
+  --success: #22c55e;
+  --shadow-menu: 0 16px 36px -10px rgba(0, 0, 0, 0.65);
 }
-
