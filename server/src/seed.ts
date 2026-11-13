@@ -138,7 +138,16 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
 
     const now = Date.now();
 
-    // Scheduled Meeting 1: "Team standup"
+    // Scheduled Meeting 1: "Team standup" (later today in the evening)
+    const laterTodayEvening = new Date(now);
+    laterTodayEvening.setHours(18, 0, 0, 0);
+    if (laterTodayEvening.getTime() <= now) {
+      laterTodayEvening.setHours(20, 30, 0, 0);
+      if (laterTodayEvening.getTime() <= now) {
+        laterTodayEvening.setTime(now + 60 * 60 * 1000);
+      }
+    }
+
     let meetingStandup = await Meeting.findOne({ roomCode: "DEMOROOM01" });
     const standupData = {
       teamId: team._id,
@@ -147,7 +156,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       roomCode: "DEMOROOM01",
       colorIndex: 1,
       status: "SCHEDULED" as const,
-      scheduledAt: new Date(now + 4 * 60 * 60 * 1000), // in 4 hours
+      scheduledAt: laterTodayEvening,
       ai: {
         status: "NONE" as const,
         keyPoints: [],
@@ -791,7 +800,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
         description: "Audit unresolved payment timeout queries from last month.",
         status: "TODO",
         order: 2,
-        assigneeId: lena._id,
+        assigneeId: maya._id,
         createdBy: maya._id,
         dueDate: new Date(now - 2 * dayMs), // Overdue!
       },
@@ -824,7 +833,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
         description: "Ensure focus outline satisfies 2px ink with 2px offset.",
         status: "IN_PROGRESS",
         order: 1,
-        assigneeId: sofia._id,
+        assigneeId: maya._id,
         createdBy: maya._id,
         dueDate: new Date(now + 4 * dayMs), // Upcoming!
       },

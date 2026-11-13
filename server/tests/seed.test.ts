@@ -50,6 +50,7 @@ describe("Full Seed Script (server/src/seed.ts)", () => {
       expect(bcrypt.getRounds(u.passwordHash)).toBe(12);
       expect(await bcrypt.compare("Demo@12345", u.passwordHash)).toBe(true);
     }
+    const mayaUser = users.find((u) => u.email === "maya@brightwell.test")!;
 
     // Verify Meetings: 6 ENDED and 2 SCHEDULED
     const meetings = await Meeting.find({ teamId: team?._id });
@@ -58,6 +59,12 @@ describe("Full Seed Script (server/src/seed.ts)", () => {
     const scheduled = meetings.filter((m) => m.status === "SCHEDULED");
     expect(scheduled).toHaveLength(2);
     expect(scheduled.map((m) => m.title).sort()).toEqual(["Sprint planning", "Team standup"]);
+    const mayaScheduled = scheduled.filter((m) => m.hostId.toString() === mayaUser._id.toString());
+    expect(mayaScheduled).toHaveLength(2);
+    const standup = scheduled.find((m) => m.title === "Team standup")!;
+    const sprintPlan = scheduled.find((m) => m.title === "Sprint planning")!;
+    expect(standup.scheduledAt!.getTime()).toBeGreaterThan(Date.now() - 60000);
+    expect(sprintPlan.scheduledAt!.getHours()).toBe(10);
 
     const ended = meetings.filter((m) => m.status === "ENDED");
     expect(ended).toHaveLength(6);
@@ -163,8 +170,21 @@ describe("Full Seed Script (server/src/seed.ts)", () => {
       expect(dt.completedAt!.getTime()).toBeLessThan(Date.now());
     }
 
+    // Verify Maya's open tasks: at least 3 open (1 overdue, 2 upcoming)
+    const mayaOpenTasks = tasks.filter(
+      (t) => t.assigneeId?.toString() === mayaUser._id.toString() && t.status !== "DONE",
+    );
+    expect(mayaOpenTasks.length).toBeGreaterThanOrEqual(3);
+    const overdueMaya = mayaOpenTasks.filter(
+      (t) => t.dueDate && t.dueDate.getTime() < Date.now(),
+    );
+    const upcomingMaya = mayaOpenTasks.filter(
+      (t) => t.dueDate && t.dueDate.getTime() > Date.now(),
+    );
+    expect(overdueMaya.length).toBe(1);
+    expect(upcomingMaya.length).toBe(2);
+
     // Verify 3 Notifications for Maya (1 unread)
-    const mayaUser = users.find((u) => u.email === "maya@brightwell.test")!;
     const notifs = await Notification.find({ userId: mayaUser._id }).sort({ createdAt: -1 });
     expect(notifs).toHaveLength(3);
     const unread = notifs.filter((n) => !n.read);
