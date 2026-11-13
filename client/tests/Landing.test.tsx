@@ -204,5 +204,43 @@ describe("Public Landing Page and Auth Flow", () => {
 
     expect(screen.getByText("Dashboard Home")).toBeInTheDocument();
   });
+
+  it("rendered landing page contains no false claims (download, brew, winget, pnpm, cmd+, v2.0, command bar, command palette, deploy staging, homebrew, learn more)", () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Landing />
+      </MemoryRouter>,
+    );
+
+    const forbiddenPhrases = [
+      "download",
+      "brew",
+      "winget",
+      "pnpm",
+      "cmd+",
+      "v2.0",
+      "command bar",
+      "command palette",
+      "deploy staging",
+      "homebrew",
+      "learn more",
+    ];
+
+    const textContent = container.textContent?.toLowerCase() || "";
+    const innerHTML = container.innerHTML.toLowerCase();
+
+    forbiddenPhrases.forEach((phrase) => {
+      expect(textContent).not.toContain(phrase);
+      expect(innerHTML).not.toContain(phrase);
+    });
+
+    // Check the required browser-only line is present
+    expect(
+      screen.getByText("IntellMeet runs in your browser. There is nothing to install."),
+    ).toBeInTheDocument();
+
+    // Verify hero CTA does not have arrows
+    expect(screen.getByRole("link", { name: "Try the demo" })).toBeInTheDocument();
+  });
 });
 
