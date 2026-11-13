@@ -70,19 +70,20 @@ const LIMITS = [
   "The demo uses sample data.",
 ];
 
-/* Warm geometric logo glyph for IntellMeet */
+const MEETING_SPINE_COLORS = [
+  "var(--meeting-teal)",
+  "var(--meeting-olive)",
+  "var(--meeting-rose)",
+  "var(--meeting-bronze)",
+  "var(--meeting-cocoa)",
+];
+
+/* Geometric logo mark for IntellMeet */
 function IntellMeetGlyph() {
   return (
-    <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <defs>
-        <linearGradient id="navWarmGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffb347" />
-          <stop offset="0.5" stopColor="#ff6b4a" />
-          <stop offset="1" stopColor="#ff2f3a" />
-        </linearGradient>
-      </defs>
-      <rect width="28" height="28" rx="7" fill="url(#navWarmGrad)" />
-      <path d="M8 14h2.5m2-5v10m4.5-7v4m3-2h2" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <rect width="28" height="28" rx="8" fill="var(--signal)" />
+      <path d="M8 14h2.5m2-5v10m4.5-7v4m3-2h2" stroke="var(--on-signal)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -148,7 +149,7 @@ export function Landing(): React.JSX.Element {
 
   return (
     <div className="aurora-canvas">
-      {/* Skip to main content accessible link */}
+      {/* Skip to main content link */}
       <a
         href="#main-content"
         style={{
@@ -157,10 +158,10 @@ export function Landing(): React.JSX.Element {
           left: "16px",
           zIndex: 100,
           padding: "8px 16px",
-          backgroundColor: "#ffffff",
-          color: "#07080a",
+          backgroundColor: "var(--ink)",
+          color: "var(--ground)",
           textDecoration: "none",
-          borderRadius: "6px",
+          borderRadius: "var(--radius)",
           fontSize: "14px",
           fontWeight: 600,
         }}
@@ -174,39 +175,22 @@ export function Landing(): React.JSX.Element {
         Skip to main content
       </a>
 
-      {/* =========================================================================
-          ANIMATED WARM AURORA LIGHT-BLADE BACKDROP
-          Pure CSS keyframes over subtle grain + radial vignette, strictly warm
-         ========================================================================= */}
-      <div className="aurora-backdrop" aria-hidden="true">
-        {/* Blade 1: Left diagonal crimson core */}
-        <div className="aurora-blade aurora-blade-1" />
-
-        {/* Blade 2: Right diagonal coral-amber streak */}
-        <div className="aurora-blade aurora-blade-2" />
-
-        {/* Blade 3: Center ambient glowing heart */}
-        <div className="aurora-blade aurora-blade-3" />
-
-        {/* SVG Film Grain Filter */}
-        <svg className="aurora-grain" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <filter id="noiseFilter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-        </svg>
-
-        {/* Radial vignette keeping text crisp */}
-        <div className="aurora-vignette" />
-      </div>
-
-      {/* =========================================================================
-          FLOATING TRANSLUCENT PILL NAV
-          Rounded dark-glass container hovering at top with hairline border & glow
-         ========================================================================= */}
-      <header style={{ position: "relative", zIndex: 40, padding: "0 16px" }}>
-        <nav aria-label="Main navigation" className="floating-pill-nav">
-          {/* Left: Warm logo glyph + white wordmark */}
+      {/* Top bar (48px height flat bar matching AppLayout pattern) */}
+      <header
+        style={{
+          height: "48px",
+          borderBottom: "1px solid var(--rule)",
+          backgroundColor: "var(--surface)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 24px",
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
           <Link
             to="/"
             style={{
@@ -219,36 +203,34 @@ export function Landing(): React.JSX.Element {
             <IntellMeetGlyph />
             <span
               style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "16px",
+                fontSize: "17px",
                 fontWeight: 700,
-                color: "#ffffff",
-                letterSpacing: "-0.02em",
+                color: "var(--ink)",
+                letterSpacing: "-0.01em",
               }}
             >
               IntellMeet
             </span>
           </Link>
 
-          {/* Center: Row of muted #9c9c9d 14px/500 text links (hidden on mobile) */}
-          <div
+          {/* Section anchors (hidden on mobile) */}
+          <nav
+            aria-label="Section anchors"
             className="hidden lg:flex"
             style={{
               alignItems: "center",
-              gap: "28px",
+              gap: "20px",
             }}
           >
             <a
               href="#how-it-works"
               style={{
                 fontSize: "14px",
-                fontWeight: 500,
-                color: "#9c9c9d",
+                color: "var(--ink-soft)",
                 textDecoration: "none",
-                transition: "color 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9c9c9d")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
             >
               How it works
             </a>
@@ -256,13 +238,11 @@ export function Landing(): React.JSX.Element {
               href="#features"
               style={{
                 fontSize: "14px",
-                fontWeight: 500,
-                color: "#9c9c9d",
+                color: "var(--ink-soft)",
                 textDecoration: "none",
-                transition: "color 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9c9c9d")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
             >
               Features
             </a>
@@ -270,13 +250,11 @@ export function Landing(): React.JSX.Element {
               href="#built-with"
               style={{
                 fontSize: "14px",
-                fontWeight: 500,
-                color: "#9c9c9d",
+                color: "var(--ink-soft)",
                 textDecoration: "none",
-                transition: "color 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9c9c9d")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
             >
               Built with
             </a>
@@ -284,96 +262,98 @@ export function Landing(): React.JSX.Element {
               href="#good-to-know"
               style={{
                 fontSize: "14px",
-                fontWeight: 500,
-                color: "#9c9c9d",
+                color: "var(--ink-soft)",
                 textDecoration: "none",
-                transition: "color 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9c9c9d")}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--ink)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink-soft)")}
             >
               Good to know
             </a>
-          </div>
+          </nav>
+        </div>
 
-          {/* Right: Auth controls / tactile CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            {user ? (
+        {/* Right side controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {user ? (
+            <Link
+              to="/dashboard"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "32px",
+                padding: "0 14px",
+                borderRadius: "var(--radius)",
+                backgroundColor: "var(--signal)",
+                color: "var(--on-signal)",
+                fontSize: "13px",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Open dashboard
+            </Link>
+          ) : (
+            <>
               <Link
-                to="/dashboard"
+                to="/login"
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  color: "var(--ink)",
+                  textDecoration: "none",
+                  padding: "4px 8px",
+                }}
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="hidden sm:inline-flex"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  height: "36px",
-                  padding: "0 16px",
-                  borderRadius: "9999px",
-                  background: "linear-gradient(135deg, #ff6b4a 0%, #ff2f3a 100%)",
-                  color: "#ffffff",
+                  height: "32px",
+                  padding: "0 14px",
+                  borderRadius: "var(--radius)",
+                  backgroundColor: "var(--signal)",
+                  color: "var(--on-signal)",
                   fontSize: "13px",
                   fontWeight: 600,
                   textDecoration: "none",
-                  boxShadow: "0 0 16px rgba(255, 47, 58, 0.35)",
                 }}
               >
-                Open dashboard
+                Sign up
               </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    color: "#9c9c9d",
-                    textDecoration: "none",
-                    padding: "6px 8px",
-                    transition: "color 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#9c9c9d")}
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/signup"
-                  className="keycap-btn hidden sm:inline-flex"
-                  style={{
-                    padding: "7px 15px",
-                    fontSize: "13px",
-                    borderRadius: "9999px",
-                  }}
-                >
-                  <span>Sign up</span>
-                </Link>
-              </>
-            )}
+            </>
+          )}
 
-            {/* Mobile menu trigger */}
-            <button
-              ref={menuBtnRef}
-              type="button"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="landing-menu-panel"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="flex lg:hidden"
-              style={{
-                width: "36px",
-                height: "36px",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                borderRadius: "9999px",
-                color: "#ffffff",
-                cursor: "pointer",
-              }}
-            >
-              {mobileMenuOpen ? <X size={18} strokeWidth={2} /> : <Menu size={18} strokeWidth={2} />}
-            </button>
-          </div>
-        </nav>
+          {/* Mobile menu button */}
+          <button
+            ref={menuBtnRef}
+            type="button"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="landing-menu-panel"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="flex lg:hidden"
+            style={{
+              width: "32px",
+              height: "32px",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "transparent",
+              border: "1px solid var(--rule)",
+              borderRadius: "var(--radius)",
+              color: "var(--ink)",
+              cursor: "pointer",
+            }}
+          >
+            {mobileMenuOpen ? <X size={16} strokeWidth={2} /> : <Menu size={16} strokeWidth={2} />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Drawer Dialog */}
@@ -385,8 +365,7 @@ export function Landing(): React.JSX.Element {
             style={{
               position: "fixed",
               inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.65)",
-              backdropFilter: "blur(6px)",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
               zIndex: 45,
             }}
           />
@@ -397,7 +376,6 @@ export function Landing(): React.JSX.Element {
             ref={panelRef}
             aria-modal="true"
             aria-label="Landing navigation"
-            className="mobile-menu-panel"
             style={{
               position: "fixed",
               top: 0,
@@ -406,10 +384,9 @@ export function Landing(): React.JSX.Element {
               height: "100%",
               width: "85%",
               maxWidth: "320px",
-              backgroundColor: "#0d0e12",
+              backgroundColor: "var(--surface)",
               border: "none",
-              borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
-              boxShadow: "0 0 40px rgba(0, 0, 0, 0.8)",
+              borderLeft: "1px solid var(--rule)",
               display: "flex",
               flexDirection: "column",
               zIndex: 50,
@@ -418,28 +395,28 @@ export function Landing(): React.JSX.Element {
               boxSizing: "border-box",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <IntellMeetGlyph />
-                <span style={{ fontSize: "17px", fontWeight: 700, color: "#ffffff" }}>IntellMeet</span>
+                <span style={{ fontSize: "17px", fontWeight: 700, color: "var(--ink)" }}>IntellMeet</span>
               </div>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={closeMenu}
                 style={{
-                  width: "36px",
-                  height: "36px",
+                  width: "32px",
+                  height: "32px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   background: "transparent",
                   border: "none",
-                  color: "#9c9c9d",
+                  color: "var(--ink-soft)",
                   cursor: "pointer",
                 }}
               >
-                <X size={20} strokeWidth={1.75} />
+                <X size={18} strokeWidth={2} />
               </button>
             </div>
 
@@ -448,7 +425,7 @@ export function Landing(): React.JSX.Element {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "14px",
+                gap: "12px",
                 flex: 1,
               }}
             >
@@ -457,11 +434,11 @@ export function Landing(): React.JSX.Element {
                 onClick={closeMenu}
                 style={{
                   padding: "10px 0",
-                  fontSize: "16px",
+                  fontSize: "15px",
                   fontWeight: 500,
-                  color: "#e4e4e7",
+                  color: "var(--ink)",
                   textDecoration: "none",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 How it works
@@ -471,11 +448,11 @@ export function Landing(): React.JSX.Element {
                 onClick={closeMenu}
                 style={{
                   padding: "10px 0",
-                  fontSize: "16px",
+                  fontSize: "15px",
                   fontWeight: 500,
-                  color: "#e4e4e7",
+                  color: "var(--ink)",
                   textDecoration: "none",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 Features
@@ -485,11 +462,11 @@ export function Landing(): React.JSX.Element {
                 onClick={closeMenu}
                 style={{
                   padding: "10px 0",
-                  fontSize: "16px",
+                  fontSize: "15px",
                   fontWeight: 500,
-                  color: "#e4e4e7",
+                  color: "var(--ink)",
                   textDecoration: "none",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderBottom: "1px solid var(--rule)",
                 }}
               >
                 Built with
@@ -499,9 +476,9 @@ export function Landing(): React.JSX.Element {
                 onClick={closeMenu}
                 style={{
                   padding: "10px 0",
-                  fontSize: "16px",
+                  fontSize: "15px",
                   fontWeight: 500,
-                  color: "#e4e4e7",
+                  color: "var(--ink)",
                   textDecoration: "none",
                 }}
               >
@@ -509,20 +486,20 @@ export function Landing(): React.JSX.Element {
               </a>
             </nav>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "auto", paddingTop: "20px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "auto", paddingTop: "16px", borderTop: "1px solid var(--rule)" }}>
               {user ? (
                 <Link
                   to="/dashboard"
                   onClick={closeMenu}
                   style={{
-                    height: "44px",
+                    height: "40px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    borderRadius: "8px",
-                    background: "linear-gradient(135deg, #ff6b4a 0%, #ff2f3a 100%)",
-                    color: "#ffffff",
-                    fontSize: "15px",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--signal)",
+                    color: "var(--on-signal)",
+                    fontSize: "14px",
                     fontWeight: 600,
                     textDecoration: "none",
                   }}
@@ -535,14 +512,14 @@ export function Landing(): React.JSX.Element {
                     to="/signup"
                     onClick={closeMenu}
                     style={{
-                      height: "44px",
+                      height: "40px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      borderRadius: "8px",
-                      background: "linear-gradient(135deg, #ff6b4a 0%, #ff2f3a 100%)",
-                      color: "#ffffff",
-                      fontSize: "15px",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "var(--signal)",
+                      color: "var(--on-signal)",
+                      fontSize: "14px",
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
@@ -553,15 +530,15 @@ export function Landing(): React.JSX.Element {
                     to="/login"
                     onClick={closeMenu}
                     style={{
-                      height: "44px",
+                      height: "40px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--rule)",
                       backgroundColor: "transparent",
-                      color: "#ffffff",
-                      fontSize: "15px",
+                      color: "var(--ink)",
+                      fontSize: "14px",
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
@@ -577,38 +554,31 @@ export function Landing(): React.JSX.Element {
 
       {/* Main Content Landmark */}
       <main id="main-content" style={{ position: "relative", zIndex: 10, flex: 1 }}>
-        <div style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ maxWidth: "1040px", margin: "0 auto", padding: "0 24px" }}>
           
-          {/* =====================================================================
-              HERO SECTION
-              Eyebrow, Scoped 64px H1, Warm Gradient Accent, Subtitle, Keycaps, Mockup
-             ===================================================================== */}
+          {/* Hero Section */}
           <section
             style={{
-              padding: "76px 0 60px 0",
+              padding: "72px 0 56px 0",
               textAlign: "center",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
             }}
           >
-            {/* Scoped Two-line H1 with Warm-Gradient Accent Word */}
             <h1 className="hero-headline" aria-label="Meetings that end with notes and owners.">
               Meetings that end with<br />
               notes and <span className="hero-gradient-word">owners</span>.
             </h1>
 
-            {/* Subtitle in Inter 18px / 400 / 0.2px letter-spacing */}
             <p className="hero-subtitle">
               Hold a video meeting with your team, get a written summary with decisions and action items, and turn them into tasks on a shared board.
             </p>
 
-            {/* Browser-only truth statement */}
             <p
               style={{
-                fontFamily: "'Inter', sans-serif",
                 fontSize: "14px",
-                color: "#a1a1aa",
+                color: "var(--ink-soft)",
                 margin: "0 auto 28px auto",
                 lineHeight: 1.5,
                 textAlign: "center",
@@ -617,13 +587,13 @@ export function Landing(): React.JSX.Element {
               IntellMeet runs in your browser. There is nothing to install.
             </p>
 
-            {/* Direct Web App / Demo CTAs */}
+            {/* Direct CTAs */}
             <div
               style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                gap: "14px",
+                gap: "12px",
                 flexWrap: "wrap",
               }}
             >
@@ -633,12 +603,11 @@ export function Landing(): React.JSX.Element {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    padding: "8px 20px",
-                    borderRadius: "9999px",
-                    backgroundColor: "rgba(255, 107, 74, 0.16)",
-                    border: "1px solid rgba(255, 107, 74, 0.4)",
-                    color: "#ffffff",
-                    fontSize: "13px",
+                    padding: "10px 20px",
+                    borderRadius: "var(--radius)",
+                    backgroundColor: "var(--signal)",
+                    color: "var(--on-signal)",
+                    fontSize: "14px",
                     fontWeight: 600,
                     textDecoration: "none",
                   }}
@@ -652,23 +621,14 @@ export function Landing(): React.JSX.Element {
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      padding: "7px 18px",
-                      borderRadius: "9999px",
-                      backgroundColor: "rgba(255, 255, 255, 0.05)",
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
-                      color: "#d4d4d8",
-                      fontSize: "13px",
+                      padding: "10px 20px",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "transparent",
+                      border: "1px solid var(--rule)",
+                      color: "var(--ink)",
+                      fontSize: "14px",
                       fontWeight: 500,
                       textDecoration: "none",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#ffffff";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "#d4d4d8";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
                     }}
                   >
                     Log in
@@ -679,23 +639,13 @@ export function Landing(): React.JSX.Element {
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      padding: "7px 18px",
-                      borderRadius: "9999px",
-                      backgroundColor: "rgba(255, 107, 74, 0.14)",
-                      border: "1px solid rgba(255, 107, 74, 0.35)",
-                      color: "#ffffff",
-                      fontSize: "13px",
+                      padding: "10px 20px",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "var(--signal)",
+                      color: "var(--on-signal)",
+                      fontSize: "14px",
                       fontWeight: 600,
                       textDecoration: "none",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 107, 74, 0.22)";
-                      e.currentTarget.style.borderColor = "rgba(255, 107, 74, 0.55)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 107, 74, 0.14)";
-                      e.currentTarget.style.borderColor = "rgba(255, 107, 74, 0.35)";
                     }}
                   >
                     Try the demo
@@ -705,157 +655,113 @@ export function Landing(): React.JSX.Element {
             </div>
           </section>
 
-          {/* =====================================================================
-              HOW IT WORKS SECTION
-             ===================================================================== */}
+          {/* How It Works Section */}
           <section
             id="how-it-works"
             style={{
-              padding: "72px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              scrollMarginTop: "90px",
+              padding: "48px 0",
+              borderTop: "1px solid var(--rule)",
+              scrollMarginTop: "60px",
               textAlign: "left",
             }}
           >
-            <div style={{ marginBottom: "32px" }}>
-              <div style={{ fontSize: "12px", fontFamily: "'Geist Mono', monospace", color: "#ff6b4a", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
-                Workflow
-              </div>
-              <h2
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "26px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                }}
-              >
-                How it works
-              </h2>
-            </div>
+            <h2
+              style={{
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.01em",
+                margin: "0 0 20px 0",
+              }}
+            >
+              How it works
+            </h2>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {HOW_IT_WORKS_STEPS.map((stepText, idx) => {
-                const borderColors = [
-                  "#ff6b4a",
-                  "#ffb347",
-                  "#ff2f3a",
-                  "#2A7F78",
-                  "#C46A7C",
-                ];
-                return (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {HOW_IT_WORKS_STEPS.map((stepText, idx) => (
+                <div
+                  key={stepText}
+                  className="landing-row"
+                  style={{
+                    gap: "16px",
+                  }}
+                >
                   <div
-                    key={stepText}
-                    className="obsidian-card"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "18px 20px",
-                      gap: "18px",
-                      borderLeft: `4px solid ${borderColors[idx] || "#ff6b4a"}`,
+                      width: "3px",
+                      height: "20px",
+                      borderRadius: "3px",
+                      backgroundColor: MEETING_SPINE_COLORS[idx % MEETING_SPINE_COLORS.length],
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 700,
+                      color: MEETING_SPINE_COLORS[idx % MEETING_SPINE_COLORS.length],
+                      minWidth: "20px",
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "'Geist Mono', monospace",
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: borderColors[idx] || "#ff6b4a",
-                        minWidth: "24px",
-                      }}
-                    >
-                      {idx + 1}.
-                    </span>
-                    <span style={{ fontSize: "15px", color: "#e4e4e7", lineHeight: 1.45, fontWeight: 400 }}>
-                      {stepText}
-                    </span>
-                  </div>
-                );
-              })}
+                    {idx + 1}.
+                  </span>
+                  <span style={{ fontSize: "15px", color: "var(--ink)", lineHeight: 1.5 }}>
+                    {stepText}
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* =====================================================================
-              FEATURES SECTION
-             ===================================================================== */}
+          {/* Features Section */}
           <section
             id="features"
             style={{
-              padding: "72px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              scrollMarginTop: "90px",
+              padding: "48px 0",
+              borderTop: "1px solid var(--rule)",
+              scrollMarginTop: "60px",
               textAlign: "left",
             }}
           >
-            <div style={{ marginBottom: "32px" }}>
-              <div style={{ fontSize: "12px", fontFamily: "'Geist Mono', monospace", color: "#ff6b4a", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
-                Capabilities
-              </div>
-              <h2
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "26px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                }}
-              >
-                Features
-              </h2>
-            </div>
-
-            <div
+            <h2
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: "16px",
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.01em",
+                margin: "0 0 20px 0",
               }}
             >
+              Features
+            </h2>
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {FEATURES.map((f) => {
                 const Icon = f.icon;
                 return (
                   <div
                     key={f.name}
-                    className="obsidian-card"
+                    className="landing-row"
                     style={{
-                      padding: "24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
+                      gap: "16px",
+                      alignItems: "flex-start",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 107, 74, 0.12)",
-                        border: "1px solid rgba(255, 107, 74, 0.25)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#ff6b4a",
-                      }}
-                    >
-                      <Icon size={18} />
-                    </div>
-                    <div>
-                      <div
+                    <Icon size={18} strokeWidth={1.75} style={{ color: "var(--ink-soft)", marginTop: "2px", flexShrink: 0 }} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <span
                         style={{
-                          fontSize: "16px",
+                          fontSize: "15px",
                           fontWeight: 600,
-                          color: "#ffffff",
-                          marginBottom: "6px",
-                          fontFamily: "'Inter', sans-serif",
+                          color: "var(--ink)",
                         }}
                       >
                         {f.name}
-                      </div>
-                      <div style={{ fontSize: "14px", color: "#a1a1aa", lineHeight: 1.5 }}>
+                      </span>
+                      <span style={{ fontSize: "14px", color: "var(--ink-soft)", lineHeight: 1.5 }}>
                         {f.description}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 );
@@ -863,68 +769,49 @@ export function Landing(): React.JSX.Element {
             </div>
           </section>
 
-          {/* =====================================================================
-              BUILT WITH SECTION
-             ===================================================================== */}
+          {/* Built With Section */}
           <section
             id="built-with"
             style={{
-              padding: "72px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              scrollMarginTop: "90px",
+              padding: "48px 0",
+              borderTop: "1px solid var(--rule)",
+              scrollMarginTop: "60px",
               textAlign: "left",
             }}
           >
-            <div style={{ marginBottom: "32px" }}>
-              <div style={{ fontSize: "12px", fontFamily: "'Geist Mono', monospace", color: "#ff6b4a", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
-                Architecture
-              </div>
-              <h2
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "26px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                }}
-              >
-                Built with
-              </h2>
-            </div>
-
-            <dl
+            <h2
               style={{
-                margin: 0,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: "14px",
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.01em",
+                margin: "0 0 20px 0",
               }}
             >
+              Built with
+            </h2>
+
+            <dl style={{ margin: 0, display: "flex", flexDirection: "column" }}>
               {BUILT_WITH.map((item) => (
                 <div
                   key={item.label}
-                  className="obsidian-card"
+                  className="landing-row"
                   style={{
-                    padding: "16px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "8px",
                   }}
                 >
                   <dt
                     style={{
-                      fontFamily: "'Geist Mono', monospace",
-                      fontSize: "12px",
+                      fontSize: "14px",
                       fontWeight: 600,
-                      color: "#ffb347",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
+                      color: "var(--ink)",
                     }}
                   >
                     {item.label}
                   </dt>
-                  <dd style={{ margin: 0, fontSize: "14px", color: "#e4e4e7", lineHeight: 1.45 }}>
+                  <dd style={{ margin: 0, fontSize: "14px", color: "var(--ink-soft)", lineHeight: 1.5 }}>
                     {item.value}
                   </dd>
                 </div>
@@ -932,53 +819,41 @@ export function Landing(): React.JSX.Element {
             </dl>
           </section>
 
-          {/* =====================================================================
-              GOOD TO KNOW (HONEST LIMITS) SECTION
-             ===================================================================== */}
+          {/* Good to know Section */}
           <section
             id="good-to-know"
             style={{
-              padding: "72px 0 80px 0",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              scrollMarginTop: "90px",
+              padding: "48px 0 64px 0",
+              borderTop: "1px solid var(--rule)",
+              scrollMarginTop: "60px",
               textAlign: "left",
             }}
           >
-            <div style={{ marginBottom: "32px" }}>
-              <div style={{ fontSize: "12px", fontFamily: "'Geist Mono', monospace", color: "#9c9c9d", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
-                Transparency
-              </div>
-              <h2
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "26px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                }}
-              >
-                Good to know
-              </h2>
-            </div>
+            <h2
+              style={{
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: "-0.01em",
+                margin: "0 0 20px 0",
+              }}
+            >
+              Good to know
+            </h2>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {LIMITS.map((limit) => (
                 <div
                   key={limit}
-                  className="obsidian-card"
+                  className="landing-row"
                   style={{
-                    padding: "16px 20px",
-                    fontSize: "14px",
-                    color: "#d4d4d8",
-                    lineHeight: 1.45,
-                    display: "flex",
-                    alignItems: "center",
                     gap: "12px",
                   }}
                 >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#a1a1aa", flexShrink: 0 }} />
-                  <span>{limit}</span>
+                  <span style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: "var(--ink-soft)", flexShrink: 0 }} />
+                  <span style={{ fontSize: "14px", color: "var(--ink)", lineHeight: 1.5 }}>
+                    {limit}
+                  </span>
                 </div>
               ))}
             </div>
@@ -986,14 +861,12 @@ export function Landing(): React.JSX.Element {
         </div>
       </main>
 
-      {/* =========================================================================
-          FOOTER LANDMARK
-         ========================================================================= */}
+      {/* Footer Landmark */}
       <footer
         style={{
-          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-          backgroundColor: "#07080a",
-          padding: "32px 20px",
+          borderTop: "1px solid var(--rule)",
+          backgroundColor: "var(--surface)",
+          padding: "24px 24px",
           position: "relative",
           zIndex: 10,
         }}
@@ -1006,14 +879,14 @@ export function Landing(): React.JSX.Element {
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: "14px",
-            color: "#9c9c9d",
+            color: "var(--ink-soft)",
             flexWrap: "wrap",
-            gap: "14px",
+            gap: "12px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <IntellMeetGlyph />
-            <span style={{ fontWeight: 600, color: "#ffffff" }}>IntellMeet</span>
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>IntellMeet</span>
           </div>
 
           <a
@@ -1021,12 +894,9 @@ export function Landing(): React.JSX.Element {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              color: "#d4d4d8",
+              color: "var(--ink)",
               textDecoration: "underline",
-              transition: "color 0.15s ease",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#d4d4d8")}
           >
             Source code
           </a>
