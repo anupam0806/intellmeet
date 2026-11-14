@@ -265,7 +265,7 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
     });
   });
 
-  it("labels the current week dynamically in the accessible table and chart", async () => {
+  it("labels the current week dynamically in the accessible table and chart with week date range", async () => {
     // Current Monday in UTC
     const now = new Date();
     const day = now.getUTCDay();
@@ -273,10 +273,13 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
     const currentMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
     const currentMondayStr = `${currentMonday.getUTCFullYear()}-${String(currentMonday.getUTCMonth() + 1).padStart(2, "0")}-${String(currentMonday.getUTCDate()).padStart(2, "0")}`;
 
+    const currentSunday = new Date(Date.UTC(currentMonday.getUTCFullYear(), currentMonday.getUTCMonth(), currentMonday.getUTCDate() + 6));
+    const currentSundayStr = `${currentSunday.getUTCFullYear()}-${String(currentSunday.getUTCMonth() + 1).padStart(2, "0")}-${String(currentSunday.getUTCDate()).padStart(2, "0")}`;
+
     vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockResolvedValueOnce({
       ...mockOverview,
       meetingsPerWeek: [
-        { weekStart: currentMondayStr, count: 5, isCurrentWeek: true },
+        { weekStart: currentMondayStr, weekEnd: currentSundayStr, count: 5, isCurrentWeek: true },
       ],
     });
 
@@ -286,6 +289,27 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
       expect(
         screen.getByText((content) => content.includes("Current week up to today")),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("updates analytics when custom date inputs change", async () => {
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(analyticsApi.fetchAnalyticsOverview).toHaveBeenCalledTimes(1);
+    });
+
+    const fromInput = screen.getByLabelText("From date");
+    const toInput = screen.getByLabelText("To date");
+
+    fireEvent.change(fromInput, { target: { value: "2026-11-01" } });
+    fireEvent.change(toInput, { target: { value: "2026-11-15" } });
+
+    await waitFor(() => {
+      expect(analyticsApi.fetchAnalyticsOverview).toHaveBeenCalledWith({
+        from: "2026-11-01",
+        to: "2026-11-15",
+      });
     });
   });
 });

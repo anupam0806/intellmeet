@@ -266,6 +266,62 @@ describe("Phase P7: Analytics Endpoints and Aggregations", () => {
       // The last week bucket in default 30-day range (which ends today) must be marked as current week
       const currentWeekItem = res.body.meetingsPerWeek.find((w: { isCurrentWeek?: boolean }) => w.isCurrentWeek === true);
       expect(currentWeekItem).toBeDefined();
+      expect(currentWeekItem.weekEnd).toBeDefined();
+    });
+
+    it("assigns meetings to their exact Monday-start weekly buckets and reflects new meetings in current week", async () => {
+      const admin = await createTeamWithAdmin("AnaBuckets");
+      const teamId = new mongoose.Types.ObjectId(admin.user.teamId);
+      const adminId = new mongoose.Types.ObjectId(admin.user.id);
+
+      // 1. Meeting created in previous week (e.g. 10 days ago)
+      const prevMeetingDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+      await Meeting.create({
+        teamId,
+        hostId: adminId,
+        title: "Previous Week Meeting",
+        roomCode: "prev-week-mtg",
+        colorIndex: 1,
+        status: "ENDED",
+        startedAt: prevMeetingDate,
+        endedAt: new Date(prevMeetingDate.getTime() + 1800 * 1000),
+        durationSeconds: 1800,
+      });
+
+      // 2. Meeting created today in current week
+      const todayMeetingDate = new Date();
+      await Meeting.create({
+        teamId,
+        hostId: adminId,
+        title: "Today Current Week Meeting",
+        roomCode: "today-cur-mtg",
+        colorIndex: 2,
+        status: "SCHEDULED",
+        scheduledAt: todayMeetingDate,
+      });
+
+      const res = await request(app)
+        .get("/api/v1/analytics/overview")
+        .set("Authorization", `Bearer ${admin.token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.totals.meetings).toBe(2);
+
+      // Current week item should have count >= 1
+      const currentWeekItem = res.body.meetingsPerWeek.find((w: { isCurrentWeek?: boolean }) => w.isCurrentWeek === true);
+      expect(currentWeekItem).toBeDefined();
+      expect(currentWeekItem.count).toBe(1);
+
+      // Verify each week bucket has weekEnd that is exactly 6 days after weekStart
+      for (const bucket of res.body.meetingsPerWeek) {
+        expect(bucket.weekEnd).toBeDefined();
+        const startParts = bucket.weekStart.split("-").map(Number);
+        const endParts = bucket.weekEnd.split("-").map(Number);
+        const sDate = new Date(Date.UTC(startParts[0], startParts[1] - 1, startParts[2]));
+        const eDate = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+        const diffDays = Math.round((eDate.getTime() - sDate.getTime()) / (24 * 60 * 60 * 1000));
+        expect(diffDays).toBe(6);
+      }
     });
   });
 });

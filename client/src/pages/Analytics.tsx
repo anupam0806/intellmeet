@@ -16,18 +16,18 @@ import {
 } from "recharts";
 import { Calendar, AlertCircle, RefreshCw } from "lucide-react";
 
-function formatUtcYmd(date: Date): string {
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(date.getUTCDate()).padStart(2, "0");
+function formatLocalYmd(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
 function getPresetRange(days: number): { from: string; to: string } {
   const now = new Date();
-  const to = formatUtcYmd(now);
-  const fromDt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1)));
-  const from = formatUtcYmd(fromDt);
+  const to = formatLocalYmd(now);
+  const fromDt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+  const from = formatLocalYmd(fromDt);
   return { from, to };
 }
 
@@ -42,13 +42,28 @@ function formatDuration(minutes: number): string {
   return `${mins}m`;
 }
 
-function formatWeekLabel(weekStr: string): string {
-  const parts = weekStr.split("-").map(Number);
+function formatWeekLabel(weekStartStr: string, weekEndStr?: string): string {
+  const parts = weekStartStr.split("-").map(Number);
   if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-    const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const start = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    const end = weekEndStr
+      ? (() => {
+          const ep = weekEndStr.split("-").map(Number);
+          return new Date(Date.UTC(ep[0]!, ep[1]! - 1, ep[2]!));
+        })()
+      : new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 6));
+
+    const startMonth = start.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+    const endMonth = end.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+    const startDay = start.getUTCDate();
+    const endDay = end.getUTCDate();
+
+    if (startMonth === endMonth) {
+      return `${startMonth} ${startDay}–${endDay}`;
+    }
+    return `${startMonth} ${startDay} – ${endMonth} ${endDay}`;
   }
-  return weekStr;
+  return weekStartStr;
 }
 
 function isCurrentWeek(weekStr: string): boolean {
@@ -61,29 +76,20 @@ function isCurrentWeek(weekStr: string): boolean {
   return nowUtc >= start && nowUtc <= end;
 }
 
-function formatWeekTick(weekStr: string, isCurrent?: boolean): string {
-  const base = formatWeekLabel(weekStr);
-  if (isCurrent || isCurrentWeek(weekStr)) {
-    return `${base} – Today`;
+function formatWeekTick(weekStartStr: string, weekEndStr?: string, isCurrent?: boolean): string {
+  const base = formatWeekLabel(weekStartStr, weekEndStr);
+  if (isCurrent || isCurrentWeek(weekStartStr)) {
+    return `${base} (Current)`;
   }
   return base;
 }
 
-function formatWeekTooltip(weekStr: string, isCurrent?: boolean): string {
-  const parts = weekStr.split("-").map(Number);
-  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-    const start = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-    const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-    if (isCurrent || isCurrentWeek(weekStr)) {
-      const now = new Date();
-      const todayStr = now.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-      return `Current week: ${startStr} – ${todayStr} (up to today)`;
-    }
-    const end = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 6));
-    const endStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-    return `Week of ${startStr} – ${endStr}`;
+function formatWeekTooltip(weekStartStr: string, weekEndStr?: string, isCurrent?: boolean): string {
+  const base = formatWeekLabel(weekStartStr, weekEndStr);
+  if (isCurrent || isCurrentWeek(weekStartStr)) {
+    return `Current week: ${base} (up to today)`;
   }
-  return `Week of ${weekStr}`;
+  return `Week of ${base}`;
 }
 
 type PresetDays = 7 | 30 | 90 | "custom";
@@ -104,6 +110,9 @@ export function Analytics(): React.JSX.Element {
   const loadData = useCallback(async (query: AnalyticsQueryInput) => {
     if (query.from && query.to && query.from > query.to) {
       setError("Start date must be on or before end date");
+      return;
+    }
+    if (!query.from || !query.to) {
       return;
     }
     setLoading(true);
@@ -573,7 +582,7 @@ export function Analytics(): React.JSX.Element {
                     dataKey="weekStart"
                     tickFormatter={(val) => {
                       const item = meetingsPerWeek.find((w) => w.weekStart === String(val));
-                      return formatWeekTick(String(val), item?.isCurrentWeek);
+                      return formatWeekTick(String(val), item?.weekEnd, item?.isCurrentWeek);
                     }}
                     stroke="var(--rule)"
                     tick={{ fill: "var(--ink-soft)", fontSize: 11 }}
@@ -593,7 +602,7 @@ export function Analytics(): React.JSX.Element {
                     }}
                     labelFormatter={(label) => {
                       const item = meetingsPerWeek.find((w) => w.weekStart === String(label));
-                      return formatWeekTooltip(String(label), item?.isCurrentWeek);
+                      return formatWeekTooltip(String(label), item?.weekEnd, item?.isCurrentWeek);
                     }}
                     formatter={(val) => [`${val} meetings`, "Meetings"]}
                   />
@@ -615,7 +624,7 @@ export function Analytics(): React.JSX.Element {
                 {meetingsPerWeek.map((w) => (
                   <tr key={w.weekStart}>
                     <td>
-                      {formatWeekLabel(w.weekStart)}
+                      {formatWeekLabel(w.weekStart, w.weekEnd)}
                       {(w.isCurrentWeek || isCurrentWeek(w.weekStart)) ? " (Current week up to today)" : ""}
                     </td>
                     <td>{w.count}</td>

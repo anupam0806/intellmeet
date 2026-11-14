@@ -13,7 +13,7 @@ export interface AnalyticsOverview {
     openTasks: number;
     doneTasks: number;
   };
-  meetingsPerWeek: Array<{ weekStart: string; count: number; isCurrentWeek?: boolean }>;
+  meetingsPerWeek: Array<{ weekStart: string; weekEnd?: string; count: number; isCurrentWeek?: boolean }>;
   tasksByStatus: Array<{ status: "TODO" | "IN_PROGRESS" | "DONE"; count: number }>;
   participation: Array<{ userId: string; name: string; meetingsAttended: number }>;
   actionItemConversionRate: number;
@@ -27,12 +27,16 @@ export class AnalyticsService {
     let fromStr = query.from;
     let toStr = query.to;
 
-    // Default to the last 30 days ending today in UTC
-    if (!fromStr || !toStr) {
-      const now = new Date();
-      toStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
+    // Dynamic defaults for missing dates
+    const now = new Date();
+    const todayStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
+    if (!toStr) {
+      toStr = todayStr;
+    }
+    if (!fromStr) {
+      const toDateObj = new Date(`${toStr}T00:00:00.000Z`);
       const thirtyDaysAgo = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 29),
+        Date.UTC(toDateObj.getUTCFullYear(), toDateObj.getUTCMonth(), toDateObj.getUTCDate() - 29),
       );
       fromStr = `${thirtyDaysAgo.getUTCFullYear()}-${String(thirtyDaysAgo.getUTCMonth() + 1).padStart(2, "0")}-${String(thirtyDaysAgo.getUTCDate()).padStart(2, "0")}`;
     }
@@ -202,6 +206,7 @@ export class AnalyticsService {
                   date: "$effectiveDate",
                   unit: "week",
                   startOfWeek: "monday",
+                  timezone: "UTC",
                 },
               },
               timezone: "UTC",
@@ -213,12 +218,14 @@ export class AnalyticsService {
     ]);
 
     for (const item of meetingsPerWeekAgg) {
-      if (item._id && weekMap.has(item._id)) {
+      if (item._id) {
+        if (!weekMap.has(item._id)) {
+          weekStarts.push(item._id);
+        }
         weekMap.set(item._id, item.count);
       }
     }
 
-    const now = new Date();
     const nowDay = now.getUTCDay();
     const nowDiffToMonday = nowDay === 0 ? -6 : 1 - nowDay;
     const currentWeekMonday = new Date(
@@ -234,11 +241,25 @@ export class AnalyticsService {
     );
     const currentWeekStr = `${currentWeekMonday.getUTCFullYear()}-${String(currentWeekMonday.getUTCMonth() + 1).padStart(2, "0")}-${String(currentWeekMonday.getUTCDate()).padStart(2, "0")}`;
 
-    const meetingsPerWeek = weekStarts.map((weekStart) => ({
-      weekStart,
-      count: weekMap.get(weekStart) || 0,
-      isCurrentWeek: weekStart === currentWeekStr,
-    }));
+    // Ensure the current week is present if the query range covers it
+    if (toDate >= currentWeekMonday && !weekStarts.includes(currentWeekStr)) {
+      weekStarts.push(currentWeekStr);
+      weekMap.set(currentWeekStr, 0);
+    }
+
+    weekStarts.sort();
+
+    const meetingsPerWeek = weekStarts.map((weekStart) => {
+      const parts = weekStart.split("-").map(Number);
+      const endD = new Date(Date.UTC(parts[0]!, parts[1]! - 1, parts[2]! + 6));
+      const weekEnd = `${endD.getUTCFullYear()}-${String(endD.getUTCMonth() + 1).padStart(2, "0")}-${String(endD.getUTCDate()).padStart(2, "0")}`;
+      return {
+        weekStart,
+        weekEnd,
+        count: weekMap.get(weekStart) || 0,
+        isCurrentWeek: weekStart === currentWeekStr,
+      };
+    });
 
     // 5. Participation aggregation
     const [participationAgg, teamMembers] = await Promise.all([

@@ -16,6 +16,7 @@ export interface AnalyticsTotals {
 
 export interface WeeklyMeetingCount {
   weekStart: string;
+  weekEnd?: string;
   count: number;
   isCurrentWeek?: boolean;
 }
@@ -33,6 +34,7 @@ export interface MemberParticipation {
 
 export const weeklyMeetingCountSchema = z.object({
   weekStart: z.string(),
+  weekEnd: z.string().optional(),
   count: z.number().default(0),
   isCurrentWeek: z.boolean().optional(),
 });
