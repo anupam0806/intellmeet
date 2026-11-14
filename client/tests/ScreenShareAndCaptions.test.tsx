@@ -387,6 +387,60 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
       expect(mockSpeechInstances[1]?.start).toHaveBeenCalled();
     });
 
+    it("does not start recognition if captions are enabled while microphone is muted, and starts automatically when unmuted", () => {
+      const controller = new CaptionController({
+        initialMuted: true,
+        onSegment: vi.fn(),
+        onError: vi.fn(),
+        onCaptionsOff: vi.fn(),
+      });
+
+      // User turns on captions while microphone is muted
+      controller.setCaptionsEnabled(true);
+      expect(mockSpeechInstances.length).toBe(0);
+
+      // User unmutes microphone -> recognition starts
+      controller.setMuted(false);
+      expect(mockSpeechInstances.length).toBe(1);
+      expect(mockSpeechInstances[0]?.start).toHaveBeenCalled();
+
+      // User mutes microphone again -> recognition stops
+      controller.setMuted(true);
+      expect(mockSpeechInstances[0]?.stop).toHaveBeenCalled();
+    });
+
+    it("ignores transcript segments and interim text received while muted", () => {
+      const onSegment = vi.fn();
+      const onInterim = vi.fn();
+      const controller = new CaptionController({
+        onSegment,
+        onInterim,
+        onError: vi.fn(),
+        onCaptionsOff: vi.fn(),
+      });
+      controller.setCaptionsEnabled(true);
+
+      const instance = mockSpeechInstances[0];
+      expect(instance?.start).toHaveBeenCalled();
+
+      // Mute microphone
+      controller.setMuted(true);
+
+      // Simulate recognition results arriving while muted
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: [
+          {
+            isFinal: true,
+            0: { transcript: "Speech uttered while muted" },
+          },
+        ],
+      });
+
+      expect(onSegment).not.toHaveBeenCalled();
+      expect(onInterim).toHaveBeenLastCalledWith("");
+    });
+
     it("ignores no-speech and aborted errors; turns off captions on not-allowed", () => {
       const onError = vi.fn();
       const onCaptionsOff = vi.fn();

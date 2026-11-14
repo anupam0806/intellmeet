@@ -66,6 +66,8 @@ export function saveCaptionLanguage(lang: string): void {
 
 export interface CaptionControllerOptions {
   initialLanguage?: string;
+  initialMuted?: boolean;
+  initialCaptionsEnabled?: boolean;
   onSegment: (segment: { text: string; ts: number }) => void;
   onInterim?: (text: string) => void;
   onError: (message: string) => void;
@@ -85,6 +87,16 @@ export class CaptionController {
 
   constructor(private options: CaptionControllerOptions) {
     this.language = options.initialLanguage || getDefaultCaptionLanguage();
+    if (typeof options.initialMuted === "boolean") {
+      this.isMuted = options.initialMuted;
+    }
+    if (typeof options.initialCaptionsEnabled === "boolean") {
+      this.isCaptionsEnabled = options.initialCaptionsEnabled;
+      if (options.initialCaptionsEnabled) {
+        this.isExplicitlyStopped = false;
+        this.checkAndApplyState();
+      }
+    }
   }
 
   public isSupported(): boolean {
@@ -93,6 +105,14 @@ export class CaptionController {
 
   public getLanguage(): string {
     return this.language;
+  }
+
+  public getMuted(): boolean {
+    return this.isMuted;
+  }
+
+  public getCaptionsEnabled(): boolean {
+    return this.isCaptionsEnabled;
   }
 
   public setLanguage(lang: string) {
@@ -154,6 +174,10 @@ export class CaptionController {
       return;
     }
 
+    if (!this.shouldRun()) {
+      return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRec = getSpeechRecognitionConstructor() as any;
     if (!SpeechRec) {
@@ -168,7 +192,10 @@ export class CaptionController {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
-        if (!this.shouldRun()) return;
+        if (!this.shouldRun()) {
+          this.stopRecognition();
+          return;
+        }
         const results = event.results;
         let interimText = "";
         for (let i = event.resultIndex; i < results.length; i++) {
@@ -176,7 +203,7 @@ export class CaptionController {
           if (res && res[0]) {
             if (res.isFinal) {
               const text = res[0].transcript?.trim();
-              if (text) {
+              if (text && this.shouldRun()) {
                 this.options.onSegment({
                   text,
                   ts: Date.now(),
@@ -187,7 +214,9 @@ export class CaptionController {
             }
           }
         }
-        this.options.onInterim?.(interimText.trim());
+        if (this.shouldRun()) {
+          this.options.onInterim?.(interimText.trim());
+        }
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -233,12 +262,22 @@ export class CaptionController {
     }
 
     if (this.recognition) {
+      const rec = this.recognition;
+      this.recognition = null;
       try {
-        this.recognition.stop();
+        if (typeof rec.abort === "function") {
+          rec.abort();
+        }
+      } catch {
+        // Ignore abort error
+      }
+      try {
+        if (typeof rec.stop === "function") {
+          rec.stop();
+        }
       } catch {
         // Ignore stop error
       }
-      this.recognition = null;
     }
   }
 

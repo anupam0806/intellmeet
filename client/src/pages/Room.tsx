@@ -314,11 +314,20 @@ export function Room(): React.JSX.Element {
   ]);
 
   // Captions handling
+  const audioEnabledRef = useRef(audioEnabled);
+  audioEnabledRef.current = audioEnabled;
+  const videoEnabledRef = useRef(videoEnabled);
+  videoEnabledRef.current = videoEnabled;
+  const isScreenSharingRef = useRef(isScreenSharing);
+  isScreenSharingRef.current = isScreenSharing;
+
   useEffect(() => {
     if (!isCaptionsSupported) return;
 
     const controller = new CaptionController({
       initialLanguage: captionLanguage,
+      initialMuted: !audioEnabled,
+      initialCaptionsEnabled: captionsEnabled,
       onSegment: (segment) => {
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("transcript:segment", segment);
@@ -335,9 +344,9 @@ export function Room(): React.JSX.Element {
         setInterimCaption("");
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("media:state", {
-            audio: audioEnabled,
-            video: videoEnabled,
-            screen: isScreenSharing,
+            audio: audioEnabledRef.current,
+            video: videoEnabledRef.current,
+            screen: isScreenSharingRef.current,
             captions: false,
           });
         }
@@ -350,7 +359,23 @@ export function Room(): React.JSX.Element {
       controller.destroy();
       captionControllerRef.current = null;
     };
-  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus, captionLanguage]);
+  }, [isCaptionsSupported, showStatus]);
+
+  // Synchronize microphone mute state with live captions
+  useEffect(() => {
+    captionControllerRef.current?.setMuted(!audioEnabled);
+    if (!audioEnabled) {
+      setInterimCaption("");
+    }
+  }, [audioEnabled]);
+
+  // Synchronize captions toggle state with controller
+  useEffect(() => {
+    captionControllerRef.current?.setCaptionsEnabled(captionsEnabled);
+    if (!captionsEnabled) {
+      setInterimCaption("");
+    }
+  }, [captionsEnabled]);
 
   const handleToggleCaptions = useCallback(() => {
     if (!isCaptionsSupported) {
