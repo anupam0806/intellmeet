@@ -510,6 +510,74 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
 
       expect(instance?.stop).toHaveBeenCalled();
     });
+
+    it("ensures setMuted and setCaptionsEnabled calls are idempotent without spawning duplicate instances", () => {
+      const controller = new CaptionController({
+        onSegment: vi.fn(),
+        onError: vi.fn(),
+        onCaptionsOff: vi.fn(),
+      });
+      controller.setCaptionsEnabled(true);
+      expect(mockSpeechInstances.length).toBe(1);
+
+      // Calling with true again should do nothing
+      controller.setCaptionsEnabled(true);
+      expect(mockSpeechInstances.length).toBe(1);
+
+      // Calling setMuted(false) when already unmuted should do nothing
+      controller.setMuted(false);
+      expect(mockSpeechInstances.length).toBe(1);
+
+      // Muting once
+      controller.setMuted(true);
+      expect(mockSpeechInstances[0]?.stop).toHaveBeenCalledTimes(1);
+
+      // Muting again should not call stop again
+      controller.setMuted(true);
+      expect(mockSpeechInstances[0]?.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it("recovers and retries starting recognition if browser start throws an exception", () => {
+      vi.useFakeTimers();
+      try {
+        let throwOnce = true;
+        const MockThrowRec = class extends MockSpeechRecognition {
+          constructor() {
+            super();
+            if (throwOnce) {
+              throwOnce = false;
+              this.start = vi.fn().mockImplementation(() => {
+                throw new Error("InvalidStateError: recognition has already started");
+              });
+            }
+          }
+        };
+
+        (globalThis as unknown as { SpeechRecognition?: typeof MockSpeechRecognition }).SpeechRecognition =
+          MockThrowRec;
+
+        const controller = new CaptionController({
+          onSegment: vi.fn(),
+          onError: vi.fn(),
+          onCaptionsOff: vi.fn(),
+        });
+
+        // First attempt throws
+        controller.setCaptionsEnabled(true);
+        expect(mockSpeechInstances.length).toBe(1);
+
+        // Advance 300 ms retry timer
+        act(() => {
+          vi.advanceTimersByTime(350);
+        });
+
+        // Second attempt succeeds
+        expect(mockSpeechInstances.length).toBe(2);
+        expect(mockSpeechInstances[1]?.start).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("UI Notices & Markers", () => {

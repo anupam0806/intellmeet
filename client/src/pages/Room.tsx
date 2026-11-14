@@ -173,32 +173,31 @@ export function Room(): React.JSX.Element {
 
   // 3. Media toggle controls
   const handleToggleAudio = useCallback(() => {
-    setAudioEnabled((prev) => {
-      const next = !prev;
-      if (localStream) {
-        localStream.getAudioTracks().forEach((t) => {
-          t.enabled = next;
-        });
-      }
-      rtcManagerRef.current?.setTrackEnabled("audio", next);
+    const next = !audioEnabled;
+    setAudioEnabled(next);
 
-      // Privacy: pause speech recognition immediately when muted
-      captionControllerRef.current?.setMuted(!next);
-      if (!next) {
-        setInterimCaption("");
-      }
+    if (localStream) {
+      localStream.getAudioTracks().forEach((t) => {
+        t.enabled = next;
+      });
+    }
+    rtcManagerRef.current?.setTrackEnabled("audio", next);
 
-      if (socketRef.current?.connected && isJoinedRef.current) {
-        socketRef.current.emit("media:state", {
-          audio: next,
-          video: videoEnabled,
-          screen: isScreenSharing,
-          captions: captionsEnabled,
-        });
-      }
-      return next;
-    });
-  }, [localStream, videoEnabled, isScreenSharing, captionsEnabled]);
+    // Privacy: pause speech recognition immediately when muted
+    captionControllerRef.current?.setMuted(!next);
+    if (!next) {
+      setInterimCaption("");
+    }
+
+    if (socketRef.current?.connected && isJoinedRef.current) {
+      socketRef.current.emit("media:state", {
+        audio: next,
+        video: videoEnabled,
+        screen: isScreenSharing,
+        captions: captionsEnabled,
+      });
+    }
+  }, [audioEnabled, localStream, videoEnabled, isScreenSharing, captionsEnabled]);
 
   const handleToggleVideo = useCallback(() => {
     setVideoEnabled((prev) => {
@@ -383,24 +382,23 @@ export function Room(): React.JSX.Element {
       return;
     }
 
-    setCaptionsEnabled((prev) => {
-      const next = !prev;
-      captionControllerRef.current?.setCaptionsEnabled(next);
-      if (!next) {
-        setInterimCaption("");
-      }
+    const next = !captionsEnabled;
+    setCaptionsEnabled(next);
 
-      if (socketRef.current?.connected && isJoinedRef.current) {
-        socketRef.current.emit("media:state", {
-          audio: audioEnabled,
-          video: videoEnabled,
-          screen: isScreenSharing,
-          captions: next,
-        });
-      }
-      return next;
-    });
-  }, [isCaptionsSupported, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
+    captionControllerRef.current?.setCaptionsEnabled(next);
+    if (!next) {
+      setInterimCaption("");
+    }
+
+    if (socketRef.current?.connected && isJoinedRef.current) {
+      socketRef.current.emit("media:state", {
+        audio: audioEnabled,
+        video: videoEnabled,
+        screen: isScreenSharing,
+        captions: next,
+      });
+    }
+  }, [isCaptionsSupported, captionsEnabled, audioEnabled, videoEnabled, isScreenSharing, showStatus]);
 
   const handleCaptionLanguageChange = useCallback((lang: string) => {
     setCaptionLanguage(lang);

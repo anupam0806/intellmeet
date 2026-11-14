@@ -128,6 +128,7 @@ export class CaptionController {
   }
 
   public setCaptionsEnabled(enabled: boolean) {
+    if (this.isCaptionsEnabled === enabled) return;
     this.isCaptionsEnabled = enabled;
     if (enabled) {
       this.isExplicitlyStopped = false;
@@ -139,6 +140,7 @@ export class CaptionController {
   }
 
   public setMuted(muted: boolean) {
+    if (this.isMuted === muted) return;
     this.isMuted = muted;
     this.checkAndApplyState();
   }
@@ -193,7 +195,7 @@ export class CaptionController {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
         if (!this.shouldRun()) {
-          this.stopRecognition();
+          this.options.onInterim?.("");
           return;
         }
         const results = event.results;
@@ -235,7 +237,9 @@ export class CaptionController {
       };
 
       recognition.onend = () => {
-        this.recognition = null;
+        if (this.recognition === recognition) {
+          this.recognition = null;
+        }
         this.options.onInterim?.("");
         if (this.shouldRun()) {
           // Restart automatically about 300 ms after onend while captions are on
@@ -251,6 +255,13 @@ export class CaptionController {
       recognition.start();
     } catch {
       this.recognition = null;
+      if (this.shouldRun()) {
+        this.restartTimeout = setTimeout(() => {
+          if (this.shouldRun()) {
+            this.startRecognition();
+          }
+        }, 300);
+      }
     }
   }
 
@@ -265,18 +276,19 @@ export class CaptionController {
       const rec = this.recognition;
       this.recognition = null;
       try {
-        if (typeof rec.abort === "function") {
+        if (typeof rec.stop === "function") {
+          rec.stop();
+        } else if (typeof rec.abort === "function") {
           rec.abort();
         }
       } catch {
-        // Ignore abort error
-      }
-      try {
-        if (typeof rec.stop === "function") {
-          rec.stop();
+        try {
+          if (typeof rec.abort === "function") {
+            rec.abort();
+          }
+        } catch {
+          // Ignore
         }
-      } catch {
-        // Ignore stop error
       }
     }
   }
