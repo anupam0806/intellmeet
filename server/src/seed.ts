@@ -140,11 +140,11 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
 
     // Scheduled Meeting 1: "Team standup" (later today in the evening)
     const laterTodayEvening = new Date(now);
-    laterTodayEvening.setHours(18, 0, 0, 0);
+    laterTodayEvening.setUTCHours(18, 0, 0, 0);
     if (laterTodayEvening.getTime() <= now) {
-      laterTodayEvening.setHours(20, 30, 0, 0);
+      laterTodayEvening.setUTCHours(21, 30, 0, 0);
       if (laterTodayEvening.getTime() <= now) {
-        laterTodayEvening.setTime(now + 60 * 60 * 1000);
+        laterTodayEvening.setTime(now + 30 * 60 * 1000);
       }
     }
 

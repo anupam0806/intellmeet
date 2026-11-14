@@ -54,8 +54,8 @@ describe("Phase P7: Dashboard Real-Data Integration", () => {
       participantCount: 4,
       aiStatus: "READY",
       actionItemCount: 3,
-      startedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 1800 * 1000).toISOString(),
+      startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      endedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 + 1800 * 1000).toISOString(),
     },
   ];
 
