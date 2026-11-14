@@ -251,5 +251,21 @@ describe("Phase P7: Analytics Endpoints and Aggregations", () => {
       expect(res.body.meetingsPerWeek.length).toBeGreaterThan(0);
       expect(res.body.meetingsPerWeek.every((w: { count: number }) => w.count === 0)).toBe(true);
     });
+
+    it("dynamically includes the current week up to today when defaulting or querying current range", async () => {
+      const admin = await createTeamWithAdmin("AnaCurr");
+
+      const res = await request(app)
+        .get("/api/v1/analytics/overview")
+        .set("Authorization", `Bearer ${admin.token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.meetingsPerWeek).toBeInstanceOf(Array);
+      expect(res.body.meetingsPerWeek.length).toBeGreaterThanOrEqual(4);
+
+      // The last week bucket in default 30-day range (which ends today) must be marked as current week
+      const currentWeekItem = res.body.meetingsPerWeek.find((w: { isCurrentWeek?: boolean }) => w.isCurrentWeek === true);
+      expect(currentWeekItem).toBeDefined();
+    });
   });
 });

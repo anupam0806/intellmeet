@@ -13,7 +13,7 @@ export interface AnalyticsOverview {
     openTasks: number;
     doneTasks: number;
   };
-  meetingsPerWeek: Array<{ weekStart: string; count: number }>;
+  meetingsPerWeek: Array<{ weekStart: string; count: number; isCurrentWeek?: boolean }>;
   tasksByStatus: Array<{ status: "TODO" | "IN_PROGRESS" | "DONE"; count: number }>;
   participation: Array<{ userId: string; name: string; meetingsAttended: number }>;
   actionItemConversionRate: number;
@@ -151,11 +151,25 @@ export class AnalyticsService {
       ),
     );
 
+    const toDayOfWeek = toDate.getUTCDay();
+    const toDiffToMonday = toDayOfWeek === 0 ? -6 : 1 - toDayOfWeek;
+    const endMonday = new Date(
+      Date.UTC(
+        toDate.getUTCFullYear(),
+        toDate.getUTCMonth(),
+        toDate.getUTCDate() + toDiffToMonday,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+
     const weekMap = new Map<string, number>();
     const weekStarts: string[] = [];
 
     let curr = new Date(startMonday);
-    while (curr <= toDate) {
+    while (curr <= endMonday) {
       const weekStr = `${curr.getUTCFullYear()}-${String(curr.getUTCMonth() + 1).padStart(2, "0")}-${String(curr.getUTCDate()).padStart(2, "0")}`;
       weekStarts.push(weekStr);
       weekMap.set(weekStr, 0);
@@ -204,9 +218,26 @@ export class AnalyticsService {
       }
     }
 
+    const now = new Date();
+    const nowDay = now.getUTCDay();
+    const nowDiffToMonday = nowDay === 0 ? -6 : 1 - nowDay;
+    const currentWeekMonday = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + nowDiffToMonday,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    const currentWeekStr = `${currentWeekMonday.getUTCFullYear()}-${String(currentWeekMonday.getUTCMonth() + 1).padStart(2, "0")}-${String(currentWeekMonday.getUTCDate()).padStart(2, "0")}`;
+
     const meetingsPerWeek = weekStarts.map((weekStart) => ({
       weekStart,
       count: weekMap.get(weekStart) || 0,
+      isCurrentWeek: weekStart === currentWeekStr,
     }));
 
     // 5. Participation aggregation

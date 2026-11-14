@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { Analytics } from "../src/pages/Analytics.js";
 import * as analyticsApi from "../src/lib/analytics.js";
+import * as socketModule from "../src/lib/socket.js";
 
 describe("Phase P7: Analytics Dashboard (Client)", () => {
+  let socketCallbacks: Record<string, (data?: unknown) => void> = {};
+  let mockSocket: any;
+
   const mockOverview: analyticsApi.AnalyticsOverview = {
     range: {
       from: "2026-03-01",
@@ -36,6 +40,19 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
   };
 
   beforeEach(() => {
+    socketCallbacks = {};
+    mockSocket = {
+      connected: true,
+      connect: vi.fn(),
+      on: vi.fn((event: string, cb: (data?: unknown) => void) => {
+        socketCallbacks[event] = cb;
+      }),
+      off: vi.fn((event: string) => {
+        delete socketCallbacks[event];
+      }),
+      emit: vi.fn(),
+    };
+    vi.spyOn(socketModule, "getSocket").mockReturnValue(mockSocket);
     vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockResolvedValue(mockOverview);
   });
 
@@ -214,6 +231,61 @@ describe("Phase P7: Analytics Dashboard (Client)", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+    });
+  });
+
+  it("refreshes data in real time when socket events (meeting:created, meeting:ended) are received", async () => {
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(analyticsApi.fetchAnalyticsOverview).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockSocket.on).toHaveBeenCalledWith("meeting:created", expect.any(Function));
+    expect(mockSocket.on).toHaveBeenCalledWith("meeting:ended", expect.any(Function));
+
+    // Simulate receiving meeting:created socket event
+    await act(async () => {
+      socketCallbacks["meeting:created"]?.({ id: "meeting-new" });
+      await new Promise((r) => setTimeout(r, 200));
+    });
+
+    await waitFor(() => {
+      expect(analyticsApi.fetchAnalyticsOverview).toHaveBeenCalledTimes(2);
+    });
+
+    // Simulate receiving meeting:ended socket event
+    await act(async () => {
+      socketCallbacks["meeting:ended"]?.({ meetingId: "meeting-new" });
+      await new Promise((r) => setTimeout(r, 200));
+    });
+
+    await waitFor(() => {
+      expect(analyticsApi.fetchAnalyticsOverview).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  it("labels the current week dynamically in the accessible table and chart", async () => {
+    // Current Monday in UTC
+    const now = new Date();
+    const day = now.getUTCDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const currentMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
+    const currentMondayStr = `${currentMonday.getUTCFullYear()}-${String(currentMonday.getUTCMonth() + 1).padStart(2, "0")}-${String(currentMonday.getUTCDate()).padStart(2, "0")}`;
+
+    vi.spyOn(analyticsApi, "fetchAnalyticsOverview").mockResolvedValueOnce({
+      ...mockOverview,
+      meetingsPerWeek: [
+        { weekStart: currentMondayStr, count: 5, isCurrentWeek: true },
+      ],
+    });
+
+    render(<Analytics />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText((content) => content.includes("Current week up to today")),
+      ).toBeInTheDocument();
     });
   });
 });

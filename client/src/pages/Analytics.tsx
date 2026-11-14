@@ -4,6 +4,7 @@ import {
   type AnalyticsOverview,
   type AnalyticsQueryInput,
 } from "../lib/analytics.js";
+import { getSocket } from "../lib/socket.js";
 import {
   ResponsiveContainer,
   BarChart,
@@ -50,6 +51,41 @@ function formatWeekLabel(weekStr: string): string {
   return weekStr;
 }
 
+function isCurrentWeek(weekStr: string): boolean {
+  const parts = weekStr.split("-").map(Number);
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return false;
+  const start = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0));
+  const end = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 6, 23, 59, 59, 999));
+  const now = new Date();
+  const nowUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0));
+  return nowUtc >= start && nowUtc <= end;
+}
+
+function formatWeekTick(weekStr: string, isCurrent?: boolean): string {
+  const base = formatWeekLabel(weekStr);
+  if (isCurrent || isCurrentWeek(weekStr)) {
+    return `${base} – Today`;
+  }
+  return base;
+}
+
+function formatWeekTooltip(weekStr: string, isCurrent?: boolean): string {
+  const parts = weekStr.split("-").map(Number);
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+    const start = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    if (isCurrent || isCurrentWeek(weekStr)) {
+      const now = new Date();
+      const todayStr = now.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      return `Current week: ${startStr} – ${todayStr} (up to today)`;
+    }
+    const end = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 6));
+    const endStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    return `Week of ${startStr} – ${endStr}`;
+  }
+  return `Week of ${weekStr}`;
+}
+
 type PresetDays = 7 | 30 | 90 | "custom";
 
 export function Analytics(): React.JSX.Element {
@@ -66,6 +102,10 @@ export function Analytics(): React.JSX.Element {
   const toInputId = useId();
 
   const loadData = useCallback(async (query: AnalyticsQueryInput) => {
+    if (query.from && query.to && query.from > query.to) {
+      setError("Start date must be on or before end date");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -83,11 +123,66 @@ export function Analytics(): React.JSX.Element {
     loadData({ from: fromDate, to: toDate });
   }, [fromDate, toDate, loadData]);
 
+  // Real-time socket updates for meetings and tasks
+  useEffect(() => {
+    let socket: ReturnType<typeof getSocket> | null = null;
+    try {
+      socket = getSocket();
+      if (!socket.connected) {
+        socket.connect();
+      }
+    } catch {
+      // In non-browser / test environments
+    }
+
+    if (!socket) return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const handleRealtimeUpdate = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (selectedPreset !== "custom") {
+          const freshRange = getPresetRange(selectedPreset);
+          setFromDate(freshRange.from);
+          setToDate(freshRange.to);
+          void loadData(freshRange);
+        } else {
+          void loadData({ from: fromDate, to: toDate });
+        }
+      }, 150);
+    };
+
+    socket.on("meeting:created", handleRealtimeUpdate);
+    socket.on("meeting:started", handleRealtimeUpdate);
+    socket.on("meeting:ended", handleRealtimeUpdate);
+    socket.on("meeting:deleted", handleRealtimeUpdate);
+    socket.on("meeting:ai-ready", handleRealtimeUpdate);
+    socket.on("task:created", handleRealtimeUpdate);
+    socket.on("task:updated", handleRealtimeUpdate);
+    socket.on("task:deleted", handleRealtimeUpdate);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      socket?.off("meeting:created", handleRealtimeUpdate);
+      socket?.off("meeting:started", handleRealtimeUpdate);
+      socket?.off("meeting:ended", handleRealtimeUpdate);
+      socket?.off("meeting:deleted", handleRealtimeUpdate);
+      socket?.off("meeting:ai-ready", handleRealtimeUpdate);
+      socket?.off("task:created", handleRealtimeUpdate);
+      socket?.off("task:updated", handleRealtimeUpdate);
+      socket?.off("task:deleted", handleRealtimeUpdate);
+    };
+  }, [fromDate, toDate, selectedPreset, loadData]);
+
   const handleSelectPreset = (days: 7 | 30 | 90) => {
     setSelectedPreset(days);
     const range = getPresetRange(days);
-    setFromDate(range.from);
-    setToDate(range.to);
+    if (range.from === fromDate && range.to === toDate) {
+      void loadData(range);
+    } else {
+      setFromDate(range.from);
+      setToDate(range.to);
+    }
   };
 
   const handleCustomDateChange = (from: string, to: string) => {
@@ -472,11 +567,14 @@ export function Analytics(): React.JSX.Element {
 
             <div style={{ height: "240px", width: "100%", minHeight: "240px" }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
-                <BarChart data={data.meetingsPerWeek} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={meetingsPerWeek} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid stroke="var(--rule)" strokeDasharray="3 3" vertical={false} opacity={0.5} />
                   <XAxis
                     dataKey="weekStart"
-                    tickFormatter={formatWeekLabel}
+                    tickFormatter={(val) => {
+                      const item = meetingsPerWeek.find((w) => w.weekStart === String(val));
+                      return formatWeekTick(String(val), item?.isCurrentWeek);
+                    }}
                     stroke="var(--rule)"
                     tick={{ fill: "var(--ink-soft)", fontSize: 11 }}
                   />
@@ -493,7 +591,10 @@ export function Analytics(): React.JSX.Element {
                       fontSize: "12px",
                       color: "var(--ink)",
                     }}
-                    labelFormatter={(label) => `Week of ${formatWeekLabel(String(label))}`}
+                    labelFormatter={(label) => {
+                      const item = meetingsPerWeek.find((w) => w.weekStart === String(label));
+                      return formatWeekTooltip(String(label), item?.isCurrentWeek);
+                    }}
                     formatter={(val) => [`${val} meetings`, "Meetings"]}
                   />
                   <Bar dataKey="count" fill="var(--signal)" radius={[3, 3, 0, 0]} />
@@ -513,7 +614,10 @@ export function Analytics(): React.JSX.Element {
               <tbody>
                 {meetingsPerWeek.map((w) => (
                   <tr key={w.weekStart}>
-                    <td>{formatWeekLabel(w.weekStart)}</td>
+                    <td>
+                      {formatWeekLabel(w.weekStart)}
+                      {(w.isCurrentWeek || isCurrentWeek(w.weekStart)) ? " (Current week up to today)" : ""}
+                    </td>
                     <td>{w.count}</td>
                   </tr>
                 ))}

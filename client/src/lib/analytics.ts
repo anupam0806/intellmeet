@@ -17,6 +17,7 @@ export interface AnalyticsTotals {
 export interface WeeklyMeetingCount {
   weekStart: string;
   count: number;
+  isCurrentWeek?: boolean;
 }
 
 export interface TaskStatusCount {
@@ -33,6 +34,7 @@ export interface MemberParticipation {
 export const weeklyMeetingCountSchema = z.object({
   weekStart: z.string(),
   count: z.number().default(0),
+  isCurrentWeek: z.boolean().optional(),
 });
 
 export const taskStatusCountSchema = z.object({

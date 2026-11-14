@@ -10,6 +10,10 @@ export class MeetingController {
         req.user!.teamId,
         req.body,
       );
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team:${req.user!.teamId}`).emit("meeting:created", meeting);
+      }
       res.status(201).json(meeting);
     } catch (error) {
       next(error);
@@ -63,6 +67,10 @@ export class MeetingController {
         req.user!.role,
         req.user!.teamId,
       );
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team:${req.user!.teamId}`).emit("meeting:deleted", { meetingId: req.params.id });
+      }
       res.status(204).end();
     } catch (error) {
       next(error);
@@ -88,6 +96,10 @@ export class MeetingController {
         req.user!.id,
         req.user!.teamId,
       );
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`team:${req.user!.teamId}`).emit("meeting:started", { meetingId: req.params.id });
+      }
       res.status(200).json(result);
     } catch (error) {
       next(error);
