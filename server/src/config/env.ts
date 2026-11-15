@@ -65,8 +65,8 @@ const envSchema = z
     TURN_USERNAME: z.string().optional().default(""),
     TURN_CREDENTIAL: z.string().optional().default(""),
     MAX_PARTICIPANTS: z.preprocess(
-      (val) => (val === "" || val === undefined ? 4 : val),
-      z.coerce.number().default(4),
+      (val) => (val === "" || val === undefined ? 10 : val),
+      z.coerce.number().default(10),
     ),
     LOG_LEVEL: z
       .string()

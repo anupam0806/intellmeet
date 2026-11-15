@@ -236,16 +236,17 @@ describe("Socket Server: Signalling, Presence, Chat, and RTC", () => {
   });
 
   it("enforces MAX_PARTICIPANTS room capacity and returns ROOM_FULL for (MAX_PARTICIPANTS+1)th user", async () => {
-    // MAX_PARTICIPANTS default is 4
+    // MAX_PARTICIPANTS default is 10
     const admin = await createTestTeam("Admin Cap", "admin_cap@example.com", "Cap Team");
     const teamRes = await request(app).get("/api/v1/team").set("Authorization", `Bearer ${admin.token}`);
     const inviteCode = teamRes.body.inviteCode;
 
-    // Create 4 team members
-    const m1 = await joinTestTeam("User 1", "user1_cap@example.com", inviteCode);
-    const m2 = await joinTestTeam("User 2", "user2_cap@example.com", inviteCode);
-    const m3 = await joinTestTeam("User 3", "user3_cap@example.com", inviteCode);
-    const m4 = await joinTestTeam("User 4", "user4_cap@example.com", inviteCode);
+    // Create env.MAX_PARTICIPANTS team members
+    const members = [];
+    for (let i = 1; i <= env.MAX_PARTICIPANTS; i++) {
+      const m = await joinTestTeam(`User ${i}`, `user${i}_cap@example.com`, inviteCode);
+      members.push(m);
+    }
 
     // Admin creates meeting and starts it
     const meetingRes = await request(app)
@@ -255,9 +256,9 @@ describe("Socket Server: Signalling, Presence, Chat, and RTC", () => {
     const meetingId = meetingRes.body.id;
     await request(app).post(`/api/v1/meetings/${meetingId}/start`).set("Authorization", `Bearer ${admin.token}`);
 
-    // Join 4 distinct users (Admin, m1, m2, m3)
+    // Join env.MAX_PARTICIPANTS distinct users (Admin + members[0..MAX_PARTICIPANTS-2])
     const clients: ClientSocket[] = [];
-    const users = [admin, m1, m2, m3];
+    const users = [admin, ...members.slice(0, env.MAX_PARTICIPANTS - 1)];
     for (const u of users) {
       const c = connectClient(u.token);
       await waitFor(c, "connect");
@@ -268,18 +269,19 @@ describe("Socket Server: Signalling, Presence, Chat, and RTC", () => {
       clients.push(c);
     }
 
-    // 5th distinct user (m4) attempts to join -> ROOM_FULL
-    const client5 = connectClient(m4.token);
-    await waitFor(client5, "connect");
-    const res5 = await new Promise<{ ok: boolean; code?: string }>((resolve) => {
-      client5.emit("room:join", { meetingId }, resolve);
+    // (MAX_PARTICIPANTS+1)th distinct user attempts to join -> ROOM_FULL
+    const overflowUser = members[env.MAX_PARTICIPANTS - 1];
+    const clientOverflow = connectClient(overflowUser.token);
+    await waitFor(clientOverflow, "connect");
+    const resOverflow = await new Promise<{ ok: boolean; code?: string }>((resolve) => {
+      clientOverflow.emit("room:join", { meetingId }, resolve);
     });
 
-    expect(res5.ok).toBe(false);
-    expect(res5.code).toBe("ROOM_FULL");
+    expect(resOverflow.ok).toBe(false);
+    expect(resOverflow.code).toBe("ROOM_FULL");
 
     // Clean up
-    client5.disconnect();
+    clientOverflow.disconnect();
     clients.forEach((c) => c.disconnect());
   });
 

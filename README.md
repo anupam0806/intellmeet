@@ -49,7 +49,7 @@ Configure the following environment variable names in Render (supply values dire
 - `TURN_URL` — Optional TURN server URL for relaying media across strict symmetric NATs.
 - `TURN_USERNAME` — Optional TURN server authentication username.
 - `TURN_CREDENTIAL` — Optional TURN server authentication credential/password.
-- `MAX_PARTICIPANTS` — Maximum concurrent participants allowed per room (default 4).
+- `MAX_PARTICIPANTS` — Maximum concurrent participants allowed per room (default 10).
 - `LOG_LEVEL` — Logging verbosity level (`info`, `warn`, `error`, `debug`).
 - `CLIENT_DIST_DIR` — Optional custom path to client build output folder (defaults to `client/dist`).
 
