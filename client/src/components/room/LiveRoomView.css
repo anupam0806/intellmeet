@@ -135,9 +135,9 @@
 
 @media (max-width: 640px) or (orientation: portrait) {
   .live-room-btn-leave {
-    background-color: rgba(239, 68, 68, 0.12);
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.35);
+    background-color: #b91c1c;
+    color: #ffffff;
+    border-color: #dc2626;
   }
 
   /* Accessible touch target (44x44px minimum) on mobile devices */
@@ -183,14 +183,16 @@
   gap: 8px;
   padding: 8px;
   box-sizing: border-box;
+  grid-template-columns: var(--grid-cols, 1fr);
+  grid-template-rows: var(--grid-rows, 1fr);
 }
 
 @media (max-width: 640px) or (orientation: portrait) {
   .live-room-tiles-grid {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto !important;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
     overflow-y: auto;
-    max-height: 100% !important;
+    max-height: 100%;
   }
 }
 

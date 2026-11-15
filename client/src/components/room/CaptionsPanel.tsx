@@ -11,17 +11,154 @@ export interface LiveCaptionSegment {
 }
 
 export interface CaptionsPanelProps {
-  captions: LiveCaptionSegment[];
-  isSupported: boolean;
-  captionsEnabled: boolean;
-  onToggleCaptions: () => void;
-  currentLanguage?: string;
-  onLanguageChange?: (lang: string) => void;
-  interimCaption?: string;
-  speakerName?: string;
-  isMuted?: boolean;
-  isListening?: boolean;
-  errorMessage?: string | null;
+  readonly captions: readonly LiveCaptionSegment[];
+  readonly isSupported: boolean;
+  readonly captionsEnabled: boolean;
+  readonly onToggleCaptions: () => void;
+  readonly currentLanguage?: string;
+  readonly onLanguageChange?: (lang: string) => void;
+  readonly interimCaption?: string;
+  readonly speakerName?: string;
+  readonly isMuted?: boolean;
+  readonly isListening?: boolean;
+  readonly errorMessage?: string | null;
+}
+
+function formatTime(ts: number | string): string {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function getListeningStatusText(isMuted: boolean, isListening: boolean): string {
+  if (isMuted) {
+    return "Microphone muted — captions paused";
+  }
+  if (isListening) {
+    return "Listening for speech...";
+  }
+  return "Connecting captions...";
+}
+
+function getEmptyHelpText(captionsEnabled: boolean, isMuted: boolean): string {
+  if (!captionsEnabled) {
+    return "Spoken words from participants with captions turned on will appear here in real time.";
+  }
+  if (isMuted) {
+    return "Unmute your microphone and speak to transcribe speech.";
+  }
+  return "Speak into your microphone to transcribe speech in real time.";
+}
+
+function CaptionsHeader({
+  isSupported,
+  captionsEnabled,
+  onToggleCaptions,
+}: {
+  readonly isSupported: boolean;
+  readonly captionsEnabled: boolean;
+  readonly onToggleCaptions: () => void;
+}): React.JSX.Element {
+  return (
+    <div
+      style={{
+        padding: "16px",
+        borderBottom: "1px solid var(--rule)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Subtitles size={18} style={{ color: "var(--signal)" }} />
+        <span style={{ fontSize: "14px", fontWeight: 600 }}>Live Captions</span>
+      </div>
+
+      {isSupported && (
+        <button
+          type="button"
+          onClick={onToggleCaptions}
+          style={{
+            padding: "4px 10px",
+            fontSize: "12px",
+            fontWeight: 600,
+            borderRadius: "3px",
+            border: "1px solid var(--rule)",
+            backgroundColor: captionsEnabled ? "var(--signal)" : "transparent",
+            color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
+            cursor: "pointer",
+          }}
+        >
+          {captionsEnabled ? "Captions On" : "Turn On"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LanguagePickerBar({
+  currentLanguage,
+  onLanguageChange,
+}: {
+  readonly currentLanguage: string;
+  readonly onLanguageChange?: (lang: string) => void;
+}): React.JSX.Element {
+  return (
+    <div
+      style={{
+        padding: "8px 16px",
+        borderBottom: "1px solid var(--rule)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px",
+        backgroundColor: "var(--ground)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <Globe size={14} style={{ color: "var(--ink-soft)" }} />
+        <label
+          htmlFor="caption-language-select"
+          style={{
+            fontSize: "12px",
+            color: "var(--ink-soft)",
+            fontWeight: 500,
+          }}
+        >
+          Language
+        </label>
+      </div>
+      <select
+        id="caption-language-select"
+        data-testid="caption-language-select"
+        aria-label="Spoken language"
+        value={currentLanguage}
+        onChange={(e) => onLanguageChange?.(e.target.value)}
+        style={{
+          fontSize: "12px",
+          padding: "3px 8px",
+          borderRadius: "3px",
+          border: "1px solid var(--rule)",
+          backgroundColor: "var(--surface)",
+          color: "var(--ink)",
+          colorScheme: "light dark",
+          cursor: "pointer",
+        }}
+      >
+        {CAPTION_LANGUAGES.map((lang) => (
+          <option
+            key={lang.code}
+            value={lang.code}
+            style={{
+              backgroundColor: "var(--surface)",
+              color: "var(--ink)",
+            }}
+          >
+            {lang.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export function CaptionsPanel({
@@ -36,7 +173,7 @@ export function CaptionsPanel({
   isMuted = false,
   isListening = false,
   errorMessage = null,
-}: CaptionsPanelProps): React.JSX.Element {
+}: Readonly<CaptionsPanelProps>): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -45,10 +182,8 @@ export function CaptionsPanel({
     }
   }, [captions, interimCaption]);
 
-  function formatTime(ts: number | string): string {
-    const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  }
+  const listeningStatusText = getListeningStatusText(isMuted, isListening);
+  const emptyHelpText = getEmptyHelpText(captionsEnabled, isMuted);
 
   return (
     <div
@@ -61,98 +196,17 @@ export function CaptionsPanel({
         color: "var(--ink)",
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          padding: "16px",
-          borderBottom: "1px solid var(--rule)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Subtitles size={18} style={{ color: "var(--signal)" }} />
-          <span style={{ fontSize: "14px", fontWeight: 600 }}>Live Captions</span>
-        </div>
+      <CaptionsHeader
+        isSupported={isSupported}
+        captionsEnabled={captionsEnabled}
+        onToggleCaptions={onToggleCaptions}
+      />
 
-        {isSupported && (
-          <button
-            type="button"
-            onClick={onToggleCaptions}
-            style={{
-              padding: "4px 10px",
-              fontSize: "12px",
-              fontWeight: 600,
-              borderRadius: "3px",
-              border: "1px solid var(--rule)",
-              backgroundColor: captionsEnabled ? "var(--signal)" : "transparent",
-              color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
-              cursor: "pointer",
-            }}
-          >
-            {captionsEnabled ? "Captions On" : "Turn On"}
-          </button>
-        )}
-      </div>
-
-      {/* Language Picker Bar */}
       {isSupported && (
-        <div
-          style={{
-            padding: "8px 16px",
-            borderBottom: "1px solid var(--rule)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "8px",
-            backgroundColor: "var(--ground)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Globe size={14} style={{ color: "var(--ink-soft)" }} />
-            <label
-              htmlFor="caption-language-select"
-              style={{
-                fontSize: "12px",
-                color: "var(--ink-soft)",
-                fontWeight: 500,
-              }}
-            >
-              Language
-            </label>
-          </div>
-          <select
-            id="caption-language-select"
-            data-testid="caption-language-select"
-            aria-label="Spoken language"
-            value={currentLanguage}
-            onChange={(e) => onLanguageChange?.(e.target.value)}
-            style={{
-              fontSize: "12px",
-              padding: "3px 8px",
-              borderRadius: "3px",
-              border: "1px solid var(--rule)",
-              backgroundColor: "var(--surface)",
-              color: "var(--ink)",
-              colorScheme: "light dark",
-              cursor: "pointer",
-            }}
-          >
-            {CAPTION_LANGUAGES.map((lang) => (
-              <option
-                key={lang.code}
-                value={lang.code}
-                style={{
-                  backgroundColor: "var(--surface)",
-                  color: "var(--ink)",
-                }}
-              >
-                {lang.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <LanguagePickerBar
+          currentLanguage={currentLanguage}
+          onLanguageChange={onLanguageChange}
+        />
       )}
 
       {/* Unsupported browser notice */}
@@ -229,13 +283,7 @@ export function CaptionsPanel({
               flexShrink: 0,
             }}
           />
-          <span>
-            {isMuted
-              ? "Microphone muted — captions paused"
-              : isListening
-                ? "Listening for speech..."
-                : "Connecting captions..."}
-          </span>
+          <span>{listeningStatusText}</span>
         </div>
       )}
 
@@ -265,11 +313,7 @@ export function CaptionsPanel({
           >
             No speech transcribed yet.
             <br />
-            {captionsEnabled
-              ? isMuted
-                ? "Unmute your microphone and speak to transcribe speech."
-                : "Speak into your microphone to transcribe speech in real time."
-              : "Spoken words from participants with captions turned on will appear here in real time."}
+            {emptyHelpText}
           </div>
         ) : (
           <>

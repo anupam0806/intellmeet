@@ -37,7 +37,7 @@ const envSchema = z
       .default(isTest ? "test-jwt-refresh-secret-placeholder-for-tests" : ""),
     CLIENT_ORIGIN: z
       .string()
-      .transform((val) => (val ? val : "http://localhost:5173"))
+      .transform((val) => val || "http://localhost:5173")
       .default("http://localhost:5173"),
     DEMO_LOGIN_ENABLED: z.preprocess((val) => {
       if (typeof val === "boolean") return val;
@@ -59,7 +59,7 @@ const envSchema = z
     ),
     STUN_URLS: z
       .string()
-      .transform((val) => (val ? val : "stun:stun.l.google.com:19302"))
+      .transform((val) => val || "stun:stun.l.google.com:19302")
       .default("stun:stun.l.google.com:19302"),
     TURN_URL: z.string().optional().default(""),
     TURN_USERNAME: z.string().optional().default(""),
@@ -70,58 +70,45 @@ const envSchema = z
     ),
     LOG_LEVEL: z
       .string()
-      .transform((val) => (val ? val : "info"))
+      .transform((val) => val || "info")
       .default("info"),
     CLIENT_DIST_DIR: z.string().optional().default(""),
   })
   .superRefine((data, ctx) => {
-    if (data.NODE_ENV !== "test") {
-      if (!data.MONGODB_URI || data.MONGODB_URI.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["MONGODB_URI"],
-          message: "MONGODB_URI is required",
-        });
-      }
-      if (!data.JWT_ACCESS_SECRET || data.JWT_ACCESS_SECRET.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["JWT_ACCESS_SECRET"],
-          message: "JWT_ACCESS_SECRET is required",
-        });
-      }
-      if (!data.JWT_REFRESH_SECRET || data.JWT_REFRESH_SECRET.trim() === "") {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["JWT_REFRESH_SECRET"],
-          message: "JWT_REFRESH_SECRET is required",
-        });
-      }
-      if (data.AI_PROVIDER === "openai") {
-        if (!data.AI_BASE_URL || data.AI_BASE_URL.trim() === "") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AI_BASE_URL"],
-            message: "AI_BASE_URL is required when AI_PROVIDER is openai",
-          });
-        }
-        if (!data.AI_API_KEY || data.AI_API_KEY.trim() === "") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AI_API_KEY"],
-            message: "AI_API_KEY is required when AI_PROVIDER is openai",
-          });
-        }
-        if (!data.AI_MODEL || data.AI_MODEL.trim() === "") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["AI_MODEL"],
-            message: "AI_MODEL is required when AI_PROVIDER is openai",
-          });
-        }
-      }
+    if (data.NODE_ENV === "test") return;
+
+    validateRequiredField(ctx, data.MONGODB_URI, "MONGODB_URI", "MONGODB_URI is required");
+    validateRequiredField(ctx, data.JWT_ACCESS_SECRET, "JWT_ACCESS_SECRET", "JWT_ACCESS_SECRET is required");
+    validateRequiredField(ctx, data.JWT_REFRESH_SECRET, "JWT_REFRESH_SECRET", "JWT_REFRESH_SECRET is required");
+
+    if (data.AI_PROVIDER === "openai") {
+      validateOpenAiFields(data, ctx);
     }
   });
+
+function validateRequiredField(
+  ctx: z.RefinementCtx,
+  val: string | undefined,
+  path: string,
+  message: string,
+): void {
+  if (!val || val.trim() === "") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [path],
+      message,
+    });
+  }
+}
+
+function validateOpenAiFields(
+  data: { AI_BASE_URL?: string; AI_API_KEY?: string; AI_MODEL?: string },
+  ctx: z.RefinementCtx,
+): void {
+  validateRequiredField(ctx, data.AI_BASE_URL, "AI_BASE_URL", "AI_BASE_URL is required when AI_PROVIDER is openai");
+  validateRequiredField(ctx, data.AI_API_KEY, "AI_API_KEY", "AI_API_KEY is required when AI_PROVIDER is openai");
+  validateRequiredField(ctx, data.AI_MODEL, "AI_MODEL", "AI_MODEL is required when AI_PROVIDER is openai");
+}
 
 const parsedEnv = envSchema.safeParse(process.env);
 

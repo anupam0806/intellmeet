@@ -18,6 +18,23 @@ import type {
   ConvertActionItemInput,
 } from "../validators/meeting.js";
 
+async function resolveActionItemAssignee(
+  assigneeId: string | null | undefined,
+  teamId: string,
+): Promise<{ id?: mongoose.Types.ObjectId; name?: string } | undefined> {
+  if (assigneeId === undefined) {
+    return undefined;
+  }
+  if (assigneeId === null) {
+    return { id: undefined, name: undefined };
+  }
+  const member = await User.findOne({ _id: assigneeId, teamId });
+  if (!member) {
+    throw new ApiError(404, "NOT_FOUND", "Assignee must be a member of this team");
+  }
+  return { id: member._id, name: member.name };
+}
+
 export function startAiGeneration(meetingId: string, io?: SocketIOServer): void {
   void generateMeetingIntelligence(meetingId, undefined, io);
 }
@@ -172,7 +189,7 @@ export class MeetingService {
 
       if (isIndexError && query.q) {
         delete filter.$text;
-        const escaped = query.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const escaped = query.q.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
         const regex = { $regex: escaped, $options: "i" };
         filter.$or = [
           { title: regex },
@@ -479,25 +496,15 @@ export class MeetingService {
     }
 
     if (input.assigneeId !== undefined) {
-      if (input.assigneeId === null) {
-        item.assigneeId = undefined;
-        item.assigneeName = undefined;
-      } else {
-        const member = await User.findOne({ _id: input.assigneeId, teamId });
-        if (!member) {
-          throw new ApiError(404, "NOT_FOUND", "Assignee must be a member of this team");
-        }
-        item.assigneeId = member._id;
-        item.assigneeName = member.name;
+      const assignee = await resolveActionItemAssignee(input.assigneeId, teamId);
+      if (assignee) {
+        item.assigneeId = assignee.id;
+        item.assigneeName = assignee.name;
       }
     }
 
     if (input.dueDate !== undefined) {
-      if (input.dueDate === null) {
-        item.dueDate = undefined;
-      } else {
-        item.dueDate = new Date(input.dueDate);
-      }
+      item.dueDate = input.dueDate ? new Date(input.dueDate) : undefined;
     }
 
     await meeting.save();
@@ -657,7 +664,8 @@ export class MeetingService {
       (meeting.title || "meeting")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "")
         .slice(0, 50) || "meeting";
 
     const datePrefix = (meeting.startedAt || meeting.createdAt).toISOString().slice(0, 10);
