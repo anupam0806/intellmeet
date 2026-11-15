@@ -61,6 +61,8 @@ export function Room(): React.JSX.Element {
   const [captionLanguage, setCaptionLanguage] = useState<string>(() => getDefaultCaptionLanguage());
   const [interimCaption, setInterimCaption] = useState<string>("");
   const isCaptionsSupported = isSpeechRecognitionSupported();
+  const [isCaptionListening, setIsCaptionListening] = useState<boolean>(false);
+  const [captionError, setCaptionError] = useState<string | null>(null);
 
   // Refs for WebRTC and socket management
   const rtcManagerRef = useRef<PeerConnectionManager | null>(null);
@@ -330,17 +332,29 @@ export function Room(): React.JSX.Element {
       onSegment: (segment) => {
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("transcript:segment", segment);
+        } else {
+          setLiveCaptions((prev) => [
+            ...prev,
+            {
+              id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              speakerName: user?.name || "You",
+              text: segment.text,
+              ts: segment.ts,
+            },
+          ]);
         }
       },
       onInterim: (text) => {
         setInterimCaption(text);
       },
       onError: (msg) => {
+        setCaptionError(msg);
         showStatus(msg);
       },
       onCaptionsOff: () => {
         setCaptionsEnabled(false);
         setInterimCaption("");
+        setIsCaptionListening(false);
         if (socketRef.current?.connected && isJoinedRef.current) {
           socketRef.current.emit("media:state", {
             audio: audioEnabledRef.current,
@@ -348,6 +362,12 @@ export function Room(): React.JSX.Element {
             screen: isScreenSharingRef.current,
             captions: false,
           });
+        }
+      },
+      onListeningChange: (isListening) => {
+        setIsCaptionListening(isListening);
+        if (isListening) {
+          setCaptionError(null);
         }
       },
     });
@@ -596,7 +616,10 @@ export function Room(): React.JSX.Element {
     };
 
     const onTranscriptSegment = (data: LiveCaptionSegment) => {
-      setLiveCaptions((prev) => [...prev, data]);
+      setLiveCaptions((prev) => {
+        if (prev.some((c) => c.id === data.id)) return prev;
+        return [...prev, data];
+      });
     };
 
     const onSocketError = (err: { code?: string; message?: string }) => {
@@ -785,6 +808,8 @@ export function Room(): React.JSX.Element {
         captionLanguage={captionLanguage}
         onCaptionLanguageChange={handleCaptionLanguageChange}
         interimCaption={interimCaption}
+        isCaptionListening={isCaptionListening}
+        captionError={captionError}
         isHost={meeting.hostId === user?.id}
         isAdmin={user?.role === "ADMIN"}
         hostId={meeting.hostId}

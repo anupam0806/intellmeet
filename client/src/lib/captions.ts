@@ -72,6 +72,7 @@ export interface CaptionControllerOptions {
   onInterim?: (text: string) => void;
   onError: (message: string) => void;
   onCaptionsOff: () => void;
+  onListeningChange?: (isListening: boolean) => void;
 }
 
 export class CaptionController {
@@ -80,9 +81,11 @@ export class CaptionController {
   private isCaptionsEnabled = false;
   private isMuted = false;
   private isInRoom = true;
+  private isStarting = false;
+  private isRunning = false;
+  private isStopping = false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private restartTimeout: any = null;
-  private isExplicitlyStopped = true;
   private language: string;
 
   constructor(private options: CaptionControllerOptions) {
@@ -93,7 +96,6 @@ export class CaptionController {
     if (typeof options.initialCaptionsEnabled === "boolean") {
       this.isCaptionsEnabled = options.initialCaptionsEnabled;
       if (options.initialCaptionsEnabled) {
-        this.isExplicitlyStopped = false;
         this.checkAndApplyState();
       }
     }
@@ -115,11 +117,15 @@ export class CaptionController {
     return this.isCaptionsEnabled;
   }
 
+  public getListening(): boolean {
+    return this.isRunning;
+  }
+
   public setLanguage(lang: string) {
     if (this.language === lang) return;
     this.language = lang;
     saveCaptionLanguage(lang);
-    if (this.recognition) {
+    if (this.recognition || this.isRunning || this.isStarting) {
       this.stopRecognition();
       if (this.shouldRun()) {
         this.startRecognition();
@@ -130,13 +136,7 @@ export class CaptionController {
   public setCaptionsEnabled(enabled: boolean) {
     if (this.isCaptionsEnabled === enabled) return;
     this.isCaptionsEnabled = enabled;
-    if (enabled) {
-      this.isExplicitlyStopped = false;
-      this.checkAndApplyState();
-    } else {
-      this.isExplicitlyStopped = true;
-      this.stopRecognition();
-    }
+    this.checkAndApplyState();
   }
 
   public setMuted(muted: boolean) {
@@ -146,6 +146,7 @@ export class CaptionController {
   }
 
   public setInRoom(inRoom: boolean) {
+    if (this.isInRoom === inRoom) return;
     this.isInRoom = inRoom;
     if (!inRoom) {
       this.destroy();
@@ -154,8 +155,10 @@ export class CaptionController {
     }
   }
 
-  private shouldRun(): boolean {
-    return this.isCaptionsEnabled && !this.isMuted && this.isInRoom && !this.isExplicitlyStopped;
+  public shouldRun(): boolean {
+    const run = this.isCaptionsEnabled && !this.isMuted && this.isInRoom;
+    console.log(`[Captions] shouldRun() => ${run} (captionsEnabled: ${this.isCaptionsEnabled}, muted: ${this.isMuted}, inRoom: ${this.isInRoom})`);
+    return run;
   }
 
   private checkAndApplyState() {
@@ -172,11 +175,11 @@ export class CaptionController {
       this.restartTimeout = null;
     }
 
-    if (this.recognition) {
+    if (!this.shouldRun()) {
       return;
     }
 
-    if (!this.shouldRun()) {
+    if (this.isRunning || this.isStarting) {
       return;
     }
 
@@ -187,10 +190,19 @@ export class CaptionController {
     }
 
     try {
+      this.isStarting = true;
       const recognition = new SpeechRec();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = this.language;
+
+      recognition.onstart = () => {
+        this.isStarting = false;
+        this.isRunning = true;
+        this.isStopping = false;
+        console.log(`[Captions] recognition.onstart: recognition session active`);
+        this.options.onListeningChange?.(true);
+      };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
@@ -200,21 +212,29 @@ export class CaptionController {
         }
         const results = event.results;
         let interimText = "";
-        for (let i = event.resultIndex; i < results.length; i++) {
+        let finalSegmentEmitted = false;
+        for (let i = 0; i < results.length; i++) {
           const res = results[i];
           if (res && res[0]) {
             if (res.isFinal) {
-              const text = res[0].transcript?.trim();
-              if (text && this.shouldRun()) {
-                this.options.onSegment({
-                  text,
-                  ts: Date.now(),
-                });
+              if (i >= event.resultIndex) {
+                const text = res[0].transcript?.trim();
+                if (text && this.shouldRun()) {
+                  finalSegmentEmitted = true;
+                  console.log(`[Captions] recognition.onresult [final]: "${text}"`);
+                  this.options.onSegment({
+                    text,
+                    ts: Date.now(),
+                  });
+                }
               }
             } else {
               interimText += res[0].transcript;
             }
           }
+        }
+        if (interimText) {
+          console.log(`[Captions] recognition.onresult [interim]: "${interimText.trim()}"`);
         }
         if (this.shouldRun()) {
           this.options.onInterim?.(interimText.trim());
@@ -224,6 +244,8 @@ export class CaptionController {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
         const error = event.error;
+        console.log(`[Captions] recognition.onerror: error=${error}`);
+
         if (error === "no-speech" || error === "aborted") {
           return;
         }
@@ -231,18 +253,41 @@ export class CaptionController {
         if (error === "not-allowed" || error === "service-not-allowed") {
           this.setCaptionsEnabled(false);
           this.options.onCaptionsOff();
-          this.options.onError("Microphone access for live captions was denied or not allowed.");
+          this.options.onError(
+            error === "not-allowed"
+              ? "Microphone access for live captions was denied. Please allow microphone access in your browser."
+              : "Live captions service is not allowed by browser or system settings."
+          );
           return;
         }
+
+        if (error === "network") {
+          this.options.onError("Live captions network connection error. Reconnecting...");
+          return;
+        }
+
+        if (error === "audio-capture") {
+          this.setCaptionsEnabled(false);
+          this.options.onCaptionsOff();
+          this.options.onError("Microphone capture failed. Please check your audio input device.");
+          return;
+        }
+
+        this.options.onError(`Live captions error: ${error}`);
       };
 
       recognition.onend = () => {
+        this.isStarting = false;
+        this.isRunning = false;
+        this.isStopping = false;
         if (this.recognition === recognition) {
           this.recognition = null;
         }
+        console.log(`[Captions] recognition.onend: recognition session ended`);
+        this.options.onListeningChange?.(false);
         this.options.onInterim?.("");
+
         if (this.shouldRun()) {
-          // Restart automatically about 300 ms after onend while captions are on
           this.restartTimeout = setTimeout(() => {
             if (this.shouldRun()) {
               this.startRecognition();
@@ -252,8 +297,12 @@ export class CaptionController {
       };
 
       this.recognition = recognition;
+      console.log(`[Captions] recognition.start() called with language: ${this.language}`);
       recognition.start();
-    } catch {
+    } catch (err: unknown) {
+      console.warn(`[Captions] recognition.start() error:`, err);
+      this.isStarting = false;
+      this.isRunning = false;
       this.recognition = null;
       if (this.shouldRun()) {
         this.restartTimeout = setTimeout(() => {
@@ -266,7 +315,10 @@ export class CaptionController {
   }
 
   private stopRecognition() {
+    console.log(`[Captions] stopRecognition() called`);
     this.options.onInterim?.("");
+    this.options.onListeningChange?.(false);
+
     if (this.restartTimeout) {
       clearTimeout(this.restartTimeout);
       this.restartTimeout = null;
@@ -275,6 +327,9 @@ export class CaptionController {
     if (this.recognition) {
       const rec = this.recognition;
       this.recognition = null;
+      this.isStarting = false;
+      this.isRunning = false;
+      this.isStopping = true;
       try {
         if (typeof rec.stop === "function") {
           rec.stop();
@@ -290,13 +345,16 @@ export class CaptionController {
           // Ignore
         }
       }
+    } else {
+      this.isStarting = false;
+      this.isRunning = false;
+      this.isStopping = false;
     }
   }
 
   public destroy() {
     this.isCaptionsEnabled = false;
     this.isInRoom = false;
-    this.isExplicitlyStopped = true;
     this.stopRecognition();
   }
 }

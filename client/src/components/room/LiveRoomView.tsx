@@ -34,6 +34,8 @@ interface LiveRoomViewProps {
   captionLanguage?: string;
   onCaptionLanguageChange?: (lang: string) => void;
   interimCaption?: string;
+  isCaptionListening?: boolean;
+  captionError?: string | null;
   isHost: boolean;
   isAdmin: boolean;
   hostId: string;
@@ -67,6 +69,8 @@ export function LiveRoomView({
   captionLanguage,
   onCaptionLanguageChange,
   interimCaption,
+  isCaptionListening,
+  captionError,
   isHost,
   isAdmin,
   hostId,
@@ -431,6 +435,9 @@ export function LiveRoomView({
                 onLanguageChange={onCaptionLanguageChange}
                 interimCaption={interimCaption}
                 speakerName={selfName}
+                isMuted={!selfAudio}
+                isListening={isCaptionListening}
+                errorMessage={captionError}
               />
             )}
           </div>

@@ -19,6 +19,9 @@ export interface CaptionsPanelProps {
   onLanguageChange?: (lang: string) => void;
   interimCaption?: string;
   speakerName?: string;
+  isMuted?: boolean;
+  isListening?: boolean;
+  errorMessage?: string | null;
 }
 
 export function CaptionsPanel({
@@ -30,6 +33,9 @@ export function CaptionsPanel({
   onLanguageChange,
   interimCaption,
   speakerName = "You",
+  isMuted = false,
+  isListening = false,
+  errorMessage = null,
 }: CaptionsPanelProps): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -171,6 +177,64 @@ export function CaptionsPanel({
         </div>
       )}
 
+      {/* Error message alert */}
+      {errorMessage && (
+        <div
+          data-testid="caption-error-alert"
+          style={{
+            margin: "8px 16px",
+            padding: "8px 12px",
+            backgroundColor: "var(--ground)",
+            border: "1px solid var(--error, #e53e3e)",
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "12px",
+            color: "var(--error, #e53e3e)",
+          }}
+        >
+          <AlertCircle size={15} style={{ flexShrink: 0 }} />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {/* Recognition listening / paused status */}
+      {captionsEnabled && isSupported && !errorMessage && (
+        <div
+          data-testid={isMuted ? "caption-muted-indicator" : "caption-listening-indicator"}
+          style={{
+            padding: "6px 16px",
+            backgroundColor: "var(--ground)",
+            borderBottom: "1px solid var(--rule)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "11px",
+            color: isMuted ? "var(--ink-soft)" : "var(--signal)",
+            fontWeight: 500,
+          }}
+        >
+          <span
+            style={{
+              width: "7px",
+              height: "7px",
+              borderRadius: "50%",
+              backgroundColor: isMuted ? "var(--ink-soft)" : "var(--signal)",
+              boxShadow: isMuted ? "none" : "0 0 6px var(--signal)",
+              flexShrink: 0,
+            }}
+          />
+          <span>
+            {isMuted
+              ? "Microphone muted — captions paused"
+              : isListening
+                ? "Listening for speech..."
+                : "Connecting captions..."}
+          </span>
+        </div>
+      )}
+
       {/* Captions list with aria-live="polite" */}
       <div
         ref={scrollRef}
@@ -197,7 +261,11 @@ export function CaptionsPanel({
           >
             No speech transcribed yet.
             <br />
-            Spoken words from participants with captions turned on will appear here in real time.
+            {captionsEnabled
+              ? isMuted
+                ? "Unmute your microphone and speak to transcribe speech."
+                : "Speak into your microphone to transcribe speech in real time."
+              : "Spoken words from participants with captions turned on will appear here in real time."}
           </div>
         ) : (
           <>

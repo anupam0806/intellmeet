@@ -671,6 +671,54 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
       const interimText = screen.getByText("I am currently speaking right now...");
       expect(interimText.style.color).toBe("var(--ink-soft)");
     });
+
+    it("renders active listening indicator when captions enabled and unmuted, and muted indicator when muted", () => {
+      const { rerender } = render(
+        <CaptionsPanel
+          captions={[]}
+          isSupported={true}
+          captionsEnabled={true}
+          onToggleCaptions={vi.fn()}
+          isMuted={false}
+          isListening={true}
+        />,
+      );
+
+      expect(screen.getByTestId("caption-listening-indicator")).toBeInTheDocument();
+      expect(screen.getByText("Listening for speech...")).toBeInTheDocument();
+
+      // When muted
+      rerender(
+        <CaptionsPanel
+          captions={[]}
+          isSupported={true}
+          captionsEnabled={true}
+          onToggleCaptions={vi.fn()}
+          isMuted={true}
+          isListening={false}
+        />,
+      );
+
+      expect(screen.getByTestId("caption-muted-indicator")).toBeInTheDocument();
+      expect(screen.getByText("Microphone muted — captions paused")).toBeInTheDocument();
+    });
+
+    it("renders caption error alert when errorMessage is provided", () => {
+      render(
+        <CaptionsPanel
+          captions={[]}
+          isSupported={true}
+          captionsEnabled={true}
+          onToggleCaptions={vi.fn()}
+          errorMessage="Microphone access for live captions was denied."
+        />,
+      );
+
+      expect(screen.getByTestId("caption-error-alert")).toBeInTheDocument();
+      expect(
+        screen.getByText("Microphone access for live captions was denied."),
+      ).toBeInTheDocument();
+    });
   });
 });
 
