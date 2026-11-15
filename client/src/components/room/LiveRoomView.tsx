@@ -21,6 +21,8 @@ import "./LiveRoomView.css";
 import type { PeerStreamInfo, PeerDebugStats } from "../../lib/rtc.js";
 import type { ChatMessageItem } from "../../lib/meetings.js";
 
+export type SideTab = "chat" | "participants" | "captions";
+
 interface LiveRoomViewProps {
   readonly selfStream: MediaStream | null;
   readonly selfName: string;
@@ -65,15 +67,235 @@ interface LiveRoomControlBarProps {
   readonly screenShareColor: string;
   readonly captionsEnabled: boolean;
   readonly isCaptionsSupported: boolean;
-  readonly activeSideTab: "chat" | "participants" | "captions" | null;
+  readonly activeSideTab: SideTab | null;
   readonly canEndMeeting: boolean;
   readonly onToggleAudio: () => void;
   readonly onToggleVideo: () => void;
   readonly onToggleScreenShare?: () => void;
   readonly onToggleCaptions?: () => void;
-  readonly onSelectSideTab: (tab: "chat" | "participants" | "captions") => void;
+  readonly onSelectSideTab: (tab: SideTab) => void;
   readonly onLeaveMeeting: () => void;
   readonly onRequestEndMeeting: () => void;
+}
+
+function AudioToggleButton({
+  selfAudio,
+  onToggleAudio,
+}: {
+  readonly selfAudio: boolean;
+  readonly onToggleAudio: () => void;
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onToggleAudio}
+      aria-label={selfAudio ? "Mute microphone" : "Unmute microphone"}
+      className="live-room-control-btn"
+      style={{
+        backgroundColor: selfAudio ? "var(--ground)" : "var(--error)",
+        color: selfAudio ? "var(--ink)" : "var(--on-signal)",
+        border: "1px solid var(--rule)",
+        cursor: "pointer",
+      }}
+    >
+      {selfAudio ? <Mic size={18} /> : <MicOff size={18} />}
+    </button>
+  );
+}
+
+function VideoToggleButton({
+  selfVideo,
+  onToggleVideo,
+}: {
+  readonly selfVideo: boolean;
+  readonly onToggleVideo: () => void;
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onToggleVideo}
+      aria-label={selfVideo ? "Turn off camera" : "Turn on camera"}
+      className="live-room-control-btn"
+      style={{
+        backgroundColor: selfVideo ? "var(--ground)" : "var(--error)",
+        color: selfVideo ? "var(--ink)" : "var(--on-signal)",
+        border: "1px solid var(--rule)",
+        cursor: "pointer",
+      }}
+    >
+      {selfVideo ? <Video size={18} /> : <VideoOff size={18} />}
+    </button>
+  );
+}
+
+function ScreenShareButton({
+  isScreenSharing,
+  isSomeoneElseSharing,
+  screenShareLabel,
+  screenShareColor,
+  onToggleScreenShare,
+}: {
+  readonly isScreenSharing: boolean;
+  readonly isSomeoneElseSharing: boolean;
+  readonly screenShareLabel: string;
+  readonly screenShareColor: string;
+  readonly onToggleScreenShare?: () => void;
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={isSomeoneElseSharing ? undefined : onToggleScreenShare}
+      disabled={isSomeoneElseSharing}
+      aria-label={screenShareLabel}
+      title={screenShareLabel}
+      className="live-room-control-btn"
+      style={{
+        backgroundColor: isScreenSharing ? "var(--signal)" : "var(--ground)",
+        color: screenShareColor,
+        border: "1px solid var(--rule)",
+        cursor: isSomeoneElseSharing ? "not-allowed" : "pointer",
+        opacity: isSomeoneElseSharing ? 0.6 : 1,
+      }}
+    >
+      <Monitor size={18} />
+    </button>
+  );
+}
+
+function getUnsupportedCaptionsTitle(): string {
+  if (typeof window !== "undefined" && window.isSecureContext === false) {
+    return "Live captions require HTTPS or localhost (insecure HTTP blocked by browser).";
+  }
+  return "Live captions need Chrome or Edge.";
+}
+
+function CaptionsControlButton({
+  isCaptionsSupported,
+  captionsEnabled,
+  onToggleCaptions,
+  onOpenCaptionsTab,
+}: {
+  readonly isCaptionsSupported: boolean;
+  readonly captionsEnabled: boolean;
+  readonly onToggleCaptions?: () => void;
+  readonly onOpenCaptionsTab: () => void;
+}): React.JSX.Element {
+  if (!isCaptionsSupported) {
+    return (
+      <div
+        title={getUnsupportedCaptionsTitle()}
+        aria-label="Live captions need Chrome or Edge."
+        className="live-room-control-btn"
+        style={{
+          color: "var(--ink-soft)",
+          cursor: "not-allowed",
+        }}
+      >
+        <Subtitles size={18} opacity={0.3} />
+      </div>
+    );
+  }
+
+  const label = captionsEnabled ? "Turn off live captions" : "Turn on live captions";
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onToggleCaptions?.();
+        if (!captionsEnabled) {
+          onOpenCaptionsTab();
+        }
+      }}
+      aria-label={label}
+      title={label}
+      className="live-room-control-btn"
+      style={{
+        backgroundColor: captionsEnabled ? "var(--signal)" : "var(--ground)",
+        color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
+        border: "1px solid var(--rule)",
+        cursor: "pointer",
+      }}
+    >
+      <Subtitles size={18} />
+    </button>
+  );
+}
+
+function SideTabButton({
+  tab,
+  activeSideTab,
+  label,
+  icon: Icon,
+  onSelectSideTab,
+}: {
+  readonly tab: SideTab;
+  readonly activeSideTab: SideTab | null;
+  readonly label: string;
+  readonly icon: React.ComponentType<{ size?: number }>;
+  readonly onSelectSideTab: (tab: SideTab) => void;
+}): React.JSX.Element {
+  const isActive = activeSideTab === tab;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectSideTab(tab)}
+      aria-label={label}
+      className="live-room-control-btn"
+      style={{
+        backgroundColor: isActive ? "var(--ground)" : "var(--surface)",
+        color: "var(--ink)",
+        border: "1px solid var(--rule)",
+        cursor: "pointer",
+      }}
+    >
+      <Icon size={18} />
+    </button>
+  );
+}
+
+function LeaveAndEndButtons({
+  canEndMeeting,
+  onLeaveMeeting,
+  onRequestEndMeeting,
+}: {
+  readonly canEndMeeting: boolean;
+  readonly onLeaveMeeting: () => void;
+  readonly onRequestEndMeeting: () => void;
+}): React.JSX.Element {
+  return (
+    <div className="live-room-controls-group live-room-controls-exit">
+      <button
+        type="button"
+        onClick={onLeaveMeeting}
+        aria-label="Leave meeting"
+        title="Leave call"
+        className="live-room-control-btn live-room-btn-leave"
+        style={{
+          cursor: "pointer",
+        }}
+      >
+        <LogOut size={18} />
+      </button>
+
+      {canEndMeeting && (
+        <button
+          type="button"
+          onClick={onRequestEndMeeting}
+          aria-label="End meeting for all"
+          title="End meeting for all"
+          className="live-room-control-btn"
+          style={{
+            backgroundColor: "var(--error)",
+            color: "var(--on-signal)",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          <PhoneOff size={18} />
+        </button>
+      )}
+    </div>
+  );
 }
 
 function LiveRoomControlBar({
@@ -98,185 +320,55 @@ function LiveRoomControlBar({
   return (
     <aside className="live-room-controls" aria-label="Room controls">
       <div className="live-room-controls-group">
-        {/* Audio */}
-        <button
-          type="button"
-          onClick={onToggleAudio}
-          aria-label={selfAudio ? "Mute microphone" : "Unmute microphone"}
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: selfAudio ? "var(--ground)" : "var(--error)",
-            color: selfAudio ? "var(--ink)" : "var(--on-signal)",
-            border: "1px solid var(--rule)",
-            cursor: "pointer",
-          }}
-        >
-          {selfAudio ? <Mic size={18} /> : <MicOff size={18} />}
-        </button>
-
-        {/* Video */}
-        <button
-          type="button"
-          onClick={onToggleVideo}
-          aria-label={selfVideo ? "Turn off camera" : "Turn on camera"}
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: selfVideo ? "var(--ground)" : "var(--error)",
-            color: selfVideo ? "var(--ink)" : "var(--on-signal)",
-            border: "1px solid var(--rule)",
-            cursor: "pointer",
-          }}
-        >
-          {selfVideo ? <Video size={18} /> : <VideoOff size={18} />}
-        </button>
-
-        {/* Screen Share */}
-        <button
-          type="button"
-          onClick={isSomeoneElseSharing ? undefined : onToggleScreenShare}
-          disabled={isSomeoneElseSharing}
-          aria-label={screenShareLabel}
-          title={screenShareLabel}
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: isScreenSharing ? "var(--signal)" : "var(--ground)",
-            color: screenShareColor,
-            border: "1px solid var(--rule)",
-            cursor: isSomeoneElseSharing ? "not-allowed" : "pointer",
-            opacity: isSomeoneElseSharing ? 0.6 : 1,
-          }}
-        >
-          <Monitor size={18} />
-        </button>
-
-        {/* Captions Toggle */}
-        {isCaptionsSupported ? (
-          <button
-            type="button"
-            onClick={() => {
-              onToggleCaptions?.();
-              if (!captionsEnabled) {
-                onSelectSideTab("captions");
-              }
-            }}
-            aria-label={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
-            title={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
-            className="live-room-control-btn"
-            style={{
-              backgroundColor: captionsEnabled ? "var(--signal)" : "var(--ground)",
-              color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
-              border: "1px solid var(--rule)",
-              cursor: "pointer",
-            }}
-          >
-            <Subtitles size={18} />
-          </button>
-        ) : (
-          <div
-            title={
-              typeof window !== "undefined" && window.isSecureContext === false
-                ? "Live captions require HTTPS or localhost (insecure HTTP blocked by browser)."
-                : "Live captions need Chrome or Edge."
-            }
-            aria-label="Live captions need Chrome or Edge."
-            className="live-room-control-btn"
-            style={{
-              color: "var(--ink-soft)",
-              cursor: "not-allowed",
-            }}
-          >
-            <Subtitles size={18} opacity={0.3} />
-          </div>
-        )}
-
-        {/* Chat Panel Toggle */}
-        <button
-          type="button"
-          onClick={() => onSelectSideTab("chat")}
-          aria-label="Toggle chat"
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: activeSideTab === "chat" ? "var(--ground)" : "var(--surface)",
-            color: "var(--ink)",
-            border: "1px solid var(--rule)",
-            cursor: "pointer",
-          }}
-        >
-          <MessageSquare size={18} />
-        </button>
-
-        {/* Participants Toggle */}
-        <button
-          type="button"
-          onClick={() => onSelectSideTab("participants")}
-          aria-label="Toggle participants list"
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: activeSideTab === "participants" ? "var(--ground)" : "var(--surface)",
-            color: "var(--ink)",
-            border: "1px solid var(--rule)",
-            cursor: "pointer",
-          }}
-        >
-          <Users size={18} />
-        </button>
-
-        {/* Captions placeholder tab */}
-        <button
-          type="button"
-          onClick={() => onSelectSideTab("captions")}
-          aria-label="Toggle captions panel"
-          className="live-room-control-btn"
-          style={{
-            backgroundColor: activeSideTab === "captions" ? "var(--ground)" : "var(--surface)",
-            color: "var(--ink)",
-            border: "1px solid var(--rule)",
-            cursor: "pointer",
-          }}
-        >
-          <Subtitles size={18} />
-        </button>
+        <AudioToggleButton selfAudio={selfAudio} onToggleAudio={onToggleAudio} />
+        <VideoToggleButton selfVideo={selfVideo} onToggleVideo={onToggleVideo} />
+        <ScreenShareButton
+          isScreenSharing={isScreenSharing}
+          isSomeoneElseSharing={isSomeoneElseSharing}
+          screenShareLabel={screenShareLabel}
+          screenShareColor={screenShareColor}
+          onToggleScreenShare={onToggleScreenShare}
+        />
+        <CaptionsControlButton
+          isCaptionsSupported={isCaptionsSupported}
+          captionsEnabled={captionsEnabled}
+          onToggleCaptions={onToggleCaptions}
+          onOpenCaptionsTab={() => onSelectSideTab("captions")}
+        />
+        <SideTabButton
+          tab="chat"
+          activeSideTab={activeSideTab}
+          label="Toggle chat"
+          icon={MessageSquare}
+          onSelectSideTab={onSelectSideTab}
+        />
+        <SideTabButton
+          tab="participants"
+          activeSideTab={activeSideTab}
+          label="Toggle participants list"
+          icon={Users}
+          onSelectSideTab={onSelectSideTab}
+        />
+        <SideTabButton
+          tab="captions"
+          activeSideTab={activeSideTab}
+          label="Toggle captions panel"
+          icon={Subtitles}
+          onSelectSideTab={onSelectSideTab}
+        />
       </div>
 
-      {/* Leave & End Call Buttons */}
-      <div className="live-room-controls-group live-room-controls-exit">
-        <button
-          type="button"
-          onClick={onLeaveMeeting}
-          aria-label="Leave meeting"
-          title="Leave call"
-          className="live-room-control-btn live-room-btn-leave"
-          style={{
-            cursor: "pointer",
-          }}
-        >
-          <LogOut size={18} />
-        </button>
-
-        {canEndMeeting && (
-          <button
-            type="button"
-            onClick={onRequestEndMeeting}
-            aria-label="End meeting for all"
-            title="End meeting for all"
-            className="live-room-control-btn"
-            style={{
-              backgroundColor: "var(--error)",
-              color: "var(--on-signal)",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <PhoneOff size={18} />
-          </button>
-        )}
-      </div>
+      <LeaveAndEndButtons
+        canEndMeeting={canEndMeeting}
+        onLeaveMeeting={onLeaveMeeting}
+        onRequestEndMeeting={onRequestEndMeeting}
+      />
     </aside>
   );
 }
 
 interface LiveRoomSidePanelProps {
-  readonly activeSideTab: "chat" | "participants" | "captions";
+  readonly activeSideTab: SideTab;
   readonly onClose: () => void;
   readonly chatMessages: ChatMessageItem[];
   readonly typingUsers: string[];
@@ -299,7 +391,7 @@ interface LiveRoomSidePanelProps {
   readonly captionError?: string | null;
 }
 
-function getSidePanelTitle(tab: "chat" | "participants" | "captions"): string {
+function getSidePanelTitle(tab: SideTab): string {
   if (tab === "chat") {
     return "In-call messages";
   }
@@ -539,7 +631,7 @@ export function LiveRoomView({
   onEndMeeting,
   onRetryPeerConnection,
 }: Readonly<LiveRoomViewProps>): React.JSX.Element {
-  const [activeSideTab, setActiveSideTab] = useState<"chat" | "participants" | "captions" | null>(null);
+  const [activeSideTab, setActiveSideTab] = useState<SideTab | null>(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [audioPlaybackStates, setAudioPlaybackStates] = useState<
     Record<string, { muted: boolean; playing: boolean }>
@@ -566,7 +658,7 @@ export function LiveRoomView({
     screenShareColor = "var(--on-signal)";
   }
 
-  const handleSelectSideTab = (tab: "chat" | "participants" | "captions") => {
+  const handleSelectSideTab = (tab: SideTab) => {
     setActiveSideTab((prev) => (prev === tab ? null : tab));
   };
 
