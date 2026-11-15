@@ -83,7 +83,6 @@ export class CaptionController {
   private isInRoom = true;
   private isStarting = false;
   private isRunning = false;
-  private isStopping = false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private restartTimeout: any = null;
   private language: string;
@@ -179,7 +178,7 @@ export class CaptionController {
       return;
     }
 
-    if (this.isRunning || this.isStarting) {
+    if (this.isRunning || this.isStarting || this.recognition) {
       return;
     }
 
@@ -197,9 +196,9 @@ export class CaptionController {
       recognition.lang = this.language;
 
       recognition.onstart = () => {
+        if (this.recognition !== recognition) return;
         this.isStarting = false;
         this.isRunning = true;
-        this.isStopping = false;
         console.log(`[Captions] recognition.onstart: recognition session active`);
         this.options.onListeningChange?.(true);
       };
@@ -212,7 +211,6 @@ export class CaptionController {
         }
         const results = event.results;
         let interimText = "";
-        let finalSegmentEmitted = false;
         for (let i = 0; i < results.length; i++) {
           const res = results[i];
           if (res && res[0]) {
@@ -220,7 +218,6 @@ export class CaptionController {
               if (i >= event.resultIndex) {
                 const text = res[0].transcript?.trim();
                 if (text && this.shouldRun()) {
-                  finalSegmentEmitted = true;
                   console.log(`[Captions] recognition.onresult [final]: "${text}"`);
                   this.options.onSegment({
                     text,
@@ -277,12 +274,12 @@ export class CaptionController {
       };
 
       recognition.onend = () => {
+        if (this.recognition !== recognition) {
+          return;
+        }
         this.isStarting = false;
         this.isRunning = false;
-        this.isStopping = false;
-        if (this.recognition === recognition) {
-          this.recognition = null;
-        }
+        this.recognition = null;
         console.log(`[Captions] recognition.onend: recognition session ended`);
         this.options.onListeningChange?.(false);
         this.options.onInterim?.("");
@@ -324,12 +321,12 @@ export class CaptionController {
       this.restartTimeout = null;
     }
 
+    this.isStarting = false;
+    this.isRunning = false;
+
     if (this.recognition) {
       const rec = this.recognition;
       this.recognition = null;
-      this.isStarting = false;
-      this.isRunning = false;
-      this.isStopping = true;
       try {
         if (typeof rec.stop === "function") {
           rec.stop();
@@ -345,10 +342,6 @@ export class CaptionController {
           // Ignore
         }
       }
-    } else {
-      this.isStarting = false;
-      this.isRunning = false;
-      this.isStopping = false;
     }
   }
 
