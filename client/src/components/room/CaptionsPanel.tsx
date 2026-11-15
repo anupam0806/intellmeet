@@ -173,7 +173,11 @@ export function CaptionsPanel({
           }}
         >
           <AlertCircle size={16} style={{ color: "var(--error)", flexShrink: 0 }} />
-          <span>Live captions need Chrome or Edge.</span>
+          <span>
+            {typeof window !== "undefined" && window.isSecureContext === false
+              ? "Live captions require HTTPS or localhost (insecure HTTP blocked by browser)."
+              : "Live captions need Chrome or Edge."}
+          </span>
         </div>
       )}
 

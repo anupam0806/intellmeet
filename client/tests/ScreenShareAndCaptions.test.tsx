@@ -597,6 +597,35 @@ describe("Phase P4: Screen Sharing & Captions Client Logic", () => {
       ).toBeInTheDocument();
     });
 
+    it("renders insecure origin warning in CaptionsPanel when window.isSecureContext is false", () => {
+      const originalSecureContext = window.isSecureContext;
+      try {
+        Object.defineProperty(window, "isSecureContext", {
+          value: false,
+          configurable: true,
+        });
+
+        render(
+          <CaptionsPanel
+            captions={[]}
+            isSupported={false}
+            captionsEnabled={false}
+            onToggleCaptions={vi.fn()}
+          />,
+        );
+
+        expect(screen.getByTestId("unsupported-browser-notice")).toBeInTheDocument();
+        expect(
+          screen.getByText(/Live captions require HTTPS or localhost/i),
+        ).toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "isSecureContext", {
+          value: originalSecureContext,
+          configurable: true,
+        });
+      }
+    });
+
     it("renders captions off marker on VideoTile when captions are disabled", () => {
       render(
         <VideoTile

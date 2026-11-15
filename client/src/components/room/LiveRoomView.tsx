@@ -201,7 +201,12 @@ export function LiveRoomView({
           {isCaptionsSupported ? (
             <button
               type="button"
-              onClick={onToggleCaptions}
+              onClick={() => {
+                onToggleCaptions?.();
+                if (!captionsEnabled) {
+                  setActiveSideTab("captions");
+                }
+              }}
               aria-label={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
               title={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
               className="live-room-control-btn"
@@ -218,7 +223,11 @@ export function LiveRoomView({
             </button>
           ) : (
             <div
-              title="Live captions need Chrome or Edge."
+              title={
+                typeof window !== "undefined" && window.isSecureContext === false
+                  ? "Live captions require HTTPS or localhost (insecure HTTP blocked by browser)."
+                  : "Live captions need Chrome or Edge."
+              }
               aria-label="Live captions need Chrome or Edge."
               className="live-room-control-btn"
               style={{

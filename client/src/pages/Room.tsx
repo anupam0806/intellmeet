@@ -330,10 +330,11 @@ export function Room(): React.JSX.Element {
       initialMuted: !audioEnabled,
       initialCaptionsEnabled: captionsEnabled,
       onSegment: (segment) => {
-        if (socketRef.current?.connected && isJoinedRef.current) {
-          socketRef.current.emit("transcript:segment", segment);
-        } else {
-          setLiveCaptions((prev) => [
+        setLiveCaptions((prev) => {
+          if (prev.some((c) => c.text === segment.text && Math.abs(Number(c.ts) - Number(segment.ts)) < 2000)) {
+            return prev;
+          }
+          return [
             ...prev,
             {
               id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -341,7 +342,10 @@ export function Room(): React.JSX.Element {
               text: segment.text,
               ts: segment.ts,
             },
-          ]);
+          ];
+        });
+        if (socketRef.current?.connected && isJoinedRef.current) {
+          socketRef.current.emit("transcript:segment", segment);
         }
       },
       onInterim: (text) => {
@@ -617,7 +621,15 @@ export function Room(): React.JSX.Element {
 
     const onTranscriptSegment = (data: LiveCaptionSegment) => {
       setLiveCaptions((prev) => {
-        if (prev.some((c) => c.id === data.id)) return prev;
+        if (
+          prev.some(
+            (c) =>
+              c.id === data.id ||
+              (c.text === data.text && Math.abs(Number(c.ts) - Number(data.ts)) < 3000),
+          )
+        ) {
+          return prev;
+        }
         return [...prev, data];
       });
     };

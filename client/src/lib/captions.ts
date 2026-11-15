@@ -7,8 +7,14 @@ export function getSpeechRecognitionConstructor(): unknown {
   );
 }
 
+export function isSecureContextOrigin(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.isSecureContext ?? true;
+}
+
 export function isSpeechRecognitionSupported(): boolean {
-  return Boolean(getSpeechRecognitionConstructor());
+  if (typeof window === "undefined") return false;
+  return Boolean(getSpeechRecognitionConstructor()) && isSecureContextOrigin();
 }
 
 export interface CaptionLanguageOption {
