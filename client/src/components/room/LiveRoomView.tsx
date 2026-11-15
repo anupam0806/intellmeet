@@ -147,16 +147,11 @@ export function LiveRoomView({
             type="button"
             onClick={onToggleAudio}
             aria-label={selfAudio ? "Mute microphone" : "Unmute microphone"}
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: selfAudio ? "var(--ground)" : "var(--error)",
               color: selfAudio ? "var(--ink)" : "var(--on-signal)",
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
             }}
           >
@@ -168,16 +163,11 @@ export function LiveRoomView({
             type="button"
             onClick={onToggleVideo}
             aria-label={selfVideo ? "Turn off camera" : "Turn on camera"}
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: selfVideo ? "var(--ground)" : "var(--error)",
               color: selfVideo ? "var(--ink)" : "var(--on-signal)",
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
             }}
           >
@@ -191,16 +181,11 @@ export function LiveRoomView({
             disabled={isSomeoneElseSharing}
             aria-label={screenShareLabel}
             title={screenShareLabel}
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: isScreenSharing ? "var(--signal)" : "var(--ground)",
               color: screenShareColor,
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: isSomeoneElseSharing ? "not-allowed" : "pointer",
               opacity: isSomeoneElseSharing ? 0.6 : 1,
             }}
@@ -215,18 +200,13 @@ export function LiveRoomView({
               onClick={onToggleCaptions}
               aria-label={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
               title={captionsEnabled ? "Turn off live captions" : "Turn on live captions"}
+              className="live-room-control-btn"
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "var(--radius)",
                 backgroundColor: captionsEnabled
                   ? "var(--signal)"
                   : "var(--ground)",
                 color: captionsEnabled ? "var(--on-signal)" : "var(--ink)",
                 border: "1px solid var(--rule)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 cursor: "pointer",
               }}
             >
@@ -236,12 +216,8 @@ export function LiveRoomView({
             <div
               title="Live captions need Chrome or Edge."
               aria-label="Live captions need Chrome or Edge."
+              className="live-room-control-btn"
               style={{
-                width: "40px",
-                height: "40px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 color: "var(--ink-soft)",
                 cursor: "not-allowed",
               }}
@@ -255,18 +231,12 @@ export function LiveRoomView({
             type="button"
             onClick={() => setActiveSideTab(activeSideTab === "chat" ? null : "chat")}
             aria-label="Toggle chat"
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: activeSideTab === "chat" ? "var(--ground)" : "var(--surface)",
               color: "var(--ink)",
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
-              position: "relative",
             }}
           >
             <MessageSquare size={18} />
@@ -277,16 +247,11 @@ export function LiveRoomView({
             type="button"
             onClick={() => setActiveSideTab(activeSideTab === "participants" ? null : "participants")}
             aria-label="Toggle participants list"
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: activeSideTab === "participants" ? "var(--ground)" : "var(--surface)",
               color: "var(--ink)",
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
             }}
           >
@@ -298,16 +263,11 @@ export function LiveRoomView({
             type="button"
             onClick={() => setActiveSideTab(activeSideTab === "captions" ? null : "captions")}
             aria-label="Toggle captions panel"
+            className="live-room-control-btn"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
               backgroundColor: activeSideTab === "captions" ? "var(--ground)" : "var(--surface)",
               color: "var(--ink)",
               border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
             }}
           >
@@ -316,22 +276,14 @@ export function LiveRoomView({
         </div>
 
         {/* Leave & End Call Buttons */}
-        <div className="live-room-controls-group">
+        <div className="live-room-controls-group live-room-controls-exit">
           <button
             type="button"
             onClick={onLeaveMeeting}
             aria-label="Leave meeting"
             title="Leave call"
+            className="live-room-control-btn live-room-btn-leave"
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "var(--radius)",
-              backgroundColor: "var(--surface)",
-              color: "var(--ink-soft)",
-              border: "1px solid var(--rule)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               cursor: "pointer",
             }}
           >
@@ -344,16 +296,11 @@ export function LiveRoomView({
               onClick={() => setShowEndConfirm(true)}
               aria-label="End meeting for all"
               title="End meeting for all"
+              className="live-room-control-btn"
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "var(--radius)",
                 backgroundColor: "var(--error)",
                 color: "var(--on-signal)",
                 border: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 cursor: "pointer",
               }}
             >
@@ -364,17 +311,7 @@ export function LiveRoomView({
       </aside>
 
       {/* Main Video Stage */}
-      <main
-        style={{
-          flex: 1,
-          height: "100%",
-          padding: "16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "var(--ground)",
-        }}
-      >
+      <main className="live-room-stage">
         <div
           className="live-room-tiles-grid"
           style={{
@@ -385,7 +322,7 @@ export function LiveRoomView({
                 ? "1fr 1fr"
                 : "1fr 1fr",
             gridTemplateRows: totalTiles > 2 ? "1fr 1fr" : "1fr",
-            maxHeight: "90vh",
+            maxHeight: "100%",
           }}
         >
           {/* Self Tile */}

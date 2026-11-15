@@ -2,6 +2,8 @@
 .live-room-container {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background-color: var(--ink);
   display: flex;
   flex-direction: column;
@@ -9,7 +11,7 @@
   position: relative;
 }
 
-@media (min-width: 641px) and (orientation: landscape) {
+@media (min-width: 768px), ((min-width: 641px) and (orientation: landscape)) {
   .live-room-container {
     flex-direction: row;
   }
@@ -18,23 +20,52 @@
 /* Control rail: bottom bar on mobile portrait, vertical left rail on desktop */
 .live-room-controls {
   order: 2;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-  height: 60px;
+  min-height: calc(52px + env(safe-area-inset-bottom, 0px));
+  height: auto;
   background-color: var(--surface);
   border-top: 1px solid var(--rule);
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-around;
-  padding: 0 12px;
+  justify-content: space-between;
+  padding-top: 6px;
+  padding-left: var(--room-bar-padding-x, 8px);
+  padding-right: var(--room-bar-padding-x, 8px);
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
   z-index: 30;
   flex-shrink: 0;
   box-sizing: border-box;
+  gap: var(--room-btn-gap, 6px);
+  --room-btn-size: clamp(34px, 8.5vw, 40px);
+  --room-btn-gap: clamp(4px, 1.2vw, 8px);
+  --room-bar-padding-x: clamp(6px, 1.8vw, 12px);
 }
 
-@media (min-width: 641px) and (orientation: landscape) {
+@media (max-width: 380px) {
+  .live-room-controls {
+    --room-btn-size: clamp(30px, 8.2vw, 34px);
+    --room-btn-gap: 4px;
+    --room-bar-padding-x: 6px;
+  }
+}
+
+@media (max-width: 330px) {
+  .live-room-controls {
+    --room-btn-size: 28px;
+    --room-btn-gap: 3px;
+    --room-bar-padding-x: 4px;
+  }
+}
+
+@media (min-width: 768px), ((min-width: 641px) and (orientation: landscape)) {
   .live-room-controls {
     order: 0;
+    position: static;
     width: 64px;
     height: 100%;
     border-top: none;
@@ -42,6 +73,8 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 16px 0;
+    --room-btn-size: 40px;
+    --room-btn-gap: 12px;
   }
 }
 
@@ -49,14 +82,95 @@
 .live-room-controls-group {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: var(--room-btn-gap, 6px);
   align-items: center;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
-@media (min-width: 641px) and (orientation: landscape) {
-  .live-room-controls-group {
+.live-room-controls-exit {
+  display: flex;
+  flex-direction: row;
+  gap: var(--room-btn-gap, 6px);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px), ((min-width: 641px) and (orientation: landscape)) {
+  .live-room-controls-group,
+  .live-room-controls-exit {
     flex-direction: column;
     gap: 12px;
+    flex-shrink: 0;
+  }
+}
+
+/* Individual control button */
+.live-room-control-btn {
+  width: var(--room-btn-size, 40px);
+  height: var(--room-btn-size, 40px);
+  min-width: var(--room-btn-size, 40px);
+  min-height: var(--room-btn-size, 40px);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.live-room-control-btn svg {
+  flex-shrink: 0;
+}
+
+/* Leave button styling: subtle red accent on mobile so it's clearly distinct */
+.live-room-btn-leave {
+  background-color: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+}
+
+@media (max-width: 640px) or (orientation: portrait) {
+  .live-room-btn-leave {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+
+  /* Accessible touch target (44x44px minimum) on mobile devices */
+  .live-room-control-btn::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Main video stage: must flex shrink and never push controls off screen */
+.live-room-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ground);
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) or (orientation: portrait) {
+  .live-room-stage {
+    padding: 8px;
   }
 }
 
@@ -65,6 +179,7 @@
   display: grid;
   width: 100%;
   height: 100%;
+  max-height: 100%;
   gap: 8px;
   padding: 8px;
   box-sizing: border-box;
@@ -75,6 +190,7 @@
     grid-template-columns: 1fr !important;
     grid-template-rows: auto !important;
     overflow-y: auto;
+    max-height: 100% !important;
   }
 }
 
@@ -92,7 +208,7 @@
   box-sizing: border-box;
 }
 
-@media (min-width: 641px) and (orientation: landscape) {
+@media (min-width: 768px), ((min-width: 641px) and (orientation: landscape)) {
   .live-room-side-panel {
     position: static;
     width: 320px;
