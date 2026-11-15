@@ -149,14 +149,48 @@ export class MeetingService {
     const limit = Math.min(query.limit || 10, 50);
     const skip = (page - 1) * limit;
 
-    const [total, meetings] = await Promise.all([
-      Meeting.countDocuments(filter),
-      Meeting.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("hostId", "name"),
-    ]);
+    let total: number;
+    let meetings: (IMeeting & { hostId: unknown })[];
+
+    try {
+      [total, meetings] = await Promise.all([
+        Meeting.countDocuments(filter),
+        Meeting.find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .populate("hostId", "name"),
+      ]);
+    } catch (err: unknown) {
+      const isIndexError =
+        err &&
+        typeof err === "object" &&
+        (("code" in err && (err as { code: number }).code === 27) ||
+          ("message" in err &&
+            typeof (err as { message: string }).message === "string" &&
+            (err as { message: string }).message.includes("text index required")));
+
+      if (isIndexError && query.q) {
+        delete filter.$text;
+        const escaped = query.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = { $regex: escaped, $options: "i" };
+        filter.$or = [
+          { title: regex },
+          { description: regex },
+          { "ai.summary": regex },
+        ];
+        [total, meetings] = await Promise.all([
+          Meeting.countDocuments(filter),
+          Meeting.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("hostId", "name"),
+        ]);
+      } else {
+        throw err;
+      }
+    }
 
     const items = meetings.map((m) => {
       const hostObj = m.hostId as unknown as { _id?: mongoose.Types.ObjectId; name?: string };

@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 import { createApp } from "../src/app.js";
@@ -8,6 +8,10 @@ import { generateUniqueRoomCode } from "../src/services/meeting.service.js";
 
 describe("Meetings Endpoints and Lifecycle", () => {
   const app = createApp();
+
+  beforeAll(async () => {
+    await Meeting.init();
+  });
 
   // Helper to create a user and team
   async function createTestTeam(name: string, email: string, teamName: string) {
