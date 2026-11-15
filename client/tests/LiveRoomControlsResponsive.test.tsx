@@ -10,17 +10,16 @@ const __dirname = path.dirname(__filename);
 
 describe("LiveRoomView Responsive Control Bar", () => {
   const defaultProps = {
-    roomTitle: "Sprint Planning",
-    roomCode: "PLAN123",
     isHost: false,
+    isAdmin: false,
     hostId: "user-host",
+    colorIndex: 0,
     selfName: "Dev Patel",
     selfStream: null,
     selfAudio: true,
     selfVideo: true,
     isScreenSharing: false,
     screenStream: null,
-    isSomeoneElseSharing: false,
     captionsEnabled: false,
     captions: [],
     peers: [],
@@ -35,7 +34,6 @@ describe("LiveRoomView Responsive Control Bar", () => {
     onSendMessage: vi.fn(),
     onTyping: vi.fn(),
     onRetryPeerConnection: vi.fn(),
-    canEndMeeting: false,
   };
 
   it("ensures index.html contains viewport-fit=cover for safe-area insets", () => {
@@ -87,8 +85,8 @@ describe("LiveRoomView Responsive Control Bar", () => {
     expect(defaultProps.onLeaveMeeting).toHaveBeenCalledTimes(1);
   });
 
-  it("renders host 'End meeting for all' button when canEndMeeting is true", () => {
-    render(<LiveRoomView {...defaultProps} canEndMeeting={true} isHost={true} />);
+  it("renders host 'End meeting for all' button when user isHost or isAdmin", () => {
+    render(<LiveRoomView {...defaultProps} isHost={true} />);
 
     const endBtn = screen.getByRole("button", { name: "End meeting for all" });
     expect(endBtn).toBeInTheDocument();
